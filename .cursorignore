@@ -1,0 +1,19 @@
+﻿# Cursor indeksini hafifletir (bellek / tarama). Uygulama kaynağı (src/) burada yok.
+
+node_modules/
+.next/
+out/
+build/
+
+coverage/
+playwright-report/
+test-results/
+
+public/uploads/
+
+.vercel/
+certificates/
+
+src/generated/prisma/
+
+*.tsbuildinfo

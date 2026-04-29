@@ -1,0 +1,22 @@
+# Yerel geliştirme PostgreSQL — `docker compose up -d` sonra `.env` içinde DATABASE_URL kullanın.
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ilan
+      POSTGRES_PASSWORD: ilan
+      POSTGRES_DB: ilan_dev
+    volumes:
+      - ilan_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ilan -d ilan_dev"]
+      interval: 3s
+      timeout: 5s
+      retries: 15
+      start_period: 10s
+
+volumes:
+  ilan_pgdata:

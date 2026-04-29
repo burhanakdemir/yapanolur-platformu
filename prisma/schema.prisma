@@ -1,0 +1,575 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  /** Ana yönetici: yönetici ekleme / çıkarma / şifre (en fazla 3 kişilik ekip) */
+  SUPER_ADMIN
+  ADMIN
+  MEMBER
+}
+
+enum MemberDocumentType {
+  DIPLOMA
+  ENGINEERING_SERVICE_CERTIFICATE
+  TAX_CERTIFICATE
+}
+
+enum CreditTransactionType {
+  TOP_UP
+  BID_FEE
+  REFUND
+  AD_FEE
+  ADJUSTMENT
+  DETAIL_VIEW_FEE
+  BID_ACCESS_FEE
+  /** Meslek sahibi arama: iletişim bilgisi görüntüleme (üye başına bir kez) */
+  MEMBER_CONTACT_FEE
+  /** Uye profiline yorum yazma (kredi) */
+  MEMBER_COMMENT_FEE
+  /** Profil sahibinin gelen yoruma cevabi (kredi) */
+  MEMBER_COMMENT_REPLY_FEE
+}
+
+enum AdStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  /** Ilan sahibi veya iptal akisi */
+  CANCELLED
+  /** Ilan sahibi ihaleyi sonuclandirdi */
+  COMPLETED
+}
+
+enum PaymentProvider {
+  IYZICO
+  PAYTR
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+/** Kredi yükleme sonrası e-fatura / e-arşiv (Sovos) kuyruğu */
+enum CreditInvoiceRequestStatus {
+  PENDING_APPROVAL
+  ISSUED
+  FAILED
+}
+
+/** Uye-uye profil begeni / begenmeme (tek oy / hedef) */
+enum MemberPeerVoteType {
+  LIKE
+  DISLIKE
+}
+
+/** Fatura / e-belge için üyelik tipi */
+enum MemberBillingAccountType {
+  INDIVIDUAL
+  CORPORATE
+}
+
+/** Site içi canlı destek sohbet durumu */
+enum SupportConversationStatus {
+  /** Son mesaj ziyaretçi; yanıt bekleniyor */
+  NEEDS_RESPONSE
+  /** Son mesaj yönetici */
+  ANSWERED
+  KAPALI
+}
+
+enum SupportMessageSender {
+  VISITOR
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(cuid())
+  /** Uye kayit numarasi: 124–99999999, kayit sirasina gore. */
+  memberNumber Int    @unique
+  email     String   @unique
+  name      String?
+  profilePhotoUrl String?
+  password  String
+  role      UserRole @default(MEMBER)
+  isMemberApproved Boolean @default(false)
+  /** Meslek + il eşleşen yeni ilanlarda e-posta bildirimi (kayıtta açık rıza). */
+  newAdEmailOptIn  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberProfile MemberProfile?
+  ads           Ad[]
+  bids          Bid[]
+  creditTx      CreditTransaction[]
+  paymentOrders PaymentOrder[]
+  watchedAds    AdWatch[]
+  adAccessRows  AdUserAccess[]
+  /** Meslek sahibi rehberinde iletişim ödediği hedef üyeler */
+  memberContactAsViewer MemberContactAccess[] @relation("MemberContactViewer")
+  /** Kendisi için iletişim görüntülemesi satın alınan (hedef) */
+  memberContactAsTarget MemberContactAccess[] @relation("MemberContactTarget")
+  /** Baska uyelere verdigi begeni/begenmeme */
+  memberVotesGiven    MemberPeerVote[] @relation("MemberVoteFrom")
+  /** Kendisine gelen begeni/begenmeme */
+  memberVotesReceived MemberPeerVote[] @relation("MemberVoteTo")
+  /** Baska uyelere yazdigi profil yorumlari */
+  memberCommentsWritten MemberComment[] @relation("MemberCommentFrom")
+  /** Kendisine gelen profil yorumlari */
+  memberCommentsReceived MemberComment[] @relation("MemberCommentTo")
+  supportConversationsAsMember SupportConversation[]
+  supportMessagesAsVisitor     SupportMessage[]        @relation("SupportMsgVisitor")
+  supportMessagesAsAdmin      SupportMessage[]         @relation("SupportMsgAdmin")
+  adminSupportPresence        AdminSupportPresence?
+  creditInvoiceRequests       CreditInvoiceRequest[] @relation("CreditInvoiceBuyer")
+  creditInvoiceApprovals      CreditInvoiceRequest[] @relation("CreditInvoiceApprover")
+}
+
+/** Uye profiline ucretli (kredi) yorum */
+model MemberComment {
+  id         String   @id @default(cuid())
+  fromUserId String
+  fromUser   User     @relation("MemberCommentFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId   String
+  toUser     User     @relation("MemberCommentTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  body       String
+  createdAt  DateTime @default(now())
+  /** Profil sahibinin (toUser) tek seferlik ucretli cevabi */
+  replyBody  String?
+  repliedAt  DateTime?
+
+  @@index([toUserId, createdAt])
+  @@index([fromUserId, createdAt])
+}
+
+model MemberPeerVote {
+  id         String             @id @default(cuid())
+  fromUserId String
+  fromUser   User               @relation("MemberVoteFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId   String
+  toUser     User               @relation("MemberVoteTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  type       MemberPeerVoteType
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@unique([fromUserId, toUserId])
+  @@index([toUserId, type])
+  @@index([fromUserId])
+}
+
+/** Görüntüleyen üye, hedef üyenin iletişim bilgisini görmek için tek seferlik ödeme */
+model MemberContactAccess {
+  id           String   @id @default(cuid())
+  viewerUserId String
+  viewer       User     @relation("MemberContactViewer", fields: [viewerUserId], references: [id], onDelete: Cascade)
+  targetUserId String
+  target       User     @relation("MemberContactTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  paidAt       DateTime @default(now())
+
+  @@unique([viewerUserId, targetUserId])
+  @@index([viewerUserId])
+  @@index([targetUserId])
+}
+
+model Profession {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberProfiles MemberProfile[]
+  ads            Ad[]
+
+  @@index([sortOrder, name])
+}
+
+model MemberProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone     String?
+  /** Uye ikamet / kayit ili (metin, ilan arama ile ayni isimler) */
+  province  String?
+  district  String?
+  professionId String?
+  profession   Profession? @relation(fields: [professionId], references: [id], onDelete: SetNull)
+
+  /** Fatura: bireysel veya kurumsal */
+  billingAccountType MemberBillingAccountType @default(INDIVIDUAL)
+  /** Bireysel fatura: TC Kimlik No (11 hane, rakam) */
+  billingTcKimlik     String?
+  /** Kurumsal fatura: ticari ünvan */
+  billingCompanyTitle String?
+  /** Kurumsal: vergi dairesi adı */
+  billingTaxOffice    String?
+  /** Kurumsal: vergi numarası (10 hane) */
+  billingVkn          String?
+  /** Fatura teslim adresi (cadde, mahalle, kapı no, daire) */
+  billingAddressLine  String?
+  billingPostalCode   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents MemberDocument[]
+}
+
+model MemberDocument {
+  id        String             @id @default(cuid())
+  memberId  String
+  member    MemberProfile      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  type      MemberDocumentType
+  fileUrl   String
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@unique([memberId, type])
+}
+
+/** Uye kayit e-posta / telefon OTP (15 dk gecerli) */
+model OtpChallenge {
+  id        String   @id @default(cuid())
+  purpose   String
+  target    String
+  codeHash  String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([purpose, target])
+  @@index([expiresAt])
+}
+
+model Ad {
+  id          String      @id @default(cuid())
+  /** Gorunen ilan no (rakamlar): 234–99999999. */
+  listingNumber Int       @unique
+  ownerId     String
+  owner       User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  /** İlanla ilişkili meslek (üyelere mesleğe göre bildirim vb. için). */
+  professionId String?
+  profession   Profession? @relation(fields: [professionId], references: [id], onDelete: SetNull)
+  title       String
+  description String
+  startingPriceTry Int @default(1000)
+  auctionEndsAt DateTime?
+
+  // Location fields required for tender/job bidding filters.
+  // Stored as strings for MVP; can be normalized later.
+  city         String
+  province     String
+  district     String
+  neighborhood String
+  blockNo      String?
+  parcelNo     String?
+  showcaseUntil DateTime?
+  status       AdStatus @default(PENDING)
+  approvedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  photos AdPhoto[]
+  bids   Bid[]
+  watchers AdWatch[]
+  accessGrants AdUserAccess[]
+
+  @@index([categoryId])
+  @@index([professionId])
+  @@index([city, province, district, neighborhood])
+  @@index([createdAt])
+}
+
+model AdWatch {
+  id        String   @id @default(cuid())
+  userId    String
+  adId      String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ad        Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, adId])
+  @@index([userId, createdAt])
+  @@index([adId, createdAt])
+}
+
+model AdPhoto {
+  id        String   @id @default(cuid())
+  adId      String
+  ad        Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+  url       String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Bid {
+  id        String   @id @default(cuid())
+  adId      String
+  ad        Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+  bidderId  String
+  bidder    User     @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+  amountTry Int
+  message   String?
+  createdAt DateTime @default(now())
+
+  @@index([adId, createdAt])
+  @@index([bidderId, createdAt])
+}
+
+model CreditTransaction {
+  id           String                @id @default(cuid())
+  userId       String
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         CreditTransactionType
+  amountTry    Int
+  description  String?
+  referenceId  String?
+  createdAt    DateTime              @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+}
+
+/** Kullanici basina ilan basina detay / teklif erisim odemeleri */
+model AdUserAccess {
+  id                String    @id @default(cuid())
+  userId            String
+  adId              String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ad                Ad        @relation(fields: [adId], references: [id], onDelete: Cascade)
+  detailPaidAt      DateTime?
+  bidAccessPaidAt   DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([userId, adId])
+  @@index([adId])
+}
+
+model AdminSettings {
+  id                 String   @id @default("singleton")
+  bidFeeEnabled      Boolean  @default(false)
+  bidFeeAmountTry    Int      @default(0)
+  /** Ilan detayini gormek icin tek seferlik ucret (kredi) */
+  detailViewFeeEnabled   Boolean @default(false)
+  detailViewFeeAmountTry Int     @default(0)
+  /** Ilanda teklif verebilmek icin tek seferlik ucret (detay ucretinden ayri) */
+  bidAccessFeeEnabled   Boolean @default(false)
+  bidAccessFeeAmountTry Int     @default(0)
+  /** Meslek sahibi arama: iletişim (tel, e-posta, il, ilçe) görüntüleme ücreti */
+  memberContactFeeEnabled   Boolean @default(true)
+  memberContactFeeAmountTry Int     @default(50)
+  /** Uye profiline yorum yazma ucreti (kredi) */
+  memberCommentFeeEnabled   Boolean @default(false)
+  memberCommentFeeAmountTry Int     @default(0)
+  showcaseFeeAmountTry Int    @default(250)
+  showcaseDailyPricingJson String @default("{}")
+  homeHeroTitleTr    String   @default("Kullanici veya ilan veren olarak katilin")
+  homeHeroSubtitleTr String   @default("Kullanici olarak teklif verin, ilan yayinlayin ve ilanlarinizi gercek zamanli yonetin.")
+  homeHeroTitleEn    String   @default("Join as user or seller")
+  homeHeroSubtitleEn String   @default("Place bids as user, publish listings, and manage your listings in real-time.")
+  homeTaglineTr      String   @default("Cok saticili ilan ve teklif platformu")
+  homeTaglineEn      String   @default("Multivendor listing and bidding platform")
+  homePrimaryButtonTr String  @default("Kullanici ol")
+  homePrimaryButtonEn String  @default("Become a user")
+  homeSecondaryButtonTr String @default("Satici ol")
+  homeSecondaryButtonEn String @default("Become a merchant")
+  homeFooterContact  String   @default("Contact: +90 850 000 00 00 | support@viserbid.local")
+  /** Yönetici panelinden; boşsa IYZICO_* ortam değişkenleri kullanılır. */
+  iyzicoApiKey       String   @default("")
+  iyzicoSecretKey    String   @default("")
+  /** Örn. https://api.iyzipay.com veya https://sandbox-api.iyzipay.com */
+  iyzicoBaseUrl      String   @default("")
+  /** PayTR mağaza no / key / salt — panel; boşsa env PAYTR_* */
+  paytrMerchantId     String   @default("")
+  paytrMerchantKey    String   @default("")
+  paytrMerchantSalt   String   @default("")
+  paytrTestMode       Boolean  @default(false)
+  /** Transactional SMTP — doluysa env SMTP_* yerine bu kullanılır. */
+  smtpHost     String  @default("")
+  smtpPort     Int     @default(587)
+  smtpUser     String  @default("")
+  smtpPass     String  @default("")
+  smtpSecure   Boolean @default(false)
+  /** Yeni ilan yönetici onayından sonra: il+meslek eşleşen üyelere otomatik e-posta (küresel). */
+  newAdEmailAutoEnabled     Boolean  @default(true)
+  /** Transactional e-posta “From”; boşsa SMTP kullanıcısı / env. */
+  newAdEmailFromAddress     String   @default("")
+  /** `ad.approved` olayında dış uçlara POST (e-posta ayrı). */
+  newAdEmailWebhookEnabled   Boolean  @default(true)
+  /** `ad.approved` olayında POST atılacak https URL’leri (JSON dizi). */
+  newAdEmailWebhookUrlsJson String   @default("[]")
+  /** Webhook’lara `Authorization: Bearer …` (isteğe bağlı). */
+  newAdEmailWebhookSecret   String   @default("")
+  /** e-fatura: mock | sovos — süper yönetici paneli; boş kalırsa EINVOICE_MODE env yedek. */
+  eInvoiceMode       String   @default("mock")
+  /** Sovos REST taban URL — panel; boşsa SOVOS_API_BASE_URL env. */
+  sovosApiBaseUrl    String   @default("")
+  sovosApiKey        String   @default("")
+  sovosApiSecret     String   @default("")
+  /**
+   * Kayıt telefon OTP: HTTP(S) webhook — etkin ve URL doluysa önce bu kullanılır; yoksa Twilio env.
+   * Gövde/URL şablonu yer tutucular: {{phone}}, {{code}}, {{message}}
+   */
+  signupSmsHttpEnabled        Boolean  @default(false)
+  signupSmsHttpMethod         String   @default("POST")
+  signupSmsHttpUrl            String   @default("")
+  /** Ek başlıklar JSON nesnesi (Content-Type vb.); değerlerde {{code}} kullanılabilir. */
+  signupSmsHttpHeadersJson    String   @default("{}")
+  /** Boşsa varsayılan JSON gövde kullanılır. */
+  signupSmsHttpBodyTemplate   String   @default("")
+  signupSmsAuthHeaderName     String   @default("")
+  signupSmsAuthHeaderValue    String   @default("")
+  signupSmsHttpTimeoutMs      Int      @default(15000)
+  /**
+   * Kayıt SMS: İleti Merkezi (api.iletimerkezi.com/v1/send-sms/json).
+   * Etkin ve anahtarlar doluysa genel HTTP webhook’tan önceliklidir.
+   */
+  signupIletiMerkeziEnabled   Boolean  @default(false)
+  signupIletiMerkeziApiKey    String   @default("")
+  signupIletiMerkeziApiSecret String   @default("")
+  /** Panelde onaylı gönderici başlığı (origin). */
+  signupIletiMerkeziSender    String   @default("")
+  /**
+   * Genel İleti Merkezi JSON SMS: API “kullanıcı” (key), “şifre” (gizli / HMAC), gönderici.
+   * `sendIletiMerkeziJsonSms` önce burayı, eksikse ILETI_MERKEZI_* env’i kullanır.
+   */
+  iletiMerkeziUser    String   @default("")
+  iletiMerkeziPass   String   @default("")
+  iletiMerkeziSender String   @default("")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  /** Alt kategoriler için opsiyonel görsel (yönetici yükler veya tohum URL). */
+  imageUrl    String?
+  /** Aynı üst kategori altında gösterim sırası (0 = en üst). */
+  sortOrder   Int        @default(0)
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Category[] @relation("CategoryHierarchy")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  ads         Ad[]
+
+  @@index([parentId, sortOrder])
+  @@index([parentId, createdAt])
+  @@unique([name, parentId])
+}
+
+/** Anon: visitorKey; üye: userId. */
+model SupportConversation {
+  id     String  @id @default(cuid())
+  /** Anonim tarayıcı anahtarı (httpOnly cookie); üye sohbetinde doldurulur/ilişkilendirilir. */
+  visitorKey String? @unique
+  userId     String?
+  user       User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  /** Anonim iletişim (isteğe bağlı) */
+  guestEmail  String?
+  status      SupportConversationStatus @default(NEEDS_RESPONSE)
+  lastReadByAdminAt   DateTime @default(now())
+  lastReadByVisitorAt DateTime @default(now())
+  lastVisitorMessageAt DateTime?
+  lastAdminMessageAt  DateTime?
+  /** E-posta tekrar throttling (çevrimdışı personel) */
+  lastEmailNotifiedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  messages  SupportMessage[]
+
+  @@index([userId])
+  @@index([status, updatedAt])
+}
+
+model SupportMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  conversation   SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         SupportMessageSender
+  body           String
+  authorUserId   String?
+  authorUser     User?   @relation("SupportMsgVisitor", fields: [authorUserId], references: [id], onDelete: SetNull)
+  authorAdminId  String?
+  authorAdmin    User?   @relation("SupportMsgAdmin", fields: [authorAdminId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+/** Yönetici paneli “müsaitim” + heartbeat (çevrimiçi) */
+model AdminSupportPresence {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isAvailable Boolean  @default(true)
+  lastPingAt  DateTime @default(now())
+}
+
+model PaymentOrder {
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider        PaymentProvider
+  amountTry       Int
+  status          PaymentStatus   @default(PENDING)
+  externalRef     String?
+  providerPayload String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  paidAt          DateTime?
+
+  creditInvoiceRequest CreditInvoiceRequest?
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+/** Yalnızca kredi yükleme (TOP_UP) ödemeleri PAID olduktan sonra oluşur. */
+model CreditInvoiceRequest {
+  id     String @id @default(cuid())
+  paymentOrderId String @unique
+  paymentOrder   PaymentOrder @relation(fields: [paymentOrderId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation("CreditInvoiceBuyer", fields: [userId], references: [id], onDelete: Cascade)
+
+  amountTry Int
+  status    CreditInvoiceRequestStatus @default(PENDING_APPROVAL)
+  /** Yönetici düzeltme / iç not (KVKK: gereksiz kişisel veri yazmayın) */
+  adminNote String? @db.Text
+
+  approvedByUserId String?
+  approvedBy       User?   @relation("CreditInvoiceApprover", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+
+  issuedAt           DateTime?
+  /** SOVOS veya SOVOS_MOCK */
+  provider           String   @default("SOVOS")
+  providerDocumentId String?
+  ettn               String?
+  documentUrl        String?
+  lastError          String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+}

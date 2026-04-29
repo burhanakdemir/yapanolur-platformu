@@ -1,0 +1,30 @@
+{
+  "frames": [
+    {
+      "id": "hero",
+      "type": "frame",
+      "name": "Hero",
+      "layout": {
+        "title": "Ihale ve Ilan Platformu",
+        "subtitle": "Muhendislik, sehir planlama ve insaat projeleri icin teklif toplama platformu.",
+        "actions": ["Yeni Ilan Ver", "Uye Ol / Belgeler"]
+      }
+    },
+    {
+      "id": "categories",
+      "type": "frame",
+      "name": "Ust Kategoriler",
+      "items": ["Muhendislik Projeleri", "Sehir Planlama", "Insaat", "Renovasyon"]
+    },
+    {
+      "id": "ads",
+      "type": "frame",
+      "name": "Ornek Ilanlar",
+      "cards": [
+        { "title": "Konut Projesi - Betonarme", "location": "Ankara / Cankaya" },
+        { "title": "Kentsel Donusum", "location": "Istanbul / Kadikoy" },
+        { "title": "Yenileme - Ofis", "location": "Izmir / Bornova" }
+      ]
+    }
+  ]
+}

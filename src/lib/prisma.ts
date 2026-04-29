@@ -1,0 +1,60 @@
+/**
+ * PostgreSQL — Prisma 7: `PrismaPg` + `pg` havuzu. `DATABASE_URL` `prisma.config.ts` ile aynı kaynaktan okunur.
+ * Yerel: `docker compose up -d` — bkz. `.env.example`, `docs/local-db.md`.
+ *
+ * Not: `PrismaClient` Proxy ile sarmalanmaz; Turbopack/RSC altında `prisma.ad.count()` gibi çağrılarda
+ * "Invalid invocation" hatalarına yol açabiliyordu.
+ */
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
+import { PrismaClient } from "@/generated/prisma/client";
+import { resolveDatabaseUrl } from "@/lib/resolveDatabaseUrl";
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+  pgPool: Pool | undefined;
+};
+
+function getConnectionString(): string {
+  const url = process.env.DATABASE_URL?.trim();
+  if (!url) {
+    throw new Error(
+      'DATABASE_URL ortam degiskeni tanimlanmali. Ornek: DATABASE_URL="postgresql://USER:PASSWORD@127.0.0.1:5432/DB"',
+    );
+  }
+  if (url.startsWith("file:")) {
+    throw new Error(
+      "DATABASE_URL artık SQLite (file:...) değil; PostgreSQL kullanın. Örnek: postgresql://ilan:ilan@127.0.0.1:5432/ilan_dev — docker compose up -d. Bkz. .env.example",
+    );
+  }
+  return resolveDatabaseUrl(url);
+}
+
+function getPool(): Pool {
+  const cached = globalForPrisma.pgPool;
+  if (cached) return cached;
+  const connectionString = getConnectionString();
+  /** Yerel Docker Postgres genelde SSL sunmaz; URL'de ?sslmode=require varsa bağlantı düşer. `DATABASE_SSL_DISABLE=1` ile zorla kapatın. */
+  const sslExplicit =
+    process.env.DATABASE_SSL_DISABLE === "1" || process.env.DATABASE_SSL_DISABLE === "true"
+      ? false
+      : undefined;
+  const connectMs = Number(process.env.DATABASE_CONNECT_TIMEOUT_MS);
+  const connectionTimeoutMillis =
+    Number.isFinite(connectMs) && connectMs > 0 ? connectMs : 15_000;
+  const pool = new Pool(
+    sslExplicit === false
+      ? { connectionString, ssl: false, connectionTimeoutMillis }
+      : { connectionString, connectionTimeoutMillis },
+  );
+  globalForPrisma.pgPool = pool;
+  return pool;
+}
+
+function createPrismaClient(): PrismaClient {
+  const adapter = new PrismaPg(getPool());
+  return new PrismaClient({ adapter });
+}
+
+export const prisma: PrismaClient =
+  globalForPrisma.prisma ?? (globalForPrisma.prisma = createPrismaClient());

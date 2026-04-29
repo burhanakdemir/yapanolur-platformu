@@ -1,0 +1,202 @@
+import type { AdminPanelMode } from "@/lib/adminRoles";
+
+/**
+ * Yönetici paneli: tek kaynak (üst menü, yan menü, ana sayfa bölümleri).
+ */
+export type AdminNavSection = {
+  id: string;
+  title: string;
+  description: string;
+  href: string;
+  /** true: sadece süper yönetici (SUPER_ADMIN) menüde ve sayfada görür */
+  superOnly?: boolean;
+};
+
+export type AdminNavGroup = {
+  id: string;
+  label: string;
+  sections: AdminNavSection[];
+};
+
+export type AdminQuickLink = {
+  href: string;
+  label: string;
+  superOnly?: boolean;
+};
+
+/** Üst hızlı menü + sol sidebar (kısa ve sık kullanılanlar) */
+export const ADMIN_QUICK_LINKS: readonly AdminQuickLink[] = [
+  { href: "/admin", label: "Özet" },
+  { href: "/admin/site-settings", label: "Site" },
+  { href: "/admin/odeme", label: "Ödeme", superOnly: true },
+  { href: "/admin/signup-sms-provider", label: "Kayıt SMS", superOnly: true },
+  { href: "/admin/ileti-merkezi-json", label: "İleti SMS", superOnly: true },
+  { href: "/admin/payments", label: "Vitrin" },
+  { href: "/admin/categories", label: "Kategoriler" },
+  { href: "/admin/members", label: "Üyeler" },
+  { href: "/admin/listings", label: "İlanlar" },
+  { href: "/admin/ilan-eposta", label: "İlan e-posta" },
+  { href: "/admin/bid-settings", label: "Teklif fiyatı" },
+  { href: "/admin/bids", label: "Teklifler" },
+  { href: "/admin/credit-invoices", label: "Faturalar" },
+  { href: "/admin/support", label: "Canlı destek" },
+];
+
+/** Ana panelde gruplu kartlar + arama */
+export const ADMIN_SECTION_GROUPS: AdminNavGroup[] = [
+  {
+    id: "site",
+    label: "Site & görünüm",
+    sections: [
+      {
+        id: "site-settings",
+        title: "Site ayarları",
+        description: "Ana sayfa metinleri, butonlar, iletişim satırı ve genel site davranışı.",
+        href: "/admin/site-settings",
+      },
+      {
+        id: "support",
+        title: "Canlı destek",
+        description: "Ziyaretçi sohbetleri, yanıtlama ve müsaitlik (çevrimiçi bildirim).",
+        href: "/admin/support",
+      },
+    ],
+  },
+  {
+    id: "uyelik",
+    label: "Üyelik",
+    sections: [
+      {
+        id: "members",
+        title: "Üyelik yönetimi",
+        description: "Üye listesi, onay, şifre sıfırlama ve belge kontrolü.",
+        href: "/admin/members",
+      },
+      {
+        id: "member-votes",
+        title: "Üye beğeni durumu",
+        description: "Beğeni / beğenmeme oyları; silme ve inceleme.",
+        href: "/admin/member-votes",
+      },
+      {
+        id: "member-comments",
+        title: "Üye profil yorumları",
+        description: "Ücretli profil yorumlarını listeleyin ve silin.",
+        href: "/admin/member-comments",
+      },
+    ],
+  },
+  {
+    id: "odeme",
+    label: "Ödeme & vitrin",
+    sections: [
+      {
+        id: "odeme",
+        title: "Ödeme bağlantıları (iyzico & PayTR)",
+        description: "API anahtarları, bildirim ve callback URL’leri; kartla kredi entegrasyonu.",
+        href: "/admin/odeme",
+        superOnly: true,
+      },
+      {
+        id: "signup-sms",
+        title: "Kayıt telefon SMS",
+        description: "Üye kaydı telefon OTP için HTTP webhook veya Twilio yedek; test gönderimi.",
+        href: "/admin/signup-sms-provider",
+        superOnly: true,
+      },
+      {
+        id: "ileti-json-sms",
+        title: "İleti Merkezi JSON SMS",
+        description: "Genel SMS: API kullanıcı / şifre / gönderici (panel veya ILETI_MERKEZI_* env).",
+        href: "/admin/ileti-merkezi-json",
+        superOnly: true,
+      },
+      {
+        id: "payments",
+        title: "Vitrin ayarları",
+        description: "Vitrin paket fiyatları ve temel vitrin ücreti.",
+        href: "/admin/payments",
+      },
+      {
+        id: "credit-invoices",
+        title: "Kredi faturaları (e-fatura)",
+        description: "Kredi yükleme ödemeleri için bekleyen kesimler ve Sovos / mock akışı.",
+        href: "/admin/credit-invoices",
+      },
+    ],
+  },
+  {
+    id: "katalog",
+    label: "Katalog",
+    sections: [
+      {
+        id: "categories",
+        title: "Kategori ayarları",
+        description: "Ana sayfa, ilan verme ve arama: tüm kategori ağacı (tek veritabanı).",
+        href: "/admin/categories",
+      },
+      {
+        id: "professions",
+        title: "Meslek ayarları",
+        description: "Kayıt formunda seçilecek meslek listesi (ekle / sil).",
+        href: "/admin/professions",
+      },
+    ],
+  },
+  {
+    id: "ilan",
+    label: "İlan & teklif",
+    sections: [
+      {
+        id: "listings",
+        title: "İlan ayarları",
+        description: "İlan onay, red, iptal ve yenileme.",
+        href: "/admin/listings",
+      },
+      {
+        id: "ilan-eposta",
+        title: "Yeni ilan e-posta & API",
+        description:
+          "Onay sonrası il+meslek eşleşen üyelere e-posta; gizli anahtarlı webhook URL’leri ve gönderen adresi.",
+        href: "/admin/ilan-eposta",
+      },
+      {
+        id: "bid-settings",
+        title: "Teklif ayarları",
+        description: "Teklif verirken kredi / ücret kuralları.",
+        href: "/admin/bid-settings",
+      },
+      {
+        id: "bids",
+        title: "Teklif verilen işler",
+        description: "Teklif alan ilanlar; her ilan altında tüm teklif verenler ve tutarlar.",
+        href: "/admin/bids",
+      },
+    ],
+  },
+];
+
+export function flattenAdminSections(): AdminNavSection[] {
+  return ADMIN_SECTION_GROUPS.flatMap((g) => g.sections);
+}
+
+/** Süper dışı panellerde ödeme sağlayıcı vb. bölümleri düşürür. */
+export function filterNavGroupsByMode(
+  groups: AdminNavGroup[],
+  mode: AdminPanelMode,
+): AdminNavGroup[] {
+  return groups
+    .map((g) => ({
+      ...g,
+      sections: g.sections.filter((s) => !s.superOnly || mode === "super"),
+    }))
+    .filter((g) => g.sections.length > 0);
+}
+
+/** Süper yönetici: yönetici ekibi (rol ile koşullu) */
+export const ADMIN_TEAM_SECTION: AdminNavSection = {
+  id: "team",
+  title: "Yönetici ekibi",
+  description: "Yardımcı yönetici ekleme, çıkarma ve şifre (en fazla 3 kişi).",
+  href: "/admin/admins",
+};

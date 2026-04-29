@@ -1,0 +1,373 @@
+@import "tailwindcss";
+
+/* Tüm src altındaki bileşenlerde utility sınıflarının üretilmesi (Tailwind v4) */
+@source "../**/*.{js,ts,jsx,tsx,mdx}";
+
+:root {
+  color-scheme: light;
+  --background: #fff7ed;
+  --foreground: #101828;
+  /* home-sidebar-panel ile aynı katmanlar — layout gövdesi ve kartlar uyumlu kalsın */
+  --home-panel-bg-layers:
+    radial-gradient(ellipse 160% 90% at 50% -25%, rgba(255, 247, 237, 0.98) 0%, transparent 52%),
+    radial-gradient(ellipse 100% 70% at 100% 15%, rgba(254, 215, 170, 0.5) 0%, transparent 48%),
+    radial-gradient(ellipse 85% 65% at 0% 85%, rgba(255, 237, 213, 0.75) 0%, transparent 50%),
+    repeating-linear-gradient(
+      118deg,
+      transparent 0,
+      transparent 14px,
+      rgba(251, 146, 60, 0.045) 14px,
+      rgba(251, 146, 60, 0.045) 28px
+    ),
+    linear-gradient(168deg, #fffbeb 0%, #ffedd5 42%, #fed7aa 100%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/*
+ * İşletim sistemi koyu modunda :root'u siyaha çevirmiyoruz: arka planın son katmanı
+ * var(--background) olduğu için sayfa neredeyse siyah görünüyor ve turuncu tema kayboluyordu.
+ * Marka arayüzü her zaman açık tonlarda.
+ */
+
+html {
+  overflow-x: clip;
+}
+
+body {
+  background: var(--home-panel-bg-layers);
+  color: var(--foreground);
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.glass-card {
+  background: rgba(255, 247, 237, 0.9);
+  backdrop-filter: blur(6px);
+  border: 1px solid #fdba74;
+  box-shadow: 0 10px 30px rgba(194, 65, 12, 0.12);
+}
+
+/* Ana sayfa sol sütun: açık turuncu, yumuşak dalga hissi veren katmanlı geçişler */
+.home-sidebar-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(251, 191, 36, 0.42);
+  /* Sola doğru turuncu gölge (sol ve sağ sütun kartları) */
+  box-shadow:
+    -10px 14px 36px rgba(234, 88, 12, 0.2),
+    -4px 6px 20px rgba(249, 115, 22, 0.16),
+    -1px 0 12px rgba(251, 146, 60, 0.12);
+  backdrop-filter: blur(6px);
+  background: var(--home-panel-bg-layers);
+}
+
+/* Üst düzen: içerik alanı gövdesi — panellerle aynı palet (çift katman yok, tek süreklilik) */
+.app-main-shell {
+  background: var(--home-panel-bg-layers);
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, #f97316, #fb923c);
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+
+.chip {
+  box-sizing: border-box;
+  border: 1px solid #fdba74;
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  background: #fff7ed;
+  color: #9a3412;
+  text-decoration: none;
+}
+
+a.chip:hover {
+  text-decoration: none;
+}
+
+/* Panel / alt sayfa geri linkleri — chip + hafif gölge (ana sayfa sıcak tonları) */
+.admin-back-link {
+  box-sizing: border-box;
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border: 1px solid rgba(253, 186, 116, 0.85);
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.92);
+  color: #9a3412;
+  text-decoration: none;
+  box-shadow: 0 2px 10px rgba(194, 65, 12, 0.1);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+a.admin-back-link:hover {
+  border-color: rgba(249, 115, 22, 0.55);
+  box-shadow: 0 4px 14px rgba(194, 65, 12, 0.14);
+  text-decoration: none;
+}
+
+.admin-back-link--compact {
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Yönetici paneli — ana sayfa teması (sıcak gradient + cam kartlar) */
+.admin-canvas {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(251, 146, 60, 0.38) 0%, transparent 34%),
+    radial-gradient(circle at 92% 12%, rgba(253, 230, 138, 0.42) 0%, transparent 30%),
+    radial-gradient(circle at 48% 88%, rgba(254, 215, 170, 0.28) 0%, transparent 42%),
+    #fff7ed;
+}
+
+/* Süper yönetici oturumu — daha koyu altın, hafif mor vurgu */
+.admin-canvas--super {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(180, 83, 9, 0.26) 0%, transparent 40%),
+    radial-gradient(circle at 90% 10%, rgba(109, 40, 217, 0.1) 0%, transparent 30%),
+    radial-gradient(circle at 50% 95%, rgba(251, 191, 36, 0.16) 0%, transparent 42%),
+    #fffbeb;
+}
+
+/* Yardımcı yönetici (ADMIN) — serin teal */
+.admin-canvas--staff {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(45, 212, 191, 0.18) 0%, transparent 35%),
+    radial-gradient(circle at 88% 12%, rgba(148, 163, 184, 0.2) 0%, transparent 32%),
+    radial-gradient(circle at 48% 92%, rgba(204, 251, 241, 0.45) 0%, transparent 48%),
+    #f0fdfa;
+}
+
+/* Yalnızca panel şifresi (üye oturumu yok) */
+.admin-canvas--panel {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(251, 146, 60, 0.32) 0%, transparent 34%),
+    radial-gradient(circle at 92% 12%, rgba(253, 230, 138, 0.38) 0%, transparent 30%),
+    #fff7ed;
+}
+
+.admin-hero {
+  background: linear-gradient(120deg, #ea580c 0%, #f97316 45%, #fbbf24 100%);
+  box-shadow:
+    0 4px 24px rgba(234, 88, 12, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Süper yönetici — ana sayfa / başlık bandı */
+.admin-hero-super {
+  background: linear-gradient(125deg, #78350f 0%, #b45309 38%, #d97706 78%, #57534e 100%);
+  box-shadow:
+    0 4px 28px rgba(69, 26, 3, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Yardımcı yönetici — ana sayfa başlığı */
+.admin-hero-staff {
+  background: linear-gradient(118deg, #0f766e 0%, #0d9488 42%, #2dd4bf 100%);
+  box-shadow:
+    0 4px 24px rgba(15, 118, 110, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.admin-nav-card,
+.admin-stat-tile {
+  background: linear-gradient(
+    155deg,
+    rgba(255, 247, 237, 0.98) 0%,
+    rgba(255, 237, 213, 0.95) 42%,
+    rgba(254, 215, 170, 0.55) 100%
+  );
+  border: 1px solid rgba(251, 146, 60, 0.45);
+  box-shadow:
+    0 8px 26px rgba(234, 88, 12, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.admin-nav-card:hover,
+.admin-stat-tile:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(
+    155deg,
+    rgba(255, 251, 235, 0.99) 0%,
+    rgba(255, 228, 196, 0.92) 45%,
+    rgba(253, 186, 116, 0.42) 100%
+  );
+  box-shadow: 0 14px 34px rgba(194, 65, 12, 0.14);
+  border-color: rgba(249, 115, 22, 0.52);
+}
+
+/* İlan kartı vitrin rozeti — göz alıcı parlama / sönme (çok katmanlı glow + parlaklık nabzı) */
+@keyframes showcase-vitrin-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(1) saturate(1);
+    box-shadow:
+      0 0 2px 1px rgba(251, 191, 36, 0.55),
+      0 0 8px 2px rgba(249, 115, 22, 0.28);
+    text-shadow: none;
+  }
+  28% {
+    opacity: 1;
+    filter: brightness(1.38) saturate(1.35);
+    box-shadow:
+      0 0 3px 2px rgba(254, 243, 199, 0.95),
+      0 0 14px 5px rgba(251, 146, 60, 0.85),
+      0 0 26px 10px rgba(245, 158, 11, 0.5),
+      0 0 38px 14px rgba(234, 88, 12, 0.22);
+    text-shadow:
+      0 0 10px rgba(255, 251, 235, 0.95),
+      0 0 6px rgba(255, 255, 255, 0.75);
+  }
+  52% {
+    opacity: 0.78;
+    filter: brightness(0.88) saturate(0.92);
+    box-shadow: 0 0 2px 0 rgba(180, 83, 9, 0.2);
+    text-shadow: none;
+  }
+  72% {
+    opacity: 1;
+    filter: brightness(1.22) saturate(1.15);
+    box-shadow:
+      0 0 8px 3px rgba(253, 186, 116, 0.65),
+      0 0 18px 6px rgba(249, 115, 22, 0.4);
+    text-shadow: 0 0 6px rgba(255, 247, 237, 0.85);
+  }
+}
+
+.showcase-vitrin-pulse {
+  animation: showcase-vitrin-twinkle 1.35s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  will-change: filter, box-shadow, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .showcase-vitrin-pulse {
+    animation: none;
+    opacity: 1;
+    filter: none;
+    box-shadow: none;
+    text-shadow: none;
+    will-change: auto;
+  }
+}
+
+/* İlan kartı alt kategori satırı — güçlü yanıp sönen turuncu parıltı */
+@keyframes auction-card-subcategory-shimmer {
+  0%,
+  100% {
+    color: rgb(71 85 105);
+    opacity: 1;
+    text-shadow: none;
+    filter: brightness(1) saturate(1);
+  }
+  22% {
+    color: rgb(154 52 18);
+    opacity: 1;
+    text-shadow:
+      0 0 2px rgb(255 255 255),
+      0 0 6px rgba(254 243 199 / 1),
+      0 0 16px rgba(251 146 60 / 1),
+      0 0 28px rgba(249 115 22 / 0.85),
+      0 0 42px rgba(234 88 12 / 0.55),
+      0 0 56px rgba(245 158 11 / 0.35);
+    filter: brightness(1.58) saturate(1.65) contrast(1.08);
+  }
+  46% {
+    color: rgb(71 85 105);
+    opacity: 0.58;
+    text-shadow: none;
+    filter: brightness(0.68) saturate(0.72) contrast(0.96);
+  }
+  66% {
+    color: rgb(194 65 12);
+    opacity: 1;
+    text-shadow:
+      0 0 4px rgba(255 251 235 / 0.95),
+      0 0 14px rgba(251 146 60 / 0.95),
+      0 0 28px rgba(249 115 22 / 0.7);
+    filter: brightness(1.45) saturate(1.5) contrast(1.05);
+  }
+}
+
+.auction-card-subcategory-glow {
+  animation: auction-card-subcategory-shimmer 1.45s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+  will-change: filter, text-shadow, opacity, color;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auction-card-subcategory-glow {
+    animation: none;
+    color: rgb(71 85 105);
+    opacity: 1;
+    filter: none;
+    text-shadow: none;
+    will-change: auto;
+  }
+}
+
+/* Ana sayfa "İlan ver" — alt kategori parıltısı ile aynı ritim; kutu gölgesi + parlaklık */
+@keyframes home-post-listing-cta-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 4px 14px rgba(234 88 12 / 0.38),
+      0 0 0 0 rgba(249 115 22 / 0.25);
+    filter: brightness(1) saturate(1);
+  }
+  22% {
+    box-shadow:
+      0 6px 28px rgba(249 115 22 / 0.55),
+      0 0 24px rgba(251 146 60 / 0.5),
+      0 0 44px rgba(234 88 12 / 0.4),
+      0 0 64px rgba(245 158 11 / 0.22);
+    filter: brightness(1.1) saturate(1.2);
+  }
+  46% {
+    box-shadow:
+      0 2px 10px rgba(234 88 12 / 0.28),
+      0 0 0 0 rgba(249 115 22 / 0.12);
+    filter: brightness(0.92) saturate(0.88);
+  }
+  66% {
+    box-shadow:
+      0 5px 22px rgba(251 146 60 / 0.48),
+      0 0 18px rgba(249 115 22 / 0.45),
+      0 0 40px rgba(234 88 12 / 0.28);
+    filter: brightness(1.06) saturate(1.12);
+  }
+}
+
+.home-post-listing-cta-glow {
+  animation: home-post-listing-cta-glow 1.45s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+  will-change: box-shadow, filter;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-post-listing-cta-glow {
+    animation: none;
+    filter: none;
+    will-change: auto;
+  }
+}
