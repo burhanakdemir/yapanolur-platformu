@@ -57,7 +57,17 @@ Opsiyonel:
   - `ALLOW_LOCAL_UPLOADS_IN_PRODUCTION=1`
 - Bu mod sadece kisa sureli acil durum icindir; kalici degildir.
 
-## 7) Kisa rollback
+## 7) Kategori gorsel runbook (tekrar bozulmayi onleme)
+
+- Production'da `npm run seed:category-images` komutunu kullanmayin; bu komut kategori adina gore otomatik/farkli gorsel atar.
+- Kategori gorselleri icin kaynak dosya `yedek/category-export-from-sqlite.json` olmalidir.
+- Toplu duzeltmede veriyi kaynaga zorla hizalamak icin:
+  - `npm run import:categories-sqlite -- --force-image-update`
+- Her basarili toplu guncellemeden sonra yedek alin:
+  - `npm run backup:categories`
+- `backup` dosyalarini repoya zorunlu olarak koymak yerine guvenli harici depoda da saklayin.
+
+## 8) Kisa rollback
 
 1. Render'da onceki stabil deploy'u yeniden yayinlayin.
 2. Environment'ta `STORAGE_PROVIDER` degerini onceki calisan degerine geri alin.
