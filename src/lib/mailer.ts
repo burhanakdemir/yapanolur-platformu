@@ -32,6 +32,9 @@ export function formatSmtpSendError(err: unknown): string {
   if (rc === 554 || rc === 553 || /sender address|mail from|not allowed|spf|dmarc/i.test(combined)) {
     return "Gonderici (From) adresi reddedildi. Paneldeki gonderen adres ile SMTP hesabinin uyumlu oldugundan emin olun.";
   }
+  if (rc === 550 || /Invalid [`']from[`'] field|550 Invalid/i.test(combined)) {
+    return "Gonderici (From) biçimi veya MAIL FROM gecersiz. Panelde «Gonderen e-posta» alanina tam adres (ornek@alanadiniz.com) yazin; Resend SMTP kullanici adi `resend` From olamaz.";
+  }
   if (/certificate|self signed|unable to verify|UNABLE_TO_VERIFY_LEAF_SIGNATURE/i.test(combined)) {
     return "SMTP TLS sertifikasi dogrulanamadi. Test ortaminda .env ile SMTP_TLS_REJECT_UNAUTHORIZED=false deneyebilirsiniz (uretimde onerilmez).";
   }
@@ -54,7 +57,7 @@ async function sendMailResolved(params: { to: string; subject: string; text: str
       subject: params.subject,
       text: params.text,
       ...(params.html ? { html: params.html } : {}),
-      ...(smtpExplicitEnvelopeEnabled()
+      ...(smtpExplicitEnvelopeEnabled() && resolved.envelopeFrom
         ? { envelope: { from: resolved.envelopeFrom, to: params.to } }
         : {}),
     });

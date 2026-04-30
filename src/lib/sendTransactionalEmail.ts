@@ -27,7 +27,9 @@ export async function sendTransactionalEmail(
       subject: p.subject,
       text: p.text,
       html: p.html,
-      ...(smtpExplicitEnvelopeEnabled() ? { envelope: { from: resolved.envelopeFrom, to: p.to } } : {}),
+      ...(smtpExplicitEnvelopeEnabled() && resolved.envelopeFrom
+        ? { envelope: { from: resolved.envelopeFrom, to: p.to } }
+        : {}),
     });
     return { sent: true };
   } catch (e) {

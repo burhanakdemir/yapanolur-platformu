@@ -57,7 +57,9 @@ export async function POST(req: Request) {
       subject,
       text,
       html,
-      ...(smtpExplicitEnvelopeEnabled() ? { envelope: { from: resolved.envelopeFrom, to } } : {}),
+      ...(smtpExplicitEnvelopeEnabled() && resolved.envelopeFrom
+        ? { envelope: { from: resolved.envelopeFrom, to } }
+        : {}),
     });
     return NextResponse.json({ ok: true, to, from: resolved.from, source: resolved.source });
   } catch (e) {

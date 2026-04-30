@@ -1,13 +1,13 @@
 import nodemailer from "nodemailer";
 import { prisma } from "@/lib/prisma";
-import { getDefaultSmtpFromAddress } from "@/lib/smtpConfig";
+import { getDefaultSmtpFromAddress, smtpEnvelopeMailFrom } from "@/lib/smtpConfig";
 
 type Resolved = {
   transport: nodemailer.Transporter;
   /** Message From (baslik); cogu saglayicida SMTP kullanicisiyla uyumlu olmali. */
   from: string;
-  /** SMTP MAIL FROM / kimlik — zarf adresi (DMARC uyumu icin AUTH kullanicisi). */
-  envelopeFrom: string;
+  /** SMTP MAIL FROM — geçerli e-posta; Resend vb. için AUTH kullanıcısı (`resend`) kullanılmaz. Yoksa zarf gönderilmez. */
+  envelopeFrom: string | null;
   /** Nereden geldi: panel | env (log / debug) */
   source: "panel" | "env";
 };
@@ -77,7 +77,12 @@ export async function getResolvedSmtpForSend(
       pUser,
       "panel",
     );
-    return { transport, from, envelopeFrom: pUser.trim(), source: "panel" };
+    return {
+      transport,
+      from,
+      envelopeFrom: smtpEnvelopeMailFrom(from, pUser),
+      source: "panel",
+    };
   }
 
   const h = process.env.SMTP_HOST?.trim() ?? "";
@@ -95,5 +100,10 @@ export async function getResolvedSmtpForSend(
     u,
     "env",
   );
-  return { transport, from, envelopeFrom: u.trim(), source: "env" };
+  return {
+    transport,
+    from,
+    envelopeFrom: smtpEnvelopeMailFrom(from, u),
+    source: "env",
+  };
 }
