@@ -22,6 +22,7 @@ import {
 } from "@/lib/intlPhone";
 import { getSafeInternalNextPath } from "@/lib/safeNextPath";
 import HomeBackButtonLink, { homeBackPrimaryClassName } from "@/components/HomeBackButtonLink";
+import { formatSignupOtpTtlTr } from "@/lib/signupOtpTtl";
 
 function membersLoginHref(lang: Lang, nextPath: string): string {
   const q = new URLSearchParams();
@@ -29,11 +30,6 @@ function membersLoginHref(lang: Lang, nextPath: string): string {
   if (lang === "en") q.set("lang", "en");
   return `/login?${q.toString()}`;
 }
-
-/** Sunucudaki e-posta OTP süresi (dk) ile aynı olmalı — src/lib/otp.ts OTP_SIGNUP_EMAIL_TTL_MINUTES */
-const EMAIL_OTP_COUNTDOWN_SECONDS = 60;
-/** Yeni kod isteği bekleme süresi (telefon); sunucu OTP süresi ile aynı dilimde tutuldu. */
-const PHONE_OTP_COUNTDOWN_SECONDS = 60;
 
 const signupEmailFieldSchema = z.string().trim().toLowerCase().pipe(z.string().email());
 
@@ -76,6 +72,8 @@ export default function MembersPage() {
 
 function MembersPageContent() {
   const [lang, setLang] = useState<Lang>("tr");
+  /** Sunucu SIGNUP_OTP_TTL_MINUTES ile uyumlu; API yanıtındaki otpTtlMinutes ile güncellenir. */
+  const [signupOtpTtlMinutes, setSignupOtpTtlMinutes] = useState(15);
   const [message, setMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -292,7 +290,13 @@ function MembersPageContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: emailOk.data }),
       });
-      const data = (await res.json()) as { ok?: boolean; hint?: string; error?: unknown; retryAfterSec?: number };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        hint?: string;
+        error?: unknown;
+        retryAfterSec?: number;
+        otpTtlMinutes?: number;
+      };
       if (!res.ok) {
         const base = apiErrorMessage(data.error, "E-posta kodu gönderilemedi.");
         const retry =
@@ -302,9 +306,14 @@ function MembersPageContent() {
         setMessage(base + retry);
         return;
       }
+      const ttlMin =
+        typeof data.otpTtlMinutes === "number" && data.otpTtlMinutes > 0
+          ? Math.min(60, Math.floor(data.otpTtlMinutes))
+          : 15;
+      setSignupOtpTtlMinutes(ttlMin);
       setEmailVerified(false);
       setEmailOtpCode("");
-      setEmailOtpSecondsLeft(EMAIL_OTP_COUNTDOWN_SECONDS);
+      setEmailOtpSecondsLeft(ttlMin * 60);
       setMessage(
         typeof data.hint === "string" && data.hint.trim()
           ? data.hint.trim()
@@ -399,7 +408,7 @@ function MembersPageContent() {
         body: JSON.stringify({ email: emailOk.data, phone: e164 }),
       });
       const raw = await res.text();
-      let data: { error?: unknown; hint?: string; smsSent?: boolean } = {};
+      let data: { error?: unknown; hint?: string; smsSent?: boolean; otpTtlMinutes?: number } = {};
       if (raw.trim()) {
         try {
           data = JSON.parse(raw) as { error?: unknown; hint?: string; smsSent?: boolean };
@@ -421,11 +430,16 @@ function MembersPageContent() {
         setPhoneOtpFeedback(full);
         return;
       }
+      const ttlMin =
+        typeof data.otpTtlMinutes === "number" && data.otpTtlMinutes > 0
+          ? Math.min(60, Math.floor(data.otpTtlMinutes))
+          : signupOtpTtlMinutes;
+      setSignupOtpTtlMinutes(ttlMin);
       setPhoneVerified(false);
       setPhoneOtpCode("");
-      setPhoneOtpSecondsLeft(PHONE_OTP_COUNTDOWN_SECONDS);
+      setPhoneOtpSecondsLeft(ttlMin * 60);
       const okText = data.smsSent
-        ? "Telefonunuza SMS ile kod gönderildi. Kod 1 dakika geçerlidir."
+        ? `Telefonunuza SMS ile kod gönderildi. Kod ${formatSignupOtpTtlTr(ttlMin)} geçerlidir.`
         : typeof data.hint === "string"
           ? data.hint
           : "SMS kanalı kapalı görünüyor; geliştirme ortamında kod yine kaydedilir. Üretimde /admin/signup-sms-provider üzerinden İleti Merkezi, HTTP veya Twilio yapılandırın.";
@@ -925,8 +939,8 @@ function MembersPageContent() {
             <p id="email-verify-hint" className="text-xs text-slate-600 leading-relaxed">
               Önce e-postanızı, ardından telefonunuzu doğrulamanız gerekir; ikisi tamamlanmadan kayıt alanları
               açılmaz. E-posta kodu{" "}
-              <strong className="font-medium text-slate-800">1 dakika</strong> geçerlidir; süre dolunca yeni kod
-              isteyin.
+              <strong className="font-medium text-slate-800">{formatSignupOtpTtlTr(signupOtpTtlMinutes)}</strong>{" "}
+              geçerlidir; süre dolunca yeni kod isteyin.
             </p>
             <div className="space-y-2 rounded-lg border border-orange-100 bg-orange-50/50 p-2">
               {emailOtpSecondsLeft > 0 && (
@@ -1066,8 +1080,8 @@ function MembersPageContent() {
           >
             <p id="phone-verify-hint" className="text-xs text-slate-600 leading-relaxed">
               E-posta doğrulandıktan sonra telefonunuza SMS gönderilir. Kod{" "}
-              <strong className="font-medium text-slate-800">1 dakika</strong> geçerlidir; yeni kod için aynı süre
-              bekleyin.
+              <strong className="font-medium text-slate-800">{formatSignupOtpTtlTr(signupOtpTtlMinutes)}</strong>{" "}
+              geçerlidir; yeni kod için aynı süre bekleyin.
             </p>
             {phoneOtpFeedback && (
               <p

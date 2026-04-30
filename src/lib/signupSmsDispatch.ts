@@ -1,5 +1,11 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import { sendIletiMerkeziSignupOtp } from "@/lib/iletMerkeziSignupSms";
+import { getSignupOtpTtlMinutes } from "@/lib/signupOtpTtl";
+
+function formatOtpTtlSmsTr(minutes: number): string {
+  const m = Math.floor(Math.min(60, Math.max(1, minutes)));
+  return m <= 1 ? "1 dk" : `${m} dk`;
+}
 
 async function fetchAdminSettingsRow(prisma: PrismaClient) {
   /** Kayıt SMS ayarları okunurken satır yoksa oluştur (findUnique null → tüm kanallar kapalı görünürdü). */
@@ -23,7 +29,7 @@ export function invalidateSignupSmsConfigCache() {
 }
 
 const DEFAULT_OTP_SMS_TEXT_TR = (code: string) =>
-  `Üye kayıt doğrulama kodunuz: ${code} (1 dk geçerli)`;
+  `Üye kayıt doğrulama kodunuz: ${code} (${formatOtpTtlSmsTr(getSignupOtpTtlMinutes())} geçerli)`;
 
 function applyTemplate(template: string, phoneE164: string, code: string, message: string): string {
   return template

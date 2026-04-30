@@ -3,8 +3,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import {
   OTP_PURPOSE_SIGNUP_EMAIL,
+  OTP_SIGNUP_EMAIL_TTL_MINUTES,
   verifyAndConsumeOtp,
 } from "@/lib/otp";
+import { formatSignupOtpTtlTr } from "@/lib/signupOtpTtl";
 import { createSignupEmailProofToken, SIGNUP_EMAIL_COOKIE } from "@/lib/signupEmailProof";
 import { SIGNUP_PHONE_COOKIE } from "@/lib/signupPhoneProof";
 import { shouldUseSecureCookie } from "@/lib/cookieSecure";
@@ -33,8 +35,7 @@ export async function POST(req: Request) {
     if (!ok) {
       return NextResponse.json(
         {
-          error:
-            "Kod hatali veya suresi dolmus (1 dakika). Yeni kod isteyip tekrar deneyin.",
+          error: `Kod hatali veya suresi dolmus (${formatSignupOtpTtlTr(OTP_SIGNUP_EMAIL_TTL_MINUTES)}). Yeni kod isteyip tekrar deneyin.`,
         },
         { status: 400 },
       );

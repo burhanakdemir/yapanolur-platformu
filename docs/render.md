@@ -9,6 +9,15 @@ Bu rehber, projeyi Render uzerinde production'a alirken minimum riskli akis icin
 - `DATABASE_URL=postgresql://...`
 - `AUTH_SECRET=<guclu-rastgele>`
 - `OTP_PEPPER=<guclu-rastgele>`
+- `SIGNUP_OTP_TTL_MINUTES` (istege bagli, varsayilan `15`) — kayit e-posta/SMS OTP gecerlilik suresi (dakika). Posta gecikmesi olan saglayicilarda `10` veya `15` kullanin; eski sabit 1 dk kaldirildi.
+
+### SMTP ve kayit e-posta OTP (Render)
+
+Uygulama kayit e-posta kodunu **SMTP (nodemailer)** ile gonderir; ayar yoksa `/api/register/request-email-otp` 502/400 doner.
+
+- Panel: `/admin` SMTP alanlari **veya** Render ortaminda `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, istege bagli `SMTP_FROM`.
+- Yaygin hatalar: `ETIMEDOUT` / `ECONNREFUSED` (host-port-guvenlik duvari), `535` (kimlik), `554`/`553` (From / SPF-DMARC).
+- SMS OTP ayri kanal: `/admin/signup-sms-provider` veya `SIGNUP_OTP_ALLOW_LOG_FALLBACK` (yalnizca acil/test).
 
 ## 2) Kalici upload/storage (Render)
 

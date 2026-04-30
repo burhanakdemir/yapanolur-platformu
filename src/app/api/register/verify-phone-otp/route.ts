@@ -3,7 +3,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { normalizePhoneInputToE164 } from "@/lib/intlPhone";
-import { OTP_PURPOSE_SIGNUP_PHONE, verifyAndConsumeOtp } from "@/lib/otp";
+import {
+  OTP_PURPOSE_SIGNUP_PHONE,
+  OTP_SIGNUP_PHONE_TTL_MINUTES,
+  verifyAndConsumeOtp,
+} from "@/lib/otp";
+import { formatSignupOtpTtlTr } from "@/lib/signupOtpTtl";
 import { shouldUseSecureCookie } from "@/lib/cookieSecure";
 import { rateLimitGuard } from "@/lib/rateLimit";
 import { verifySignupEmailProofToken, SIGNUP_EMAIL_COOKIE } from "@/lib/signupEmailProof";
@@ -60,8 +65,7 @@ export async function POST(req: Request) {
     if (!ok) {
       return NextResponse.json(
         {
-          error:
-            "Telefon kodu hatalı veya süresi dolmuş (1 dakika). Yeni kod isteyip tekrar deneyin.",
+          error: `Telefon kodu hatalı veya süresi dolmuş (${formatSignupOtpTtlTr(OTP_SIGNUP_PHONE_TTL_MINUTES)}). Yeni kod isteyip tekrar deneyin.`,
         },
         { status: 400 },
       );

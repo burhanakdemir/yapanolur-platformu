@@ -1,5 +1,6 @@
 import { createHash, randomInt } from "node:crypto";
 import type { PrismaClient } from "@/generated/prisma/client";
+import { getSignupOtpTtlMinutes } from "@/lib/signupOtpTtl";
 
 function getOtpPepper(): string {
   const p = process.env.OTP_PEPPER?.trim();
@@ -14,10 +15,10 @@ function getOtpPepper(): string {
 export const OTP_PURPOSE_SIGNUP_EMAIL = "signup_email";
 export const OTP_PURPOSE_SIGNUP_PHONE = "signup_phone";
 
-/** Kayıt e-posta OTP geçerlilik süresi (dakika). */
-export const OTP_SIGNUP_EMAIL_TTL_MINUTES = 1;
+/** Kayıt e-posta OTP geçerlilik süresi (dakika); `SIGNUP_OTP_TTL_MINUTES` ile yapılandırılır. */
+export const OTP_SIGNUP_EMAIL_TTL_MINUTES = getSignupOtpTtlMinutes();
 
-/** Kayıt telefon OTP — e-posta ile aynı süre (üyeler sayfası geri sayımı ile uyumlu). */
+/** Kayıt telefon OTP — e-posta ile aynı süre. */
 export const OTP_SIGNUP_PHONE_TTL_MINUTES = OTP_SIGNUP_EMAIL_TTL_MINUTES;
 
 export function generateSixDigitCode(): string {

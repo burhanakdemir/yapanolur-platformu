@@ -1,4 +1,5 @@
 import { getResolvedSmtpForSend } from "@/lib/resolveSmtpConfig";
+import { getSignupOtpTtlMinutes } from "@/lib/signupOtpTtl";
 import { smtpExplicitEnvelopeEnabled } from "@/lib/smtpConfig";
 
 /** SMTP/nodemailer hatalarini kullaniciya okunur metne cevirir. */
@@ -72,8 +73,9 @@ function escapeHtml(s: string): string {
 }
 
 /** Tıklanabilir doğrulama bağlantısı yok — yalnızca sitedeki forma kod girilir. */
-function signupEmailOtpHtml(code: string): string {
+function signupEmailOtpHtml(code: string, ttlMinutes: number): string {
   const c = escapeHtml(code.replace(/\D/g, "").slice(0, 6) || code.trim());
+  const ttlLabel = ttlMinutes <= 1 ? "1 dakika" : `${ttlMinutes} dakika`;
   return `<!DOCTYPE html>
 <html lang="tr">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -82,7 +84,7 @@ function signupEmailOtpHtml(code: string): string {
     <p style="margin:0 0 12px;">Merhaba,</p>
     <p style="margin:0 0 8px;">Üye kayıt için e-posta doğrulama <strong>kodunuz</strong> (altı hane):</p>
     <p style="margin:16px 0;padding:16px 12px;text-align:center;font-size:1.75rem;font-weight:700;letter-spacing:0.4em;font-family:ui-monospace,Consolas,monospace;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#9a3412;">${c}</p>
-    <p style="margin:0 0 12px;font-size:0.9375rem;">Kod <strong>1 dakika</strong> geçerlidir; süre dolarsa üyelik sayfasından yeni kod isteyin.</p>
+    <p style="margin:0 0 12px;font-size:0.9375rem;">Kod <strong>${escapeHtml(ttlLabel)}</strong> geçerlidir; süre dolarsa üyelik sayfasından yeni kod isteyin.</p>
     <p style="margin:16px 0 0;padding-top:16px;border-top:1px solid #e2e8f0;font-size:0.8125rem;color:#64748b;">
       Bu e-postada hesabınızı onaylamanız için tıklanacak bir <strong>bağlantı yoktur</strong>.
       Kodu yalnızca sitedeki üyelik formunda «E-postayı doğrula» adımına yazın.
@@ -108,12 +110,14 @@ export async function sendPasswordResetEmail(params: {
 }
 
 export async function sendSignupEmailOtp(params: { to: string; code: string }) {
+  const ttlMinutes = getSignupOtpTtlMinutes();
+  const ttlLabel = ttlMinutes <= 1 ? "1 dakika" : `${ttlMinutes} dakika`;
   const code = params.code.replace(/\D/g, "").slice(0, 6) || params.code.trim();
   const text = `Merhaba,
 
 Üye kayıt e-posta doğrulama kodunuz (altı hane): ${code}
 
-Kod 1 dakika geçerlidir; süre dolarsa üyelik sayfasından yeni kod isteyin.
+Kod ${ttlLabel} geçerlidir; süre dolarsa üyelik sayfasından yeni kod isteyin.
 
 Önemli: Bu e-postada tıklanacak bir doğrulama bağlantısı yoktur. Kodu yalnızca sitedeki forma girin.
 
@@ -124,6 +128,6 @@ Bu isteği siz yapmadıysanız bu e-postayı yok sayın.
     /** ASCII konu: bazi MTA/anti-spam zincirlerinde Unicode konu sorun cikarabilir. */
     subject: "Uyelik: E-posta dogrulama kodu (6 hane)",
     text,
-    html: signupEmailOtpHtml(code),
+    html: signupEmailOtpHtml(code, ttlMinutes),
   });
 }

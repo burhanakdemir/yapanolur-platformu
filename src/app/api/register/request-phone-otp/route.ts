@@ -84,6 +84,7 @@ export async function POST(req: Request) {
 
     const res = NextResponse.json({
       ok: true,
+      otpTtlMinutes: OTP_SIGNUP_PHONE_TTL_MINUTES,
       smsSent: smsResult.sent,
       channel: smsResult.channel,
       hint: smsResult.sent

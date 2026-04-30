@@ -40,6 +40,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         ok: true,
         hint: SIGNUP_EMAIL_OTP_REQUEST_PUBLIC_HINT_TR,
+        otpTtlMinutes: OTP_SIGNUP_EMAIL_TTL_MINUTES,
       });
     }
 
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       hint: SIGNUP_EMAIL_OTP_REQUEST_PUBLIC_HINT_TR,
+      otpTtlMinutes: OTP_SIGNUP_EMAIL_TTL_MINUTES,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
