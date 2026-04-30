@@ -2,7 +2,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken } from "@/lib/auth";
-import { isSuperAdminRole } from "@/lib/adminRoles";
+import { isSuperAdminRole, MAX_ADMIN_TEAM_SIZE } from "@/lib/adminRoles";
 import TeamAdminsClient from "./team-admins-client";
 
 export default async function AdminTeamPage() {
@@ -27,8 +27,8 @@ export default async function AdminTeamPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-100/95">Süper yönetici</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">Yönetici ekibi</h1>
         <p className="mt-3 max-w-xl text-sm leading-relaxed text-amber-50/95">
-          Yardımcı yönetici ekleyin, şifrelerini belirleyin veya hesapları kaldırın. Toplam en fazla 100 yönetici
-          hesabı olabilir.
+          Yardımcı yönetici ekleyin, şifrelerini belirleyin veya hesapları kaldırın. Toplam en fazla{" "}
+          {MAX_ADMIN_TEAM_SIZE} yönetici hesabı olabilir.
         </p>
       </header>
 

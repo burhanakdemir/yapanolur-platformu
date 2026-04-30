@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
+import { MAX_ADMIN_TEAM_SIZE } from "@/lib/adminRoles";
 
 type TeamRow = {
   id: string;
@@ -211,7 +212,9 @@ export default function TeamAdminsClient({
     );
   }
 
-  const slotsLeft = Math.max(0, data.maxSize - data.team.length);
+  /** Sunucu eski önbellekle yanlış maxSize döndürse bile gösterim tek kaynak: adminRoles */
+  const teamLimit = MAX_ADMIN_TEAM_SIZE;
+  const slotsLeft = Math.max(0, teamLimit - data.team.length);
   const gapClass = compact ? "space-y-3" : embedded ? "space-y-5" : "space-y-8";
   const cardPad = compact ? "p-4" : "p-6";
   const innerCardClass = compact
@@ -246,7 +249,7 @@ export default function TeamAdminsClient({
       <section className={innerCardClass}>
         <h2 className={h2Class}>Mevcut ekip</h2>
         <p className={`mt-1 ${bodyText}`}>
-          En fazla {data.maxSize} yönetici (ana + yardımcılar). Şu an {data.team.length} / {data.maxSize}.
+          En fazla {teamLimit} yönetici (ana + yardımcılar). Şu an {data.team.length} / {teamLimit}.
         </p>
         <ul className={compact ? "mt-3 space-y-2" : "mt-4 space-y-4"}>
           {data.team.map((row) => {

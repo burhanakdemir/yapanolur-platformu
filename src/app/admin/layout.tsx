@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 import HomeBackButtonLink from "@/components/HomeBackButtonLink";
+
+/** Admin panelleri önbelleğe alınmasın; yerelde güncel JS/HTML görülsün. */
+export const dynamic = "force-dynamic";
 import { cookies } from "next/headers";
 import { verifySessionToken } from "@/lib/auth";
 import { getAdminPanelMode, isSuperAdminRole } from "@/lib/adminRoles";
