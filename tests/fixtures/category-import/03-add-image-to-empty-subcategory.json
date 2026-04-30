@@ -1,0 +1,23 @@
+[
+  {
+    "id": "root-yapi",
+    "name": "Yapi",
+    "parentId": null,
+    "sortOrder": 0,
+    "imageUrl": null
+  },
+  {
+    "id": "sub-betonarme",
+    "name": "Betonarme",
+    "parentId": "root-yapi",
+    "sortOrder": 0,
+    "imageUrl": "https://cdn.example.com/categories/betonarme-v2.jpg"
+  },
+  {
+    "id": "sub-duvar",
+    "name": "Duvar Orme",
+    "parentId": "root-yapi",
+    "sortOrder": 1,
+    "imageUrl": "https://cdn.example.com/categories/duvar.jpg"
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "root-yapi",
+    "name": "Yapi",
+    "parentId": null,
+    "sortOrder": 0,
+    "imageUrl": null
+  },
+  {
+    "id": "legacy-id-betonarme-001",
+    "name": "Betonarme",
+    "parentId": "root-yapi",
+    "sortOrder": 0,
+    "imageUrl": "https://cdn.example.com/categories/betonarme-new-source.jpg"
+  },
+  {
+    "id": "sub-celik",
+    "name": "Celik Konstruksiyon",
+    "parentId": "root-yapi",
+    "sortOrder": 1,
+    "imageUrl": "https://cdn.example.com/categories/celik.jpg"
+  }
+]

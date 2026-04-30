@@ -1,0 +1,44 @@
+[
+  {
+    "id": "root-yapi",
+    "name": "Yapi",
+    "parentId": null,
+    "sortOrder": 0,
+    "imageUrl": null
+  },
+  {
+    "id": "sub-betonarme",
+    "name": "Betonarme",
+    "parentId": "root-yapi",
+    "sortOrder": 0,
+    "imageUrl": "https://cdn.example.com/categories/betonarme.jpg"
+  },
+  {
+    "id": "sub-celik",
+    "name": "Celik Konstruksiyon",
+    "parentId": "root-yapi",
+    "sortOrder": 1,
+    "imageUrl": "https://cdn.example.com/categories/celik.jpg"
+  },
+  {
+    "id": "sub-kalip",
+    "name": "Kalıp Isciligi",
+    "parentId": "root-yapi",
+    "sortOrder": 2,
+    "imageUrl": "https://cdn.example.com/categories/kalip.jpg"
+  },
+  {
+    "id": "root-tesisat",
+    "name": "Tesisat",
+    "parentId": null,
+    "sortOrder": 1,
+    "imageUrl": null
+  },
+  {
+    "id": "sub-elektrik",
+    "name": "Elektrik Tesisati",
+    "parentId": "root-tesisat",
+    "sortOrder": 0,
+    "imageUrl": "https://cdn.example.com/categories/elektrik.jpg"
+  }
+]

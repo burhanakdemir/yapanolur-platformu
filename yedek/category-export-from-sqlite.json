@@ -1,0 +1,16 @@
+[
+  {
+    "id": "root-image-fill",
+    "name": "Image Fill Root",
+    "parentId": null,
+    "sortOrder": 90,
+    "imageUrl": null
+  },
+  {
+    "id": "sub-image-fill-target",
+    "name": "Image Fill Sub",
+    "parentId": "root-image-fill",
+    "sortOrder": 0,
+    "imageUrl": "https://cdn.example.com/categories/image-fill-target.jpg"
+  }
+]
