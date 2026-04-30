@@ -8,6 +8,8 @@ import { nextMemberNumber } from "@/lib/memberNumber";
 import { Prisma } from "@/generated/prisma/client";
 import { hashPassword } from "@/lib/passwordHash";
 
+export const dynamic = "force-dynamic";
+
 const postSchema = z.object({
   email: z.string().email(),
   password: z.string().min(4).max(200),
@@ -88,6 +90,12 @@ export async function POST(req: Request) {
     const normalizedProvinces = Array.from(
       new Set((body.provinces ?? []).map((p) => p.trim()).filter(Boolean)),
     );
+    if (body.hasAllProvinces === false && normalizedProvinces.length === 0) {
+      return NextResponse.json(
+        { error: "Belirli iller modunda en az bir il seçmelisiniz." },
+        { status: 400 },
+      );
+    }
     const hasAllProvinces =
       body.hasAllProvinces ?? normalizedProvinces.length === 0;
     const user = await prisma.$transaction(async (tx) => {

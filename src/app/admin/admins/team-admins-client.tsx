@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
 import { MAX_ADMIN_TEAM_SIZE } from "@/lib/adminRoles";
@@ -53,17 +53,12 @@ export default function TeamAdminsClient({
   const [allProvinces, setAllProvinces] = useState<string[]>([]);
   const [provinceSelectionById, setProvinceSelectionById] = useState<Record<string, string[]>>({});
   const [hasAllById, setHasAllById] = useState<Record<string, boolean>>({});
-  const [provincePickFilter, setProvincePickFilter] = useState("");
-
-  const filteredProvinceChoices = useMemo(() => {
-    const q = provincePickFilter.trim().toLocaleLowerCase("tr-TR");
-    if (!q) return allProvinces;
-    return allProvinces.filter((p) => p.toLocaleLowerCase("tr-TR").includes(q));
-  }, [allProvinces, provincePickFilter]);
+  /** Her yardımcı satırı için ayrı il araması (tek filtre birden fazla satırı karıştırıyordu). */
+  const [provinceFilterById, setProvinceFilterById] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoadError(null);
-    const res = await fetch("/api/admin/team", { credentials: "include" });
+    const res = await fetch("/api/admin/team", { credentials: "include", cache: "no-store" });
     const json = (await res.json().catch(() => ({}))) as TeamPayload & { error?: unknown };
     if (!res.ok) {
       setLoadError(apiErrorMessage(json.error, "Liste yüklenemedi."));
@@ -92,7 +87,10 @@ export default function TeamAdminsClient({
   useEffect(() => {
     let done = false;
     (async () => {
-      const res = await fetch("/api/locations?level=provinces", { credentials: "include" });
+      const res = await fetch("/api/locations?level=provinces", {
+        credentials: "include",
+        cache: "no-store",
+      });
       const json = (await res.json().catch(() => [])) as { name?: string }[];
       if (done || !Array.isArray(json)) return;
       const list = json
@@ -185,10 +183,16 @@ export default function TeamAdminsClient({
 
   async function saveProvinceScope(id: string) {
     setMessage(null);
+    const hasAllProvinces = hasAllById[id] ?? true;
+    const provinces = Array.from(new Set((provinceSelectionById[id] ?? []).filter(Boolean)));
+    if (!hasAllProvinces && provinces.length === 0) {
+      setMessage(
+        "Belirli iller modundayken en az bir il seçin — ya da «Tüm iller yetkisi» kutusunu işaretleyin.",
+      );
+      return;
+    }
     setBusy(true);
     try {
-      const hasAllProvinces = hasAllById[id] ?? true;
-      const provinces = Array.from(new Set((provinceSelectionById[id] ?? []).filter(Boolean)));
       const res = await fetch(`/api/admin/team/${id}`, {
         method: "PATCH",
         credentials: "include",
@@ -272,6 +276,13 @@ export default function TeamAdminsClient({
             const superCount = data.team.filter((t) => t.role === "SUPER_ADMIN").length;
             const showDelete =
               !isSelf && (row.role === "ADMIN" || (isSuper && superCount > 1));
+            const rowProvFilter = provinceFilterById[row.id] ?? "";
+            const provinceQuery = rowProvFilter.trim().toLocaleLowerCase("tr-TR");
+            const provincesForPicker = provinceQuery
+              ? allProvinces.filter((p) =>
+                  p.toLocaleLowerCase("tr-TR").includes(provinceQuery),
+                )
+              : allProvinces;
 
             return (
               <li
@@ -373,6 +384,11 @@ export default function TeamAdminsClient({
                         : "mt-3 rounded-lg border border-orange-100 bg-orange-50/40 p-3"
                     }
                   >
+                    {allProvinces.length === 0 ? (
+                      <p className="mb-2 text-[11px] font-medium text-amber-900">
+                        İl listesi henüz yüklenmedi veya API erişilemedi; sayfayı yenileyin.
+                      </p>
+                    ) : null}
                     <div className="mb-2 flex items-center gap-2">
                       <input
                         id={`all-provinces-${row.id}`}
@@ -392,19 +408,24 @@ export default function TeamAdminsClient({
                           İller (işaretleyin; Ctrl gerekmez)
                           <input
                             type="search"
-                            value={provincePickFilter}
-                            onChange={(e) => setProvincePickFilter(e.target.value)}
+                            value={rowProvFilter}
+                            onChange={(e) =>
+                              setProvinceFilterById((prev) => ({
+                                ...prev,
+                                [row.id]: e.target.value,
+                              }))
+                            }
                             placeholder="İl ara…"
                             className="mt-1 w-full rounded-lg border border-orange-200 bg-white px-2 py-1.5 text-xs"
                             autoComplete="off"
                           />
                         </label>
                         <div className="max-h-44 overflow-y-auto rounded-lg border border-orange-200 bg-white p-2">
-                          {filteredProvinceChoices.length === 0 ? (
+                          {provincesForPicker.length === 0 ? (
                             <p className="text-[11px] text-slate-500">Eşleşen il yok.</p>
                           ) : (
                             <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
-                              {filteredProvinceChoices.map((p) => {
+                              {provincesForPicker.map((p) => {
                                 const checked = (provinceSelectionById[row.id] ?? []).includes(p);
                                 return (
                                   <li key={p}>
@@ -448,7 +469,10 @@ export default function TeamAdminsClient({
                     <div className="mt-2">
                       <button
                         type="button"
-                        disabled={busy}
+                        disabled={
+                          busy ||
+                          (allProvinces.length === 0 && !(hasAllById[row.id] ?? true))
+                        }
                         onClick={() => void saveProvinceScope(row.id)}
                         className="rounded-lg border border-orange-300 bg-white px-3 py-1.5 text-xs font-medium text-orange-900 shadow-sm hover:bg-orange-50 disabled:opacity-50"
                       >

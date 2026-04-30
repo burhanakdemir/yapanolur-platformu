@@ -6,6 +6,8 @@ import { verifySessionToken } from "@/lib/auth";
 import { isSuperAdminRole } from "@/lib/adminRoles";
 import { hashPassword } from "@/lib/passwordHash";
 
+export const dynamic = "force-dynamic";
+
 const patchSchema = z.object({
   password: z.string().min(4).max(200).optional(),
   /** İl tablosu güncellemesi için zorunlu (çağrıda mutlaka gönderilir); yalnız şifre güncellerken gönderilmez. */
@@ -54,9 +56,23 @@ export async function PATCH(req: Request, { params }: Params) {
     return NextResponse.json({ error: "Kullanıcı bulunamadı." }, { status: 404 });
   }
 
+  if (target.role === "SUPER_ADMIN" && updatingProvinceScope) {
+    return NextResponse.json(
+      { error: "Ana yönetici hesapları il ile kısıtlanamaz." },
+      { status: 400 },
+    );
+  }
+
   const normalizedProvinces = Array.from(
     new Set((body.provinces ?? []).map((p) => p.trim()).filter(Boolean)),
   );
+
+  if (updatingProvinceScope && body.hasAllProvinces === false && normalizedProvinces.length === 0) {
+    return NextResponse.json(
+      { error: "Belirli iller seçiliyken en az bir il işaretleyin veya «tüm iller» seçeneğini açın." },
+      { status: 400 },
+    );
+  }
 
   try {
     await prisma.$transaction(async (tx) => {
