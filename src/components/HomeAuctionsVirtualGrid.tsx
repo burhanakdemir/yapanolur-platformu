@@ -5,6 +5,7 @@ import Image from "next/image";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import AuctionCountdown from "@/components/AuctionCountdown";
 import { HOME_MAIN_CATEGORY_TILE_CARD } from "@/lib/homeMainCategoryTileClass";
+import { isAllowedUploadUrl } from "@/lib/uploadUrl";
 
 export type HomeAuctionItem = {
   id: string;
@@ -60,16 +61,7 @@ function categoryImageUnoptimized(src: string): boolean {
   const s = src.trim();
   if (!s) return true;
   if (s.startsWith("/")) return false;
-  try {
-    const u = new URL(s);
-    if (u.protocol !== "http:" && u.protocol !== "https:") return true;
-    const h = u.hostname;
-    if (h === "images.unsplash.com") return false;
-    if (h.endsWith(".public.blob.vercel-storage.com")) return false;
-    return true;
-  } catch {
-    return true;
-  }
+  return !isAllowedUploadUrl(s);
 }
 
 function CategoryImageThumb({ src }: { src: string }) {

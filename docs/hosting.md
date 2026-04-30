@@ -13,7 +13,7 @@ Yerelde `docker compose` ile çalışan PostgreSQL, barındırma ortamında **er
 
 ## 2) Zorunlu ortam değişkenleri (özet)
 
-Şablon: **`.env.production.example`**. Barındırıcı panelinde (ör. Vercel → Project → Settings → Environment Variables) aynı anahtarları tanımlayın.
+Şablon: **`.env.production.example`**. Barındırıcı panelinde (ör. Render → Environment) aynı anahtarları tanımlayın.
 
 - **`DATABASE_URL`** — Uygulama + (çoğu senaryoda) migration için PostgreSQL URL’i.
 - **`APP_URL`** — Kanonik site adresi, `https://alanadiniz.com` (ödeme geri dönüşleri ve metadata için).
@@ -38,14 +38,15 @@ DATABASE_URL="postgresql://...@ep-xxxx-pooler....neon.tech/neondb?sslmode=requir
 DIRECT_DATABASE_URL="postgresql://...@ep-xxxx....neon.tech/neondb?sslmode=require"
 ```
 
-## 4) Vercel
+## 4) Render
 
 1. Neon (veya başka Postgres) oluşturun; bağlantı dizelerini alın.
-2. Vercel’de **Production** (ve gerekiyorsa Preview) için ortam değişkenlerini girin.
+2. Render servisinde **Environment** alanına gerekli değişkenleri girin.
 3. `APP_URL` üretim domain’iniz olsun.
 4. Deploy sonrası: build log’unda `prisma migrate deploy` başarılı olmalı.
+5. Upload için `STORAGE_PROVIDER=s3` ve `S3_*` değişkenleri tanımlı olmalı.
 
-Ayrıntı: **`docs/vercel-neon.md`**.
+Ayrıntı: **`docs/render.md`**.
 
 ## 5) VPS / Docker ile kendi sunucunuz
 

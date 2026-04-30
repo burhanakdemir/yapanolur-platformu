@@ -28,7 +28,7 @@ pg_dump "postgresql://ilan:ilan@127.0.0.1:5432/ilan_dev" -Fc -f backups/ilan-dev
 
 ### Uygulama dışı varlıklar
 
-- **Vercel Blob** vb.: sağlayıcının sürümleme ve yaşam döngüsü kuralları.
+- **S3/Cloud storage** sağlayıcılarında: sürümleme ve yaşam döngüsü kurallarını açın.
 - **Gizli anahtarlar:** Veritabanı yedeği yetmez; `AUTH_SECRET` ve API anahtarları güvenli kasada tutulur.
 
 ---

@@ -58,6 +58,7 @@
     "knip:all": "knip"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.918.0",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "@sentry/nextjs": "^10.48.0",
@@ -65,7 +66,6 @@
     "@tanstack/react-virtual": "^3.13.23",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
-    "@vercel/blob": "^2.3.3",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.1",
     "jose": "^6.2.2",

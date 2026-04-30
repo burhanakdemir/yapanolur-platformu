@@ -10,7 +10,7 @@ Bu dokuman, projeyi server'a sorunsuz almak icin tek akis sunar.
 - `DATABASE_URL` (gerekirse `DIRECT_DATABASE_URL`)
 - `AUTH_SECRET`, `OTP_PEPPER`
 - Odeme anahtarlari (`IYZICO_*`, `PAYTR_*`)
-- Gerekirse `UPSTASH_REDIS_REST_*`, `BLOB_READ_WRITE_TOKEN`, SMTP/SMS
+- Gerekirse `UPSTASH_REDIS_REST_*`, `STORAGE_PROVIDER`, `S3_*`, SMTP/SMS
 
 ## 2) Lokal kalite kapisi (tek komut)
 

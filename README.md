@@ -31,7 +31,7 @@ Docker kuramıyorsanız ücretsiz Postgres için: **`docs/baglanti-sorun-giderme
 - `docs/local-db.md` — yerel Docker Postgres
 - `docs/hosting.md` — barındırma, `DATABASE_URL`, Neon doğrudan URL
 - `docs/veritabani-ortamlar.md` — PostgreSQL mimarisi
-- `docs/vercel-neon.md` — Vercel + Neon
+- `docs/render.md` — Render + PostgreSQL + storage
 - `docs/yedekleme.md` — yedekleme özeti
 - `docs/go-live-checklist.md` — yayın öncesi ortam, HSTS, SEO, sağlık URL’leri
 - `.env.production.example` — üretim ortam değişkenleri şablonu

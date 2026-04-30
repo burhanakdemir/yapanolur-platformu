@@ -56,7 +56,7 @@ export default function DbConnectionHelpCard() {
           <li>
             <strong>Üretim (Neon, RDS):</strong> doğru host ve çoğu zaman{" "}
             <code className="rounded bg-white/80 px-1">?sslmode=require</code> —{" "}
-            <code className="rounded bg-white/80 px-1">docs/vercel-neon.md</code>.
+            <code className="rounded bg-white/80 px-1">docs/render.md</code>.
           </li>
         </ul>
         <p className="mt-4 text-xs text-amber-800/90">

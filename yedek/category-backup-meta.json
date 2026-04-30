@@ -1,0 +1,12 @@
+{
+  "exportedAt": "2026-04-30T09:09:45.084Z",
+  "totalCategories": 54,
+  "rootCount": 4,
+  "subcategoryCount": 50,
+  "files": {
+    "fullImportCompatible": "yedek/category-backup-latest.json",
+    "datedCopy": "yedek/category-backup-2026-04-30T09-09-45.json",
+    "subcategoriesOnly": "yedek/subcategories-backup-latest.json"
+  },
+  "importNote": "Tam geri yükleme: import-categories-from-sqlite-export.ts içinde jsonPath → yedek/category-backup-latest.json. Script kökleri siler ve JSON'u yazar; ilan categoryId önce null olur."
+}

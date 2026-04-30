@@ -8,7 +8,7 @@
 - [ ] `DATABASE_URL` yönetilen Postgres; yerel `127.0.0.1` yok. Neon vb. için gerekirse **`DIRECT_DATABASE_URL`** (migrate).
 - [ ] `AUTH_SECRET`, `OTP_PEPPER` güçlü ve repoda yok.
 - [ ] Çok instance / serverless: **`UPSTASH_REDIS_REST_*`** (oran sınırlama tutarlılığı).
-- [ ] Kalıcı dosya: **`BLOB_READ_WRITE_TOKEN`** (Vercel Blob).
+- [ ] Kalıcı dosya: **`STORAGE_PROVIDER=s3` + `S3_*`** (Render için önerilen).
 - [ ] Canlı ödeme: **Iyzico / PayTR** anahtarları ve bildirim URL’leri `APP_URL` ile uyumlu.
 - [ ] **Sentry** (önerilir): `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN`.
 - [ ] SMTP / SMS sağlayıcıları üretim değerleri.

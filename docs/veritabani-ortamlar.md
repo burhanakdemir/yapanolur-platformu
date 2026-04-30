@@ -18,7 +18,7 @@
 ## Üretim
 
 - **Neon, Supabase, RDS, DigitalOcean Managed Postgres** vb.: pano üzerinden `DATABASE_URL` alın; genelde `?sslmode=require` eklenir.
-- **Vercel + Neon:** `docs/vercel-neon.md`.
+- **Render + Neon:** `docs/render.md`.
 - Ortam değişkenleri özeti: **`.env.production.example`**.
 
 ## Eski SQLite verisinden taşıma

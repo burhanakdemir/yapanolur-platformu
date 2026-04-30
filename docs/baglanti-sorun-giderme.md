@@ -54,4 +54,4 @@ Bilgisayarda PostgreSQL veya Docker kurmanız gerekmez.
 - Yerel Docker kullanıyorsanız URL’de **`?sslmode=require` olmaması** gerekir; Neon kullanıyorsanız genelde **olması** gerekir.
 - Port **5432** başka bir program tarafından kullanılıyor olabilir; `docker-compose.yml` içinde `5432:5432` yerine `5433:5432` yapıp `DATABASE_URL` içindeki portu **5433** yapın.
 
-Detay: [local-db.md](./local-db.md), [vercel-neon.md](./vercel-neon.md).
+Detay: [local-db.md](./local-db.md), [render.md](./render.md).

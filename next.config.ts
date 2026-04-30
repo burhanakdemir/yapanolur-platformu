@@ -27,6 +27,21 @@ const extraAllowedDevOrigins = (process.env.NEXT_DEV_ALLOWED_ORIGINS ?? "")
   .map((s) => s.trim())
   .filter(Boolean);
 
+function envHost(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return null;
+  }
+}
+
+const uploadHostFromBaseUrl = envHost(process.env.S3_PUBLIC_BASE_URL);
+const uploadHostFromEndpoint = envHost(process.env.S3_ENDPOINT);
+const extraImageHosts = [uploadHostFromBaseUrl, uploadHostFromEndpoint].filter(
+  (v): v is string => Boolean(v),
+);
+
 const nextConfig: NextConfig = {
   allowedDevOrigins: [...defaultAllowedDevOrigins, ...extraAllowedDevOrigins],
   serverExternalPackages: ["pg", "@prisma/adapter-pg"],
@@ -77,6 +92,11 @@ const nextConfig: NextConfig = {
         hostname: "*.public.blob.vercel-storage.com",
         pathname: "/**",
       },
+      ...extraImageHosts.map((hostname) => ({
+        protocol: "https" as const,
+        hostname,
+        pathname: "/**",
+      })),
     ],
   },
 };

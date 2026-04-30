@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { verifySessionToken } from "@/lib/auth";
 import { rateLimitGuard } from "@/lib/rateLimit";
+import { isAllowedUploadUrl } from "@/lib/uploadUrl";
 
 const createAdSchema = z.object({
   categoryId: z.string().min(4),
@@ -22,20 +23,6 @@ const createAdSchema = z.object({
   auctionDurationDays: z.number().int().min(1).max(30).default(7),
   photos: z.array(z.string().min(1)).min(1).max(5),
 });
-
-function isAllowedPhotoUrl(value: string): boolean {
-  const raw = value.trim();
-  if (!raw) return false;
-  if (raw.startsWith("/uploads/")) return true;
-  try {
-    const u = new URL(raw);
-    if (u.protocol !== "https:") return false;
-    if (u.hostname === "images.unsplash.com") return true;
-    return u.hostname.endsWith(".public.blob.vercel-storage.com");
-  } catch {
-    return false;
-  }
-}
 
 export async function POST(req: Request) {
   try {
@@ -73,7 +60,7 @@ export async function POST(req: Request) {
     if (!profession) {
       return NextResponse.json({ error: "Meslek bulunamadi." }, { status: 404 });
     }
-    if (!data.photos.every(isAllowedPhotoUrl)) {
+    if (!data.photos.every(isAllowedUploadUrl)) {
       return NextResponse.json({ error: "Gecersiz gorsel adresi." }, { status: 400 });
     }
 

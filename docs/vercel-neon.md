@@ -1,4 +1,7 @@
-# Üretim: Vercel, PostgreSQL (Neon), ortam değişkenleri
+# Legacy Notu: Vercel + Neon
+
+Bu belge geriye donuk referans icin tutuluyor. Aktif deploy hedefi Render'dir.
+Guncel rehber: `docs/render.md`.
 
 ## Yerel geliştirme
 
