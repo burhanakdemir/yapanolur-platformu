@@ -12,6 +12,8 @@ const postSchema = z.object({
   email: z.string().email(),
   password: z.string().min(4).max(200),
   name: z.string().trim().max(120).optional(),
+  hasAllProvinces: z.boolean().optional(),
+  provinces: z.array(z.string().trim().min(1).max(120)).max(81).optional(),
 });
 
 async function requireSuperAdminSession() {
@@ -35,6 +37,8 @@ export async function GET() {
       email: true,
       name: true,
       role: true,
+      hasAllProvinces: true,
+      adminProvinceAccesses: { select: { province: true }, orderBy: { province: "asc" } },
       memberNumber: true,
       createdAt: true,
     },
@@ -42,13 +46,17 @@ export async function GET() {
   });
 
   return NextResponse.json({
-    team,
+    team: team.map((row) => ({
+      ...row,
+      provinces: row.adminProvinceAccesses.map((p) => p.province),
+      adminProvinceAccesses: undefined,
+    })),
     maxSize: MAX_ADMIN_TEAM_SIZE,
     selfId: session!.userId,
   });
 }
 
-/** Yeni yardımcı yönetici (ADMIN) — en fazla 3 kişilik ekip */
+/** Yeni yardımcı yönetici (ADMIN) — ekip limiti adminRoles.ts ile yönetilir */
 export async function POST(req: Request) {
   const { response } = await requireSuperAdminSession();
   if (response) return response;
@@ -77,6 +85,11 @@ export async function POST(req: Request) {
 
   try {
     const hashed = await hashPassword(body.password);
+    const normalizedProvinces = Array.from(
+      new Set((body.provinces ?? []).map((p) => p.trim()).filter(Boolean)),
+    );
+    const hasAllProvinces =
+      body.hasAllProvinces ?? normalizedProvinces.length === 0;
     const user = await prisma.$transaction(async (tx) => {
       const memberNumber = await nextMemberNumber(tx);
       return tx.user.create({
@@ -85,6 +98,14 @@ export async function POST(req: Request) {
           password: hashed,
           name: body.name?.trim() || null,
           role: "ADMIN",
+          hasAllProvinces,
+          adminProvinceAccesses: hasAllProvinces
+            ? undefined
+            : {
+                createMany: {
+                  data: normalizedProvinces.map((province) => ({ province })),
+                },
+              },
           memberNumber,
           isMemberApproved: true,
         },
@@ -93,13 +114,22 @@ export async function POST(req: Request) {
           email: true,
           name: true,
           role: true,
+          hasAllProvinces: true,
+          adminProvinceAccesses: { select: { province: true }, orderBy: { province: "asc" } },
           memberNumber: true,
           createdAt: true,
         },
       });
     });
 
-    return NextResponse.json({ ok: true, user });
+    return NextResponse.json({
+      ok: true,
+      user: {
+        ...user,
+        provinces: user.adminProvinceAccesses.map((p) => p.province),
+        adminProvinceAccesses: undefined,
+      },
+    });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       return NextResponse.json({ error: "Bu e-posta zaten kayıtlı." }, { status: 409 });

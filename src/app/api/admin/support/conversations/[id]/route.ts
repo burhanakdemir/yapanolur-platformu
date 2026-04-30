@@ -4,6 +4,7 @@ import { verifySessionToken } from "@/lib/auth";
 import { isStaffAdminRole } from "@/lib/adminRoles";
 import { prisma } from "@/lib/prisma";
 import { serializeThread } from "@/lib/supportThreadServer";
+import { canAdminAccessProvince } from "@/lib/adminProvinceScope";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -20,6 +21,10 @@ export async function GET(_req: Request, ctx: Ctx) {
   });
   if (!conv) {
     return NextResponse.json({ error: "Bulunamadı" }, { status: 404 });
+  }
+  const canAccess = await canAdminAccessProvince(session, conv.province);
+  if (!canAccess) {
+    return NextResponse.json({ error: "Bu ilin sohbetine erişim yetkiniz yok." }, { status: 403 });
   }
   const messagesDesc = await prisma.supportMessage.findMany({
     where: { conversationId: id },
@@ -49,6 +54,17 @@ export async function PATCH(req: Request, ctx: Ctx) {
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
   }
   const { id } = await ctx.params;
+  const conv = await prisma.supportConversation.findUnique({
+    where: { id },
+    select: { id: true, province: true },
+  });
+  if (!conv) {
+    return NextResponse.json({ error: "Bulunamadı" }, { status: 404 });
+  }
+  const canAccess = await canAdminAccessProvince(session, conv.province);
+  if (!canAccess) {
+    return NextResponse.json({ error: "Bu ilin sohbetine erişim yetkiniz yok." }, { status: 403 });
+  }
   let body: { status?: string };
   try {
     body = await req.json();

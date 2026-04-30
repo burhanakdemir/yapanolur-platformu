@@ -18,7 +18,7 @@ export default function AdminSuperTeamPanel() {
             Alt yönetici hesapları
           </h2>
           <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-amber-950/90 md:text-sm">
-            Yardımcı yönetici ekleyin (en fazla 3), şifre belirleyin veya kaldırın. Bu hesaplar üye girişiyle panele
+            Yardımcı yönetici ekleyin (en fazla 100), şifre belirleyin veya kaldırın. Bu hesaplar üye girişiyle panele
             erişir; süper yöneticiye özel bölümler hariç tüm yönetim modüllerini kullanabilirler.
           </p>
         </div>

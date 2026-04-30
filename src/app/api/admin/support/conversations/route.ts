@@ -4,6 +4,7 @@ import { verifySessionToken } from "@/lib/auth";
 import { isStaffAdminRole } from "@/lib/adminRoles";
 import { prisma } from "@/lib/prisma";
 import { isAnySupportStaffOnline } from "@/lib/supportNotify";
+import { supportConversationProvinceWhere } from "@/lib/adminProvinceScope";
 
 export async function GET(req: Request) {
   const c = await cookies();
@@ -15,7 +16,9 @@ export async function GET(req: Request) {
   const takeRaw = Number.parseInt(searchParams.get("take") ?? "80", 10);
   const take = Math.min(150, Math.max(1, Number.isFinite(takeRaw) ? takeRaw : 80));
   const online = await isAnySupportStaffOnline();
+  const provinceWhere = await supportConversationProvinceWhere(session);
   const rows = await prisma.supportConversation.findMany({
+    where: provinceWhere,
     orderBy: { updatedAt: "desc" },
     take,
     include: {
@@ -40,6 +43,7 @@ export async function GET(req: Request) {
         id: conv.id,
         status: conv.status,
         guestEmail: conv.guestEmail,
+        province: conv.province,
         user: conv.user
           ? {
               email: conv.user.email,

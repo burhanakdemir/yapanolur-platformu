@@ -13,7 +13,7 @@ datasource db {
 }
 
 enum UserRole {
-  /** Ana yönetici: yönetici ekleme / çıkarma / şifre (en fazla 3 kişilik ekip) */
+  /** Ana yönetici: yönetici ekleme / çıkarma / şifre (ekip limiti uygulama seviyesinde) */
   SUPER_ADMIN
   ADMIN
   MEMBER
@@ -105,6 +105,8 @@ model User {
   profilePhotoUrl String?
   password  String
   role      UserRole @default(MEMBER)
+  /** ADMIN/SUPER_ADMIN icin il yetki kapsami: true ise tum iller. */
+  hasAllProvinces Boolean @default(true)
   isMemberApproved Boolean @default(false)
   /** Meslek + il eşleşen yeni ilanlarda e-posta bildirimi (kayıtta açık rıza). */
   newAdEmailOptIn  Boolean  @default(false)
@@ -134,6 +136,7 @@ model User {
   supportMessagesAsVisitor     SupportMessage[]        @relation("SupportMsgVisitor")
   supportMessagesAsAdmin      SupportMessage[]         @relation("SupportMsgAdmin")
   adminSupportPresence        AdminSupportPresence?
+  adminProvinceAccesses       AdminProvinceAccess[]
   creditInvoiceRequests       CreditInvoiceRequest[] @relation("CreditInvoiceBuyer")
   creditInvoiceApprovals      CreditInvoiceRequest[] @relation("CreditInvoiceApprover")
 }
@@ -485,6 +488,8 @@ model SupportConversation {
   user       User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   /** Anonim iletişim (isteğe bağlı) */
   guestEmail  String?
+  /** Sohbetin il kapsami (uye ise profilden, anonimde null olabilir). */
+  province    String?
   status      SupportConversationStatus @default(NEEDS_RESPONSE)
   lastReadByAdminAt   DateTime @default(now())
   lastReadByVisitorAt DateTime @default(now())
@@ -498,6 +503,20 @@ model SupportConversation {
 
   @@index([userId])
   @@index([status, updatedAt])
+  @@index([province, status, updatedAt])
+}
+
+/** Admin kullanicinin il bazli yetki kapsam kayitlari */
+model AdminProvinceAccess {
+  id          String   @id @default(cuid())
+  adminUserId String
+  adminUser   User     @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  province    String
+  createdAt   DateTime @default(now())
+
+  @@unique([adminUserId, province])
+  @@index([province])
+  @@index([adminUserId])
 }
 
 model SupportMessage {

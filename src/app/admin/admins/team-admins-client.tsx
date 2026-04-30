@@ -9,6 +9,8 @@ type TeamRow = {
   email: string;
   name: string | null;
   role: "SUPER_ADMIN" | "ADMIN";
+  hasAllProvinces: boolean;
+  provinces: string[];
   memberNumber: number;
   createdAt: string;
 };
@@ -40,6 +42,9 @@ export default function TeamAdminsClient({
   const [newName, setNewName] = useState("");
 
   const [pwdById, setPwdById] = useState<Record<string, string>>({});
+  const [allProvinces, setAllProvinces] = useState<string[]>([]);
+  const [provinceSelectionById, setProvinceSelectionById] = useState<Record<string, string[]>>({});
+  const [hasAllById, setHasAllById] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     setLoadError(null);
@@ -56,6 +61,34 @@ export default function TeamAdminsClient({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!data) return;
+    const nextSel: Record<string, string[]> = {};
+    const nextAll: Record<string, boolean> = {};
+    for (const row of data.team) {
+      nextSel[row.id] = row.provinces ?? [];
+      nextAll[row.id] = row.hasAllProvinces;
+    }
+    setProvinceSelectionById(nextSel);
+    setHasAllById(nextAll);
+  }, [data]);
+
+  useEffect(() => {
+    let done = false;
+    (async () => {
+      const res = await fetch("/api/locations?level=provinces", { credentials: "include" });
+      const json = (await res.json().catch(() => [])) as { name?: string }[];
+      if (done || !Array.isArray(json)) return;
+      const list = json
+        .map((p) => (typeof p.name === "string" ? p.name.trim() : ""))
+        .filter(Boolean);
+      setAllProvinces(list);
+    })();
+    return () => {
+      done = true;
+    };
+  }, []);
 
   async function onAdd(e: FormEvent) {
     e.preventDefault();
@@ -129,6 +162,30 @@ export default function TeamAdminsClient({
         return;
       }
       setMessage("Hesap silindi.");
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveProvinceScope(id: string) {
+    setMessage(null);
+    setBusy(true);
+    try {
+      const hasAllProvinces = hasAllById[id] ?? true;
+      const provinces = Array.from(new Set((provinceSelectionById[id] ?? []).filter(Boolean)));
+      const res = await fetch(`/api/admin/team/${id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hasAllProvinces, provinces }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: unknown };
+      if (!res.ok) {
+        setMessage(apiErrorMessage(json.error, "İl yetkileri kaydedilemedi."));
+        return;
+      }
+      setMessage("İl yetkileri güncellendi.");
       await load();
     } finally {
       setBusy(false);
@@ -226,6 +283,14 @@ export default function TeamAdminsClient({
                         <span>Yardımcı yönetici</span>
                       )}
                     </p>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      İl yetkisi:{" "}
+                      {row.hasAllProvinces
+                        ? "Tüm iller"
+                        : row.provinces.length > 0
+                          ? `${row.provinces.length} il`
+                          : "Atama yok"}
+                    </p>
                   </div>
                 </div>
                 <div className={compact ? "mt-2 flex flex-col gap-2" : "mt-3 flex flex-wrap items-end gap-2"}>
@@ -287,6 +352,59 @@ export default function TeamAdminsClient({
                     ) : null}
                   </div>
                 </div>
+                {row.role === "ADMIN" ? (
+                  <div
+                    className={
+                      compact
+                        ? "mt-2 rounded-lg border border-orange-100 bg-orange-50/40 p-2"
+                        : "mt-3 rounded-lg border border-orange-100 bg-orange-50/40 p-3"
+                    }
+                  >
+                    <div className="mb-2 flex items-center gap-2">
+                      <input
+                        id={`all-provinces-${row.id}`}
+                        type="checkbox"
+                        checked={hasAllById[row.id] ?? true}
+                        onChange={(e) =>
+                          setHasAllById((prev) => ({ ...prev, [row.id]: e.target.checked }))
+                        }
+                      />
+                      <label htmlFor={`all-provinces-${row.id}`} className="text-xs font-medium text-slate-700">
+                        Tüm iller yetkisi
+                      </label>
+                    </div>
+                    {!(hasAllById[row.id] ?? true) ? (
+                      <label className="block text-xs text-slate-700">
+                        İller (çoklu seçim)
+                        <select
+                          multiple
+                          value={provinceSelectionById[row.id] ?? []}
+                          onChange={(e) => {
+                            const next = Array.from(e.currentTarget.selectedOptions).map((o) => o.value);
+                            setProvinceSelectionById((prev) => ({ ...prev, [row.id]: next }));
+                          }}
+                          className="mt-1 h-28 w-full rounded-lg border border-orange-200 bg-white px-2 py-1.5 text-xs"
+                        >
+                          {allProvinces.map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void saveProvinceScope(row.id)}
+                        className="rounded-lg border border-orange-300 bg-white px-3 py-1.5 text-xs font-medium text-orange-900 shadow-sm hover:bg-orange-50 disabled:opacity-50"
+                      >
+                        İl yetkilerini kaydet
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </li>
             );
           })}

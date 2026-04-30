@@ -23,6 +23,7 @@ type ConvRow = {
   id: string;
   status: string;
   guestEmail: string | null;
+  province?: string | null;
   user: { email: string; name: string | null; memberNumber: number } | null;
   updatedAt: string;
   unreadForAdmin: number;
@@ -252,7 +253,7 @@ export default function AdminSupportClient() {
                         {c.lastMessagePreview?.body ?? "—"}
                       </span>
                       <span className="text-[10px] text-slate-400">
-                        {c.user?.email ?? c.guestEmail ?? "Anonim"} · {c.status}
+                        {c.user?.email ?? c.guestEmail ?? "Anonim"} · {c.province ?? "İl yok"} · {c.status}
                       </span>
                     </button>
                   </li>

@@ -114,6 +114,15 @@ export async function handleSupportThreadPost(
 
   const keyFromCookie = req.cookies.get(SUPPORT_VISITOR_COOKIE)?.value?.trim() || null;
   const forceNew = Boolean(body.forceNew);
+  const memberProvince =
+    session?.role === "MEMBER"
+      ? (
+          await prisma.memberProfile.findUnique({
+            where: { userId: session.userId },
+            select: { province: true },
+          })
+        )?.province?.trim() || null
+      : null;
 
   const existing = !forceNew
     ? await findActiveConversation(session, keyFromCookie)
@@ -150,6 +159,9 @@ export async function handleSupportThreadPost(
       data: {
         status: "NEEDS_RESPONSE",
         lastVisitorMessageAt: new Date(),
+        ...(session?.role === "MEMBER" && !existing.province && memberProvince
+          ? { province: memberProvince }
+          : {}),
         guestEmail: anonVisitor
           ? effectiveGuest
           : guestEmailNorm ?? storedEmail ?? undefined,
@@ -180,6 +192,7 @@ export async function handleSupportThreadPost(
         data: {
           visitorKey: null,
           userId: session.userId,
+          province: memberProvince,
           guestEmail: null,
           status: "NEEDS_RESPONSE",
         },

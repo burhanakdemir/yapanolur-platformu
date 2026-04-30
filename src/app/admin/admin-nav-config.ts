@@ -197,6 +197,6 @@ export function filterNavGroupsByMode(
 export const ADMIN_TEAM_SECTION: AdminNavSection = {
   id: "team",
   title: "Yönetici ekibi",
-  description: "Yardımcı yönetici ekleme, çıkarma ve şifre (en fazla 3 kişi).",
+  description: "Yardımcı yönetici ekleme, çıkarma, şifre ve il yetkileri (en fazla 100 kişi).",
   href: "/admin/admins",
 };

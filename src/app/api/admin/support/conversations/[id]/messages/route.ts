@@ -4,6 +4,7 @@ import { verifySessionToken } from "@/lib/auth";
 import { isStaffAdminRole } from "@/lib/adminRoles";
 import { prisma } from "@/lib/prisma";
 import { serializeThread } from "@/lib/supportThreadServer";
+import { canAdminAccessProvince } from "@/lib/adminProvinceScope";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -17,6 +18,10 @@ export async function POST(req: Request, ctx: Ctx) {
   const conv = await prisma.supportConversation.findUnique({ where: { id: conversationId } });
   if (!conv) {
     return NextResponse.json({ error: "Bulunamadı" }, { status: 404 });
+  }
+  const canAccess = await canAdminAccessProvince(session, conv.province);
+  if (!canAccess) {
+    return NextResponse.json({ error: "Bu ilin sohbetine erişim yetkiniz yok." }, { status: 403 });
   }
   if (conv.status === "KAPALI") {
     return NextResponse.json({ error: "Sohbet kapatılmış" }, { status: 400 });

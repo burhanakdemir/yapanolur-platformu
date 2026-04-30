@@ -2,7 +2,7 @@
 export type AppUserRole = "MEMBER" | "ADMIN" | "SUPER_ADMIN";
 
 /** Yönetici paneli erişimi (ana + yardımcı yöneticiler) */
-export const MAX_ADMIN_TEAM_SIZE = 3;
+export const MAX_ADMIN_TEAM_SIZE = 100;
 
 export function isStaffAdminRole(role: string | undefined | null): boolean {
   return role === "ADMIN" || role === "SUPER_ADMIN";

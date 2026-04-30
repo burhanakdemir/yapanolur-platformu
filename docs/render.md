@@ -28,6 +28,14 @@ Opsiyonel:
 - `S3_KEY_PREFIX=uploads`
 - `ALLOWED_UPLOAD_HOSTS=cdn.example.com,files.example.com`
 
+## 2.1) Admin il bazli yetki (opsiyonel feature flag)
+
+- `ADMIN_PROVINCE_SCOPING_ENABLED=1` => il bazli admin kapsam aktif
+- `ADMIN_PROVINCE_UNASSIGNED_MODE=all|none` (varsayilan: `all`)
+- `ADMIN_PROVINCE_INCLUDE_NULL_CONVERSATIONS=0|1`
+
+Not: flag kapaliysa mevcut davranis korunur (tum adminler tum il kayitlarini gorur).
+
 ## 3) Deploy oncesi
 
 1. `npm run lint`

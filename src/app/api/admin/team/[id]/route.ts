@@ -6,9 +6,19 @@ import { verifySessionToken } from "@/lib/auth";
 import { isSuperAdminRole } from "@/lib/adminRoles";
 import { hashPassword } from "@/lib/passwordHash";
 
-const patchSchema = z.object({
-  password: z.string().min(4).max(200),
-});
+const patchSchema = z
+  .object({
+    password: z.string().min(4).max(200).optional(),
+    hasAllProvinces: z.boolean().optional(),
+    provinces: z.array(z.string().trim().min(1).max(120)).max(81).optional(),
+  })
+  .refine(
+    (v) =>
+      typeof v.password === "string" ||
+      typeof v.hasAllProvinces === "boolean" ||
+      Array.isArray(v.provinces),
+    { message: "En az bir alan gonderin." },
+  );
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -45,9 +55,38 @@ export async function PATCH(req: Request, { params }: Params) {
     return NextResponse.json({ error: "Kullanıcı bulunamadı." }, { status: 404 });
   }
 
-  await prisma.user.update({
-    where: { id: target.id },
-    data: { password: await hashPassword(body.password) },
+  const normalizedProvinces = Array.from(
+    new Set((body.provinces ?? []).map((p) => p.trim()).filter(Boolean)),
+  );
+  await prisma.$transaction(async (tx) => {
+    const data: {
+      password?: string;
+      hasAllProvinces?: boolean;
+    } = {};
+    if (typeof body.password === "string") {
+      data.password = await hashPassword(body.password);
+    }
+    if (typeof body.hasAllProvinces === "boolean") {
+      data.hasAllProvinces = body.hasAllProvinces;
+    }
+    if (Object.keys(data).length > 0) {
+      await tx.user.update({ where: { id: target.id }, data });
+    }
+    if (Array.isArray(body.provinces) || body.hasAllProvinces === false) {
+      await tx.adminProvinceAccess.deleteMany({ where: { adminUserId: target.id } });
+      const effectiveHasAll =
+        typeof body.hasAllProvinces === "boolean"
+          ? body.hasAllProvinces
+          : normalizedProvinces.length === 0;
+      if (!effectiveHasAll && normalizedProvinces.length > 0) {
+        await tx.adminProvinceAccess.createMany({
+          data: normalizedProvinces.map((province) => ({
+            adminUserId: target.id,
+            province,
+          })),
+        });
+      }
+    }
   });
 
   return NextResponse.json({ ok: true });
