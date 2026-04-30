@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
 import { MAX_ADMIN_TEAM_SIZE } from "@/lib/adminRoles";
@@ -29,6 +29,13 @@ type TeamAdminsClientProps = {
   compact?: boolean;
 };
 
+function provinceScopeSummary(row: TeamRow): string {
+  if (row.hasAllProvinces) return "Tüm iller";
+  if (row.provinces.length === 0) return "Atama yok";
+  const sorted = [...row.provinces].sort((a, b) => a.localeCompare(b, "tr"));
+  return `${sorted.length} il — ${sorted.join(", ")}`;
+}
+
 export default function TeamAdminsClient({
   embedded = false,
   compact = false,
@@ -46,6 +53,13 @@ export default function TeamAdminsClient({
   const [allProvinces, setAllProvinces] = useState<string[]>([]);
   const [provinceSelectionById, setProvinceSelectionById] = useState<Record<string, string[]>>({});
   const [hasAllById, setHasAllById] = useState<Record<string, boolean>>({});
+  const [provincePickFilter, setProvincePickFilter] = useState("");
+
+  const filteredProvinceChoices = useMemo(() => {
+    const q = provincePickFilter.trim().toLocaleLowerCase("tr-TR");
+    if (!q) return allProvinces;
+    return allProvinces.filter((p) => p.toLocaleLowerCase("tr-TR").includes(q));
+  }, [allProvinces, provincePickFilter]);
 
   const load = useCallback(async () => {
     setLoadError(null);
@@ -286,13 +300,9 @@ export default function TeamAdminsClient({
                         <span>Yardımcı yönetici</span>
                       )}
                     </p>
-                    <p className="mt-1 text-[11px] text-slate-500">
+                    <p className="mt-1 text-[11px] leading-snug text-slate-500">
                       İl yetkisi:{" "}
-                      {row.hasAllProvinces
-                        ? "Tüm iller"
-                        : row.provinces.length > 0
-                          ? `${row.provinces.length} il`
-                          : "Atama yok"}
+                      <span className="font-medium text-slate-700">{provinceScopeSummary(row)}</span>
                     </p>
                   </div>
                 </div>
@@ -377,24 +387,63 @@ export default function TeamAdminsClient({
                       </label>
                     </div>
                     {!(hasAllById[row.id] ?? true) ? (
-                      <label className="block text-xs text-slate-700">
-                        İller (çoklu seçim)
-                        <select
-                          multiple
-                          value={provinceSelectionById[row.id] ?? []}
-                          onChange={(e) => {
-                            const next = Array.from(e.currentTarget.selectedOptions).map((o) => o.value);
-                            setProvinceSelectionById((prev) => ({ ...prev, [row.id]: next }));
-                          }}
-                          className="mt-1 h-28 w-full rounded-lg border border-orange-200 bg-white px-2 py-1.5 text-xs"
-                        >
-                          {allProvinces.map((p) => (
-                            <option key={p} value={p}>
-                              {p}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      <div className="space-y-2">
+                        <label className="block text-xs font-medium text-slate-700">
+                          İller (işaretleyin; Ctrl gerekmez)
+                          <input
+                            type="search"
+                            value={provincePickFilter}
+                            onChange={(e) => setProvincePickFilter(e.target.value)}
+                            placeholder="İl ara…"
+                            className="mt-1 w-full rounded-lg border border-orange-200 bg-white px-2 py-1.5 text-xs"
+                            autoComplete="off"
+                          />
+                        </label>
+                        <div className="max-h-44 overflow-y-auto rounded-lg border border-orange-200 bg-white p-2">
+                          {filteredProvinceChoices.length === 0 ? (
+                            <p className="text-[11px] text-slate-500">Eşleşen il yok.</p>
+                          ) : (
+                            <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                              {filteredProvinceChoices.map((p) => {
+                                const checked = (provinceSelectionById[row.id] ?? []).includes(p);
+                                return (
+                                  <li key={p}>
+                                    <label className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-[11px] text-slate-800 hover:bg-orange-50">
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={(e) => {
+                                          const on = e.target.checked;
+                                          setProvinceSelectionById((prev) => {
+                                            const cur = new Set(prev[row.id] ?? []);
+                                            if (on) cur.add(p);
+                                            else cur.delete(p);
+                                            return {
+                                              ...prev,
+                                              [row.id]: Array.from(cur).sort((a, b) =>
+                                                a.localeCompare(b, "tr"),
+                                              ),
+                                            };
+                                          });
+                                        }}
+                                      />
+                                      <span className="min-w-0 break-words">{p}</span>
+                                    </label>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-600">
+                          Seçili: {(provinceSelectionById[row.id] ?? []).length} il
+                          {(provinceSelectionById[row.id] ?? []).length > 0 ? (
+                            <span className="mt-0.5 block text-[10px] leading-snug text-slate-500">
+                              {(provinceSelectionById[row.id] ?? []).sort((a, b) => a.localeCompare(b, "tr")).join(", ")}
+                            </span>
+                          ) : null}
+                        </p>
+                      </div>
                     ) : null}
                     <div className="mt-2">
                       <button

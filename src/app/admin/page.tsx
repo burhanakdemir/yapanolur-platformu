@@ -17,6 +17,7 @@ import { isLikelyDatabaseConnectionError } from "@/lib/dbErrors";
 import { prisma } from "@/lib/prisma";
 import { countPendingCreditInvoiceRequests } from "@/lib/prismaCreditInvoice";
 import AdminDashboardNav from "./admin-dashboard-nav";
+import AdminStaffScopeBanner from "./admin-staff-scope-banner";
 
 async function hasAdminAccess(): Promise<boolean> {
   const c = await cookies();
@@ -214,6 +215,10 @@ export default async function AdminPage() {
           barındırma / <code className="font-mono">DATABASE_URL</code>:{" "}
           <code className="rounded bg-white px-1">docs/hosting.md</code>
         </div>
+      ) : null}
+
+      {isStaff && session ? (
+        <AdminStaffScopeBanner session={session} />
       ) : null}
 
       <header className={`${heroClass} rounded-xl px-4 py-4 text-white md:px-6 md:py-5`}>

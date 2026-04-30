@@ -6,19 +6,12 @@ import { verifySessionToken } from "@/lib/auth";
 import { isSuperAdminRole } from "@/lib/adminRoles";
 import { hashPassword } from "@/lib/passwordHash";
 
-const patchSchema = z
-  .object({
-    password: z.string().min(4).max(200).optional(),
-    hasAllProvinces: z.boolean().optional(),
-    provinces: z.array(z.string().trim().min(1).max(120)).max(81).optional(),
-  })
-  .refine(
-    (v) =>
-      typeof v.password === "string" ||
-      typeof v.hasAllProvinces === "boolean" ||
-      Array.isArray(v.provinces),
-    { message: "En az bir alan gonderin." },
-  );
+const patchSchema = z.object({
+  password: z.string().min(4).max(200).optional(),
+  /** İl tablosu güncellemesi için zorunlu (çağrıda mutlaka gönderilir); yalnız şifre güncellerken gönderilmez. */
+  hasAllProvinces: z.boolean().optional(),
+  provinces: z.array(z.string().trim().min(1).max(120)).max(81).optional(),
+});
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -47,6 +40,12 @@ export async function PATCH(req: Request, { params }: Params) {
     return NextResponse.json({ error: "Geçersiz veri." }, { status: 400 });
   }
 
+  const updatingPassword = typeof body.password === "string";
+  const updatingProvinceScope = typeof body.hasAllProvinces === "boolean";
+  if (!updatingPassword && !updatingProvinceScope) {
+    return NextResponse.json({ error: "En az bir alan gönderin." }, { status: 400 });
+  }
+
   const target = await prisma.user.findFirst({
     where: { id, role: { in: ["SUPER_ADMIN", "ADMIN"] } },
     select: { id: true, role: true },
@@ -58,38 +57,51 @@ export async function PATCH(req: Request, { params }: Params) {
   const normalizedProvinces = Array.from(
     new Set((body.provinces ?? []).map((p) => p.trim()).filter(Boolean)),
   );
-  await prisma.$transaction(async (tx) => {
-    const data: {
-      password?: string;
-      hasAllProvinces?: boolean;
-    } = {};
-    if (typeof body.password === "string") {
-      data.password = await hashPassword(body.password);
-    }
-    if (typeof body.hasAllProvinces === "boolean") {
-      data.hasAllProvinces = body.hasAllProvinces;
-    }
-    if (Object.keys(data).length > 0) {
-      await tx.user.update({ where: { id: target.id }, data });
-    }
-    if (Array.isArray(body.provinces) || body.hasAllProvinces === false) {
-      await tx.adminProvinceAccess.deleteMany({ where: { adminUserId: target.id } });
-      const effectiveHasAll =
-        typeof body.hasAllProvinces === "boolean"
-          ? body.hasAllProvinces
-          : normalizedProvinces.length === 0;
-      if (!effectiveHasAll && normalizedProvinces.length > 0) {
-        await tx.adminProvinceAccess.createMany({
-          data: normalizedProvinces.map((province) => ({
-            adminUserId: target.id,
-            province,
-          })),
-        });
-      }
-    }
-  });
 
-  return NextResponse.json({ ok: true });
+  try {
+    await prisma.$transaction(async (tx) => {
+      const userData: { password?: string; hasAllProvinces?: boolean } = {};
+      if (updatingPassword) {
+        userData.password = await hashPassword(body.password!);
+      }
+      if (updatingProvinceScope) {
+        userData.hasAllProvinces = body.hasAllProvinces!;
+      }
+      if (Object.keys(userData).length > 0) {
+        await tx.user.update({ where: { id: target.id }, data: userData });
+      }
+
+      if (updatingProvinceScope) {
+        await tx.adminProvinceAccess.deleteMany({ where: { adminUserId: target.id } });
+        if (!body.hasAllProvinces && normalizedProvinces.length > 0) {
+          await tx.adminProvinceAccess.createMany({
+            data: normalizedProvinces.map((province) => ({
+              adminUserId: target.id,
+              province,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      }
+    });
+
+    const refreshed = await prisma.user.findUnique({
+      where: { id: target.id },
+      select: {
+        hasAllProvinces: true,
+        adminProvinceAccesses: { select: { province: true }, orderBy: { province: "asc" } },
+      },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      hasAllProvinces: refreshed?.hasAllProvinces ?? false,
+      provinces: refreshed?.adminProvinceAccesses.map((p) => p.province) ?? [],
+    });
+  } catch (e) {
+    console.error("[PATCH /api/admin/team/[id]]", e);
+    return NextResponse.json({ error: "Güncellenemedi." }, { status: 500 });
+  }
 }
 
 export async function DELETE(_req: Request, { params }: Params) {
