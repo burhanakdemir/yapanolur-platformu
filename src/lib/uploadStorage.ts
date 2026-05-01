@@ -104,7 +104,7 @@ async function saveToS3(safeName: string, buffer: Buffer): Promise<{ url: string
   return { url: buildS3PublicUrl(bucket, key) };
 }
 
-function mimeTypeByExtension(extRaw: string): string {
+export function uploadMimeTypeForExtension(extRaw: string): string {
   const ext = extRaw.toLowerCase();
   if (ext === ".png") return "image/png";
   if (ext === ".webp") return "image/webp";
@@ -115,9 +115,43 @@ function mimeTypeByExtension(extRaw: string): string {
   return "image/jpeg";
 }
 
+function mimeTypeByExtension(extRaw: string): string {
+  return uploadMimeTypeForExtension(extRaw);
+}
+
+/**
+ * Yerel dosya yazım kökü.
+ * - `LOCAL_UPLOAD_ROOT` boşsa: `public/uploads` (Next statik servisi).
+ * - Render kalıcı disk: örn. `/var/data/uploads` — `next.config` ile `/uploads/*` bu dizinden sunulur.
+ */
+export function getLocalUploadAbsoluteRoot(): string {
+  const fromEnv = (process.env.LOCAL_UPLOAD_ROOT ?? "").trim();
+  if (fromEnv) return path.resolve(fromEnv);
+  return path.join(process.cwd(), "public", "uploads");
+}
+
+/** Kalıcı disk / env ile `public` dışına çıkıldı mı (HTTP için rewrite gerekir). */
+export function usesExternalLocalUploadRoot(): boolean {
+  return (process.env.LOCAL_UPLOAD_ROOT ?? "").trim().length > 0;
+}
+
+/** Sağlık kontrolü: dizin oluşturulabilir ve tek bir probe dosyası yazılıp silinebilir mi. */
+export async function probeLocalUploadWritable(): Promise<{ ok: boolean; root: string }> {
+  const root = getLocalUploadAbsoluteRoot();
+  try {
+    await fs.mkdir(root, { recursive: true });
+    const probe = path.join(root, `.health-${randomBytes(6).toString("hex")}.tmp`);
+    await fs.writeFile(probe, "ok");
+    await fs.unlink(probe);
+    return { ok: true, root };
+  } catch {
+    return { ok: false, root };
+  }
+}
+
 async function saveToLocal(safeName: string, buffer: Buffer): Promise<{ url: string }> {
   ensureLocalWriteAllowed();
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
+  const uploadsDir = getLocalUploadAbsoluteRoot();
   await fs.mkdir(uploadsDir, { recursive: true });
   const filePath = path.join(uploadsDir, safeName);
   await fs.writeFile(filePath, buffer);

@@ -49,6 +49,14 @@ const extraImageHosts = [
 const nextConfig: NextConfig = {
   allowedDevOrigins: [...defaultAllowedDevOrigins, ...extraAllowedDevOrigins],
   serverExternalPackages: ["pg", "@prisma/adapter-pg"],
+  /**
+   * `LOCAL_UPLOAD_ROOT` tanımlıyken dosyalar `public/` dışında kalıcı diskte tutulur;
+   * `/uploads/*` istekleri `app/api/local-upload` üzerinden stream edilir (build ortamında env olmalı).
+   */
+  async rewrites() {
+    if (!(process.env.LOCAL_UPLOAD_ROOT ?? "").trim()) return [];
+    return [{ source: "/uploads/:path*", destination: "/api/local-upload/:path*" }];
+  },
   /** Eski veya farkli ortamlarda 404 alinmasin; kanonik: /admin/odeme */
   async redirects() {
     return [

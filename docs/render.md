@@ -20,9 +20,11 @@ Uygulama kayit e-posta kodunu **SMTP (nodemailer)** ile gonderir; ayar yoksa `/a
 - SMS OTP ayri kanal: `/admin/signup-sms-provider` veya `SIGNUP_OTP_ALLOW_LOG_FALLBACK` (yalnizca acil/test).
 - Demo/staging: süper yönetici `/admin/signup-verification` ile kayıt e-posta ve/veya telefon OTP adımlarını kapatabilir (`AdminSettings`, varsayılan ikisi de açık). Üretimde açık bırakın.
 
-## 2) Kalici upload/storage (Render)
+## 2) Upload / storage (Render)
 
-Render diskine yazilan dosyalar kalici kabul edilmemelidir. Production icin `s3` provider kullanin.
+### A) Obje depolama (S3 uyumlu — coklu instance, CDN)
+
+Varsayılan üretim modeli: `STORAGE_PROVIDER` bos veya `s3`.
 
 - `STORAGE_PROVIDER=s3`
 - `S3_REGION=<region>`
@@ -37,6 +39,24 @@ Opsiyonel:
 - `S3_FORCE_PATH_STYLE=1` (R2/MinIO/Spaces gerektirirse)
 - `S3_KEY_PREFIX=uploads`
 - `ALLOWED_UPLOAD_HOSTS=cdn.example.com,files.example.com`
+
+### B) Tek instance + Render Persistent Disk (S3 olmadan)
+
+Web Service icinde **Persistent Disk** baglayin (ornek mount: `/var/data`). Uploadlari bu diske yazmak icin:
+
+1. Render ortaminda:
+   - `STORAGE_PROVIDER=local`
+   - `ALLOW_LOCAL_UPLOADS_IN_PRODUCTION=1`
+   - `LOCAL_UPLOAD_ROOT=/var/data/uploads` — disk mount altinda bir klasor (uygulama bu dizini olusturur)
+2. **Redeploy**: `next.config` icindeki `/uploads/*` rewrite, build sirasinda `LOCAL_UPLOAD_ROOT` tanimliyken etkinlesir; env degistirdikten sonra yeniden build/deploy edin.
+3. URL’ler veritabaninda yine `/uploads/<dosya>` kalir; dosya fiziksel olarak `LOCAL_UPLOAD_ROOT` altindadir ve `/uploads/*` istekleri API uzerinden sunulur.
+
+Notlar:
+
+- Disk **dolunca** veya **yedek** politikasi operasyon ekibinde olmalidir.
+- Birden fazla replica kullanirsaniz yerel disk replikalar arasi paylasilmaz; o durumda A secenegi (S3/R2) kullanin.
+- Dogrulama: `GET /api/health?deep=1` — `storage.local_upload_writable`, `storage.local_upload_root`.
+- Eski dokuman: varsayilan container dosya sistemi deploy ile silinebilir; kalicilik icin Persistent Disk veya S3 sarttir.
 
 ### Kayit formu dosya yuklemesi (`/members`)
 
@@ -77,7 +97,7 @@ Not: flag kapaliysa mevcut davranis korunur (tum adminler tum il kayitlarini gor
 - `GET /api/health`
 - `GET /api/health?deep=1`
 - Admin panelde bir alt kategori resmi yukleyin.
-- Yuklenen resim URL'sinin `/uploads/...` degil `https://...` oldugunu dogrulayin.
+- S3 kullaniyorsaniz yuklenen resim URL'sinin `https://...` (bucket/CDN) oldugunu dogrulayin; yerel + `LOCAL_UPLOAD_ROOT` ise kanonik yol yine site altinda `/uploads/...` olur.
 - Ilan olusturma akisinda gorsel URL'leri kabul ediliyor mu kontrol edin.
 - **Uye kayit:** Oturum acik degilken `/members` ile OTP tamamla ve kayit gonder; belgeler kayit sonrasi giris ile ayni sayfadan yuklenir.
 - **Uye paneli:** Giris yap, belge ve profil fotografi yukle; `403`/`503` yerine basari ve kalici `https://...` URL.
@@ -85,11 +105,8 @@ Not: flag kapaliysa mevcut davranis korunur (tum adminler tum il kayitlarini gor
 
 ## 6) Operasyon notlari
 
-- Production'da local upload varsayilan olarak kapali.
-- Mecburi gecici acis:
-  - `STORAGE_PROVIDER=local`
-  - `ALLOW_LOCAL_UPLOADS_IN_PRODUCTION=1`
-- Bu mod sadece kisa sureli acil durum icindir; kalici degildir.
+- Production'da varsayilan depolama `s3` ( `STORAGE_PROVIDER` bos ise ).
+- Yerel mod: `STORAGE_PROVIDER=local` + `ALLOW_LOCAL_UPLOADS_IN_PRODUCTION=1`. Kalici dosya icin `LOCAL_UPLOAD_ROOT` + Persistent Disk (Bolum 2-B); yalnizca `ALLOW_LOCAL_UPLOADS` ile `public/` altina yazmak deploy’da kaybolabilir.
 
 ## 7) Kategori gorsel runbook (tekrar bozulmayi onleme)
 
