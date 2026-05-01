@@ -2,10 +2,15 @@ import type { CreditTransactionType, PaymentStatus } from "@/generated/prisma/cl
 import { prisma } from "@/lib/prisma";
 import {
   addCalendarDaysYmd,
+  eachDayYmdInRange,
+  eachMonthYmInRange,
+  EXEC_MAX_DAILY_TREND_BUCKETS,
+  istCalendarDaysInclusive,
   istYmdNow,
   type ExecutivePeriod,
   parseExecutivePeriod,
   parseTrendWindow,
+  rangeCustomFromToToday,
   rangeForPeriod,
   trendRangeDays,
   type IstRange,
@@ -43,9 +48,21 @@ export type ExecutiveAlert = {
 };
 
 export type ExecutiveDashboardData = {
+  /** URL / seçimle uyumlu; geçersiz özel tarihte `month` olabilir. */
   period: ExecutivePeriod;
   periodRange: IstRange;
-  trendWindow: 30 | 90;
+  /** Özel aralıkta başlangıç YYYY-MM-DD; değilse null */
+  customFromYmd: string | null;
+  /** Geçersiz özel tarih vb. */
+  notice: string | null;
+  /** Son X gün mü, yoksa özel aralık mı */
+  trendKind: "rolling" | "custom_range";
+  /** `rolling` iken dolu */
+  rollingTrendDays: 30 | 90 | null;
+  trendGranularity: "day" | "month";
+  /** Grafik ve tablo ekseni (YYYY-MM-DD veya YYYY-MM) */
+  trendBucketKeys: string[];
+  trendDisplayTitle: string;
   /** Özet kartları */
   newMembers: number;
   pendingMembers: number;
@@ -60,13 +77,9 @@ export type ExecutiveDashboardData = {
   pendingCreditInvoices: number;
   failedPaymentsInPeriod: number;
   alerts: ExecutiveAlert[];
-  /** Trend: günlük */
-  trendDays: string[];
   newMembersSeries: number[];
   creditTopUpSeriesTry: number[];
-  /** İl dağılımı (ilan, seçilen trend penceresi içinde oluşturulan) */
   topProvincesByAds: { province: string; count: number }[];
-  /** Üye ikamet ili (profilde dolu olanlar) */
   topProvincesByMembers: { province: string; count: number }[];
 };
 
@@ -115,23 +128,148 @@ async function loadAlerts(
 export async function getExecutiveDashboardData(searchParams: {
   period?: string;
   trend?: string;
+  from?: string;
 }): Promise<ExecutiveDashboardData> {
-  const period = parseExecutivePeriod(searchParams.period);
+  const rawPeriod = parseExecutivePeriod(searchParams.period);
+  const fromRaw = searchParams.from?.trim() ?? "";
   const trendWindow = parseTrendWindow(searchParams.trend);
-  const periodRange = rangeForPeriod(period);
-  const trend = trendRangeDays(trendWindow);
+  const todayYmd = istYmdNow();
 
-  const startYmd = istYmdNow(trend.start);
+  let notice: string | null = null;
+  let effectivePeriod: ExecutivePeriod = rawPeriod;
+  let customFromYmd: string | null = null;
+  let periodRange: IstRange;
+  let trendStart: Date;
+  let trendEndExclusive: Date;
+  let trendGranularity: "day" | "month";
+  let trendBucketKeys: string[];
+  let trendKind: "rolling" | "custom_range";
+  let rollingTrendDays: 30 | 90 | null = null;
+  let trendDisplayTitle = "";
 
-  const trendDays: string[] = [];
-  for (let i = 0; i < trendWindow; i++) {
-    trendDays.push(addCalendarDaysYmd(startYmd, i));
+  if (rawPeriod === "custom") {
+    const custom = fromRaw ? rangeCustomFromToToday(fromRaw) : null;
+    if (!custom) {
+      notice = fromRaw
+        ? "Başlangıç tarihi geçersiz veya gelecekte. Özet bu ay olarak gösteriliyor."
+        : "Özel dönem için başlangıç tarihi seçin veya aşağıdaki tarihi kullanın. Şimdilik bu ay gösteriliyor.";
+      effectivePeriod = "month";
+      periodRange = rangeForPeriod("month");
+      trendKind = "rolling";
+      rollingTrendDays = trendWindow;
+      const tr = trendRangeDays(trendWindow);
+      trendStart = tr.start;
+      trendEndExclusive = tr.endExclusive;
+      trendGranularity = "day";
+      const rollStartYmd = istYmdNow(tr.start);
+      trendBucketKeys = [];
+      for (let i = 0; i < trendWindow; i++) {
+        trendBucketKeys.push(addCalendarDaysYmd(rollStartYmd, i));
+      }
+      trendDisplayTitle = `Son ${trendWindow} gün (günlük)`;
+    } else {
+      customFromYmd = fromRaw;
+      effectivePeriod = "custom";
+      periodRange = custom;
+      trendKind = "custom_range";
+      rollingTrendDays = null;
+      trendStart = periodRange.start;
+      trendEndExclusive = periodRange.endExclusive;
+      const spanDays = istCalendarDaysInclusive(fromRaw, todayYmd);
+      if (spanDays <= EXEC_MAX_DAILY_TREND_BUCKETS) {
+        trendGranularity = "day";
+        trendBucketKeys = eachDayYmdInRange(fromRaw, todayYmd);
+        trendDisplayTitle = `${periodRange.label} (günlük)`;
+      } else {
+        trendGranularity = "month";
+        trendBucketKeys = eachMonthYmInRange(fromRaw, todayYmd);
+        trendDisplayTitle = `${periodRange.label} (aylık)`;
+      }
+    }
+  } else {
+    effectivePeriod = rawPeriod;
+    periodRange = rangeForPeriod(rawPeriod);
+    trendKind = "rolling";
+    rollingTrendDays = trendWindow;
+    const tr = trendRangeDays(trendWindow);
+    trendStart = tr.start;
+    trendEndExclusive = tr.endExclusive;
+    trendGranularity = "day";
+    const rollStartYmd = istYmdNow(tr.start);
+    trendBucketKeys = [];
+    for (let i = 0; i < trendWindow; i++) {
+      trendBucketKeys.push(addCalendarDaysYmd(rollStartYmd, i));
+    }
+    trendDisplayTitle = `Son ${trendWindow} gün (günlük)`;
   }
 
   const rangeWhere = {
     gte: periodRange.start,
     lt: periodRange.endExclusive,
   };
+
+  const trendWhere = { gte: trendStart, lt: trendEndExclusive };
+
+  const [memberTrendRows, topUpTrendRows] =
+    trendGranularity === "day"
+      ? await Promise.all([
+          prisma.$queryRaw<Array<{ k: string; c: bigint }>>`
+            SELECT to_char(("createdAt" AT TIME ZONE 'Europe/Istanbul')::date, 'YYYY-MM-DD') AS k,
+              COUNT(*)::bigint AS c
+            FROM "User"
+            WHERE role = 'MEMBER'
+              AND "createdAt" >= ${trendWhere.gte}
+              AND "createdAt" < ${trendWhere.lt}
+            GROUP BY 1 ORDER BY 1
+          `,
+          prisma.$queryRaw<Array<{ k: string; s: bigint }>>`
+            SELECT to_char(("createdAt" AT TIME ZONE 'Europe/Istanbul')::date, 'YYYY-MM-DD') AS k,
+              COALESCE(SUM("amountTry"), 0)::bigint AS s
+            FROM "CreditTransaction"
+            WHERE type = 'TOP_UP'
+              AND "createdAt" >= ${trendWhere.gte}
+              AND "createdAt" < ${trendWhere.lt}
+            GROUP BY 1 ORDER BY 1
+          `,
+        ])
+      : await Promise.all([
+          prisma.$queryRaw<Array<{ k: string; c: bigint }>>`
+            SELECT to_char(
+              date_trunc('month', ("createdAt" AT TIME ZONE 'Europe/Istanbul')),
+              'YYYY-MM'
+            ) AS k,
+              COUNT(*)::bigint AS c
+            FROM "User"
+            WHERE role = 'MEMBER'
+              AND "createdAt" >= ${trendWhere.gte}
+              AND "createdAt" < ${trendWhere.lt}
+            GROUP BY 1 ORDER BY 1
+          `,
+          prisma.$queryRaw<Array<{ k: string; s: bigint }>>`
+            SELECT to_char(
+              date_trunc('month', ("createdAt" AT TIME ZONE 'Europe/Istanbul')),
+              'YYYY-MM'
+            ) AS k,
+              COALESCE(SUM("amountTry"), 0)::bigint AS s
+            FROM "CreditTransaction"
+            WHERE type = 'TOP_UP'
+              AND "createdAt" >= ${trendWhere.gte}
+              AND "createdAt" < ${trendWhere.lt}
+            GROUP BY 1 ORDER BY 1
+          `,
+        ]);
+
+  const memberMap = new Map<string, number>();
+  for (const row of memberTrendRows) {
+    memberMap.set(row.k, Number(row.c));
+  }
+  const topUpMap = new Map<string, number>();
+  for (const row of topUpTrendRows) {
+    topUpMap.set(row.k, Number(row.s));
+  }
+
+  const newMembersSeries = trendBucketKeys.map((k) => memberMap.get(k) ?? 0);
+  const creditTopUpSeriesTry = trendBucketKeys.map((k) => topUpMap.get(k) ?? 0);
 
   const [
     newMembers,
@@ -148,8 +286,6 @@ export async function getExecutiveDashboardData(searchParams: {
     failedPaymentsInPeriod,
     provinceAds,
     provinceMembers,
-    memberDaily,
-    topUpDaily,
   ] = await Promise.all([
     prisma.user.count({
       where: { role: "MEMBER", createdAt: rangeWhere },
@@ -190,7 +326,7 @@ export async function getExecutiveDashboardData(searchParams: {
       .groupBy({
         by: ["province"],
         where: {
-          createdAt: { gte: trend.start, lt: trend.endExclusive },
+          createdAt: { gte: trendWhere.gte, lt: trendWhere.lt },
           NOT: { province: "" },
         },
         _count: { _all: true },
@@ -210,37 +346,7 @@ export async function getExecutiveDashboardData(searchParams: {
           .sort((a, b) => (b._count._all ?? 0) - (a._count._all ?? 0))
           .slice(0, 10),
       ),
-    prisma.$queryRaw<Array<{ ymd: string; c: bigint }>>`
-      SELECT to_char(("createdAt" AT TIME ZONE 'Europe/Istanbul')::date, 'YYYY-MM-DD') AS ymd,
-        COUNT(*)::bigint AS c
-      FROM "User"
-      WHERE role = 'MEMBER'
-        AND "createdAt" >= ${trend.start}
-        AND "createdAt" < ${trend.endExclusive}
-      GROUP BY 1 ORDER BY 1
-    `,
-    prisma.$queryRaw<Array<{ ymd: string; s: bigint }>>`
-      SELECT to_char(("createdAt" AT TIME ZONE 'Europe/Istanbul')::date, 'YYYY-MM-DD') AS ymd,
-        COALESCE(SUM("amountTry"), 0)::bigint AS s
-      FROM "CreditTransaction"
-      WHERE type = 'TOP_UP'
-        AND "createdAt" >= ${trend.start}
-        AND "createdAt" < ${trend.endExclusive}
-      GROUP BY 1 ORDER BY 1
-    `,
   ]);
-
-  const memberMap = new Map<string, number>();
-  for (const row of memberDaily) {
-    memberMap.set(row.ymd, Number(row.c));
-  }
-  const topUpMap = new Map<string, number>();
-  for (const row of topUpDaily) {
-    topUpMap.set(row.ymd, Number(row.s));
-  }
-
-  const newMembersSeries = trendDays.map((day) => memberMap.get(day) ?? 0);
-  const creditTopUpSeriesTry = trendDays.map((day) => topUpMap.get(day) ?? 0);
 
   const creditByType = creditGroups
     .map((g) => ({
@@ -264,9 +370,15 @@ export async function getExecutiveDashboardData(searchParams: {
   );
 
   return {
-    period,
+    period: effectivePeriod,
     periodRange,
-    trendWindow,
+    customFromYmd,
+    notice,
+    trendKind,
+    rollingTrendDays,
+    trendGranularity,
+    trendBucketKeys,
+    trendDisplayTitle,
     newMembers,
     pendingMembers,
     newAds,
@@ -280,7 +392,6 @@ export async function getExecutiveDashboardData(searchParams: {
     pendingCreditInvoices,
     failedPaymentsInPeriod,
     alerts,
-    trendDays,
     newMembersSeries,
     creditTopUpSeriesTry,
     topProvincesByAds: provinceAds.map((r) => ({

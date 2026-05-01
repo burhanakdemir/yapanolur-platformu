@@ -4,8 +4,10 @@ import { getExecutiveDashboardData } from "@/lib/executive/metrics";
 import { isLikelyDatabaseConnectionError } from "@/lib/dbErrors";
 import { executiveDashboardHref } from "@/lib/executive/href";
 import type { ExecutivePeriod } from "@/lib/executive/istanbulCalendar";
+import { istFirstDayOfMonth, istYmdNow } from "@/lib/executive/istanbulCalendar";
 import ExecutiveSparkline from "@/components/executive/ExecutiveSparkline";
 import ExecutiveProvinceBars from "@/components/executive/ExecutiveProvinceBars";
+import ExecutiveCustomRangeForm from "@/components/executive/ExecutiveCustomRangeForm";
 
 export const dynamic = "force-dynamic";
 
@@ -17,10 +19,10 @@ const nf = new Intl.NumberFormat("tr-TR");
 const tryFmt = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 
 type Props = {
-  searchParams: Promise<{ period?: string; trend?: string }>;
+  searchParams: Promise<{ period?: string; trend?: string; from?: string }>;
 };
 
-const PERIODS: { id: ExecutivePeriod; label: string }[] = [
+const FIXED_PERIODS: { id: Exclude<ExecutivePeriod, "custom">; label: string }[] = [
   { id: "today", label: "Bugün" },
   { id: "week", label: "Bu hafta" },
   { id: "month", label: "Bu ay" },
@@ -46,9 +48,12 @@ export default async function ExecutivePage({ searchParams }: Props) {
     );
   }
 
-  const periodLinks = PERIODS.map((p) => {
-    const active = p.id === data.period;
-    const href = executiveDashboardHref(p.id, data.trendWindow);
+  const trendParam = sp.trend === "90" ? 90 : 30;
+  const hrefTrend = data.rollingTrendDays ?? trendParam;
+
+  const periodLinks = FIXED_PERIODS.map((p) => {
+    const active = data.period === p.id;
+    const href = executiveDashboardHref(p.id, hrefTrend);
     return (
       <Link
         key={p.id}
@@ -61,20 +66,55 @@ export default async function ExecutivePage({ searchParams }: Props) {
     );
   });
 
-  const trendLinks = ([30, 90] as const).map((tw) => {
-    const active = tw === data.trendWindow;
-    const href = executiveDashboardHref(data.period, tw);
-    return (
-      <Link
-        key={tw}
-        href={href}
-        scroll={false}
-        className={`chip inline-flex items-center text-xs ${active ? "border-orange-500 bg-orange-50 font-semibold ring-2 ring-orange-400/70" : ""}`}
-      >
-        Son {tw} gün
-      </Link>
-    );
-  });
+  const customActive = data.period === "custom" && Boolean(data.customFromYmd);
+  const customChip = (
+    <span
+      key="custom-chip"
+      className={`chip inline-flex cursor-default items-center ${customActive ? "border-orange-500 bg-orange-50 font-semibold ring-2 ring-orange-400/70" : "opacity-90"}`}
+      title="Başlangıç tarihini aşağıdan seçin"
+    >
+      Özel tarih
+    </span>
+  );
+
+  const trendLinks =
+    data.trendKind === "rolling"
+      ? ([30, 90] as const).map((tw) => {
+          const active = tw === data.rollingTrendDays;
+          const href = executiveDashboardHref(data.period, tw);
+          return (
+            <Link
+              key={tw}
+              href={href}
+              scroll={false}
+              className={`chip inline-flex items-center text-xs ${active ? "border-orange-500 bg-orange-50 font-semibold ring-2 ring-orange-400/70" : ""}`}
+            >
+              Son {tw} gün
+            </Link>
+          );
+        })
+      : null;
+
+  const todayYmd = istYmdNow();
+  const defaultFromInput =
+    data.customFromYmd ??
+    (data.period === "custom"
+      ? sp.from?.trim() || istFirstDayOfMonth(todayYmd)
+      : istFirstDayOfMonth(todayYmd));
+
+  const memberSubtitle =
+    data.trendGranularity === "month"
+      ? "Ay bazında yeni üye sayısı (uzun aralıkta günlük yerine)"
+      : "Her gün kayıt olan üye sayısı";
+  const creditSubtitle =
+    data.trendGranularity === "month"
+      ? "Ay bazında TOP_UP toplamı (TL)"
+      : "TOP_UP tutarı (TL) — günlük";
+
+  const provinceAdsSubtitle =
+    data.trendKind === "custom_range"
+      ? `Seçilen aralıkta oluşturulan ilanlar (${data.trendDisplayTitle})`
+      : `Son ${data.rollingTrendDays ?? 30} günde oluşturulan ilanlar`;
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-6 pb-14 pt-4 md:space-y-8 md:pt-6">
@@ -87,21 +127,39 @@ export default async function ExecutivePage({ searchParams }: Props) {
           Bu ekran günlük operasyon (ilan onayı, SMTP, ödeme anahtarları) için değildir; yalnızca büyüme,
           gelir/kredi ve ilan/teklif özetini gösterir. Tarihler{" "}
           <strong className="text-white">Europe/Istanbul</strong> takvimine göredir. Özet kartları seçilen
-          döneme göre hesaplanır; trend grafikleri seçilen gün penceresindedir.
+          döneme göre hesaplanır. Özel tarih seçildiğinde trend grafikleri aynı aralığı kullanır; çok uzun
+          aralıkta grafikler otomatik aylık gruplanır.
         </p>
       </header>
 
-      <section className="glass-card flex flex-col gap-3 rounded-xl p-4 shadow-md md:flex-row md:flex-wrap md:items-center md:justify-between">
-        <div>
+      {data.notice ? (
+        <div className="rounded-xl border border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm">
+          {data.notice}
+        </div>
+      ) : null}
+
+      <section className="glass-card flex flex-col gap-3 rounded-xl p-4 shadow-md md:flex-row md:flex-wrap md:items-start md:justify-between">
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Dönem</p>
-          <div className="mt-2 flex flex-wrap gap-2">{periodLinks}</div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {periodLinks}
+            {customChip}
+          </div>
+          <ExecutiveCustomRangeForm maxYmd={todayYmd} defaultFrom={defaultFromInput} />
           <p className="mt-2 text-xs text-slate-600">
             Özet kartları için seçilen dönem: <strong>{data.periodRange.label}</strong> (İstanbul takvimi)
           </p>
         </div>
-        <div>
+        <div className="min-w-[200px]">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Trend penceresi</p>
-          <div className="mt-2 flex flex-wrap gap-2">{trendLinks}</div>
+          {data.trendKind === "rolling" ? (
+            <div className="mt-2 flex flex-wrap gap-2">{trendLinks}</div>
+          ) : (
+            <p className="mt-2 max-w-sm text-xs leading-snug text-slate-600">
+              Özel aralıkta grafikler başlangıç–bugün ile aynıdır (
+              {data.trendGranularity === "month" ? "aylık" : "günlük"}).
+            </p>
+          )}
         </div>
       </section>
 
@@ -221,20 +279,18 @@ export default async function ExecutivePage({ searchParams }: Props) {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-orange-950">
-          Trend — son {data.trendWindow} gün (günlük)
-        </h2>
+        <h2 className="text-lg font-bold text-orange-950">Trend — {data.trendDisplayTitle}</h2>
         <div className="grid gap-4 lg:grid-cols-2">
           <ExecutiveSparkline
             title="Yeni üye"
-            subtitle="Her gün kayıt olan üye sayısı"
+            subtitle={memberSubtitle}
             accentClass="text-teal-700"
             values={data.newMembersSeries}
             formatY={(n) => nf.format(n)}
           />
           <ExecutiveSparkline
             title="Kredi yükleme"
-            subtitle="TOP_UP tutarı (TL)"
+            subtitle={creditSubtitle}
             accentClass="text-orange-800"
             values={data.creditTopUpSeriesTry}
             formatY={(n) => tryFmt.format(n)}
@@ -243,11 +299,7 @@ export default async function ExecutivePage({ searchParams }: Props) {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <ExecutiveProvinceBars
-          title="İlan — il dağılımı"
-          subtitle={`Trend penceresinde oluşturulan ilanlar (${data.trendWindow} gün)`}
-          rows={data.topProvincesByAds}
-        />
+        <ExecutiveProvinceBars title="İlan — il dağılımı" subtitle={provinceAdsSubtitle} rows={data.topProvincesByAds} />
         <ExecutiveProvinceBars
           title="Üye — ikamet ili"
           subtitle="Profilde il bilgisi dolu üyeler (anlık)"

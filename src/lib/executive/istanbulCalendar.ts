@@ -69,11 +69,69 @@ export function istFirstDayOfNextMonth(ymd: string): string {
   }).format(nextFirst);
 }
 
-export type ExecutivePeriod = "today" | "week" | "month";
+export type ExecutivePeriod = "today" | "week" | "month" | "custom";
+
+/** Günlük trendde üst sınır; daha uzun aralıkta aylık gruplama kullanılır. */
+export const EXEC_MAX_DAILY_TREND_BUCKETS = 180;
 
 export function parseExecutivePeriod(v: string | undefined): ExecutivePeriod {
-  if (v === "today" || v === "week" || v === "month") return v;
+  if (v === "today" || v === "week" || v === "month" || v === "custom") return v;
   return "month";
+}
+
+/** İki İstanbul günü arası (her iki uç dahil) gün sayısı. */
+export function istCalendarDaysInclusive(fromYmd: string, toYmd: string): number {
+  const [y1, m1, d1] = fromYmd.split("-").map(Number);
+  const [y2, m2, d2] = toYmd.split("-").map(Number);
+  const t0 = Date.UTC(y1, m1 - 1, d1);
+  const t1 = Date.UTC(y2, m2 - 1, d2);
+  return Math.floor((t1 - t0) / 86400000) + 1;
+}
+
+/** [fromYmd, toYmd] kapsayan her ay YYYY-MM (İstanbul). */
+export function eachMonthYmInRange(fromYmd: string, toYmd: string): string[] {
+  const startY = Number(fromYmd.slice(0, 4));
+  const startM = Number(fromYmd.slice(5, 7));
+  const endY = Number(toYmd.slice(0, 4));
+  const endM = Number(toYmd.slice(5, 7));
+  const out: string[] = [];
+  let y = startY;
+  let m = startM;
+  while (y < endY || (y === endY && m <= endM)) {
+    out.push(`${y}-${String(m).padStart(2, "0")}`);
+    m += 1;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+  }
+  return out;
+}
+
+/** [fromYmd, toYmd] her gün (dahil). */
+export function eachDayYmdInRange(fromYmd: string, toYmd: string): string[] {
+  const out: string[] = [];
+  let cur = fromYmd;
+  while (cur <= toYmd) {
+    out.push(cur);
+    cur = addCalendarDaysYmd(cur, 1);
+  }
+  return out;
+}
+
+/** Başlangıç (dahil) → bugün (dahil). Geçersiz veya gelecek tarih → null. */
+export function rangeCustomFromToToday(fromYmd: string, now = new Date()): IstRange | null {
+  const today = istYmdNow(now);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fromYmd)) return null;
+  if (fromYmd > today) return null;
+  const start = istMidnightUtc(fromYmd);
+  const endExclusive = istMidnightUtc(addCalendarDaysYmd(today, 1));
+  if (start.getTime() >= endExclusive.getTime()) return null;
+  return {
+    start,
+    endExclusive,
+    label: `${fromYmd} → ${today}`,
+  };
 }
 
 export function parseTrendWindow(v: string | undefined): 30 | 90 {
