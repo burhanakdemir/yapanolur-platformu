@@ -10,7 +10,7 @@ import {
   type ExecutivePeriod,
   parseExecutivePeriod,
   parseTrendWindow,
-  rangeCustomFromToToday,
+  rangeCustomFromTo,
   rangeForPeriod,
   trendRangeDays,
   type IstRange,
@@ -51,8 +51,9 @@ export type ExecutiveDashboardData = {
   /** URL / seçimle uyumlu; geçersiz özel tarihte `month` olabilir. */
   period: ExecutivePeriod;
   periodRange: IstRange;
-  /** Özel aralıkta başlangıç YYYY-MM-DD; değilse null */
+  /** Özel aralıkta başlangıç / bitiş YYYY-MM-DD; değilse null */
   customFromYmd: string | null;
+  customToYmd: string | null;
   /** Geçersiz özel tarih vb. */
   notice: string | null;
   /** Son X gün mü, yoksa özel aralık mı */
@@ -129,15 +130,18 @@ export async function getExecutiveDashboardData(searchParams: {
   period?: string;
   trend?: string;
   from?: string;
+  to?: string;
 }): Promise<ExecutiveDashboardData> {
   const rawPeriod = parseExecutivePeriod(searchParams.period);
   const fromRaw = searchParams.from?.trim() ?? "";
+  const toRaw = searchParams.to?.trim() ?? "";
   const trendWindow = parseTrendWindow(searchParams.trend);
   const todayYmd = istYmdNow();
 
   let notice: string | null = null;
   let effectivePeriod: ExecutivePeriod = rawPeriod;
   let customFromYmd: string | null = null;
+  let customToYmd: string | null = null;
   let periodRange: IstRange;
   let trendStart: Date;
   let trendEndExclusive: Date;
@@ -148,11 +152,12 @@ export async function getExecutiveDashboardData(searchParams: {
   let trendDisplayTitle = "";
 
   if (rawPeriod === "custom") {
-    const custom = fromRaw ? rangeCustomFromToToday(fromRaw) : null;
+    const toYmd = toRaw || todayYmd;
+    const custom = fromRaw ? rangeCustomFromTo(fromRaw, toYmd) : null;
     if (!custom) {
       notice = fromRaw
-        ? "Başlangıç tarihi geçersiz veya gelecekte. Özet bu ay olarak gösteriliyor."
-        : "Özel dönem için başlangıç tarihi seçin veya aşağıdaki tarihi kullanın. Şimdilik bu ay gösteriliyor.";
+        ? "Özel aralık geçersiz: başlangıç ve bitiş bugünü aşamaz, başlangıç ≤ bitiş olmalı; aralık en fazla 365 gün (dahil) olabilir."
+        : "Özel dönem için başlangıç tarihi seçin. Şimdilik bu ay gösteriliyor.";
       effectivePeriod = "month";
       periodRange = rangeForPeriod("month");
       trendKind = "rolling";
@@ -169,20 +174,21 @@ export async function getExecutiveDashboardData(searchParams: {
       trendDisplayTitle = `Son ${trendWindow} gün (günlük)`;
     } else {
       customFromYmd = fromRaw;
+      customToYmd = toYmd;
       effectivePeriod = "custom";
       periodRange = custom;
       trendKind = "custom_range";
       rollingTrendDays = null;
       trendStart = periodRange.start;
       trendEndExclusive = periodRange.endExclusive;
-      const spanDays = istCalendarDaysInclusive(fromRaw, todayYmd);
+      const spanDays = istCalendarDaysInclusive(fromRaw, toYmd);
       if (spanDays <= EXEC_MAX_DAILY_TREND_BUCKETS) {
         trendGranularity = "day";
-        trendBucketKeys = eachDayYmdInRange(fromRaw, todayYmd);
+        trendBucketKeys = eachDayYmdInRange(fromRaw, toYmd);
         trendDisplayTitle = `${periodRange.label} (günlük)`;
       } else {
         trendGranularity = "month";
-        trendBucketKeys = eachMonthYmInRange(fromRaw, todayYmd);
+        trendBucketKeys = eachMonthYmInRange(fromRaw, toYmd);
         trendDisplayTitle = `${periodRange.label} (aylık)`;
       }
     }
@@ -373,6 +379,7 @@ export async function getExecutiveDashboardData(searchParams: {
     period: effectivePeriod,
     periodRange,
     customFromYmd,
+    customToYmd,
     notice,
     trendKind,
     rollingTrendDays,

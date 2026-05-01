@@ -4,7 +4,13 @@ import { getExecutiveDashboardData } from "@/lib/executive/metrics";
 import { isLikelyDatabaseConnectionError } from "@/lib/dbErrors";
 import { executiveDashboardHref } from "@/lib/executive/href";
 import type { ExecutivePeriod } from "@/lib/executive/istanbulCalendar";
-import { istFirstDayOfMonth, istYmdNow } from "@/lib/executive/istanbulCalendar";
+import {
+  addCalendarDaysYmd,
+  EXEC_MAX_CUSTOM_RANGE_DAYS,
+  istCalendarDaysInclusive,
+  istFirstDayOfMonth,
+  istYmdNow,
+} from "@/lib/executive/istanbulCalendar";
 import ExecutiveSparkline from "@/components/executive/ExecutiveSparkline";
 import ExecutiveProvinceBars from "@/components/executive/ExecutiveProvinceBars";
 import ExecutiveCustomRangeForm from "@/components/executive/ExecutiveCustomRangeForm";
@@ -19,7 +25,7 @@ const nf = new Intl.NumberFormat("tr-TR");
 const tryFmt = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 
 type Props = {
-  searchParams: Promise<{ period?: string; trend?: string; from?: string }>;
+  searchParams: Promise<{ period?: string; trend?: string; from?: string; to?: string }>;
 };
 
 const FIXED_PERIODS: { id: Exclude<ExecutivePeriod, "custom">; label: string }[] = [
@@ -66,12 +72,12 @@ export default async function ExecutivePage({ searchParams }: Props) {
     );
   });
 
-  const customActive = data.period === "custom" && Boolean(data.customFromYmd);
+  const customActive = data.period === "custom" && Boolean(data.customFromYmd) && Boolean(data.customToYmd);
   const customChip = (
     <span
       key="custom-chip"
       className={`chip inline-flex cursor-default items-center ${customActive ? "border-orange-500 bg-orange-50 font-semibold ring-2 ring-orange-400/70" : "opacity-90"}`}
-      title="Başlangıç tarihini aşağıdan seçin"
+      title="Başlangıç ve bitiş tarihlerini aşağıdan seçin (en fazla 365 gün)"
     >
       Özel tarih
     </span>
@@ -96,11 +102,12 @@ export default async function ExecutivePage({ searchParams }: Props) {
       : null;
 
   const todayYmd = istYmdNow();
-  const defaultFromInput =
-    data.customFromYmd ??
-    (data.period === "custom"
-      ? sp.from?.trim() || istFirstDayOfMonth(todayYmd)
-      : istFirstDayOfMonth(todayYmd));
+  const defaultToInput = data.customToYmd ?? (sp.to?.trim() || todayYmd);
+  let defaultFromInput =
+    data.customFromYmd ?? (sp.from?.trim() || istFirstDayOfMonth(defaultToInput));
+  if (istCalendarDaysInclusive(defaultFromInput, defaultToInput) > EXEC_MAX_CUSTOM_RANGE_DAYS) {
+    defaultFromInput = addCalendarDaysYmd(defaultToInput, -(EXEC_MAX_CUSTOM_RANGE_DAYS - 1));
+  }
 
   const memberSubtitle =
     data.trendGranularity === "month"
@@ -126,9 +133,9 @@ export default async function ExecutivePage({ searchParams }: Props) {
         <p className="mt-3 max-w-3xl text-sm leading-relaxed text-amber-50/95">
           Bu ekran günlük operasyon (ilan onayı, SMTP, ödeme anahtarları) için değildir; yalnızca büyüme,
           gelir/kredi ve ilan/teklif özetini gösterir. Tarihler{" "}
-          <strong className="text-white">Europe/Istanbul</strong> takvimine göredir. Özet kartları seçilen
-          döneme göre hesaplanır. Özel tarih seçildiğinde trend grafikleri aynı aralığı kullanır; çok uzun
-          aralıkta grafikler otomatik aylık gruplanır.
+          <strong className="text-white">Europe/Istanbul</strong> takvimine göredir. Özel aralıkta en fazla{" "}
+          <strong className="text-white">365 gün</strong> (dahil) seçilebilir; bitiş bugünü aşamaz. Uzun
+          aralıkta trend grafikleri otomatik aylık gruplanır.
         </p>
       </header>
 
@@ -145,7 +152,11 @@ export default async function ExecutivePage({ searchParams }: Props) {
             {periodLinks}
             {customChip}
           </div>
-          <ExecutiveCustomRangeForm maxYmd={todayYmd} defaultFrom={defaultFromInput} />
+          <ExecutiveCustomRangeForm
+            maxYmd={todayYmd}
+            defaultFrom={defaultFromInput}
+            defaultTo={defaultToInput}
+          />
           <p className="mt-2 text-xs text-slate-600">
             Özet kartları için seçilen dönem: <strong>{data.periodRange.label}</strong> (İstanbul takvimi)
           </p>

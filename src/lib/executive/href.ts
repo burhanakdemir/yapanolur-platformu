@@ -3,12 +3,13 @@ import type { ExecutivePeriod } from "@/lib/executive/istanbulCalendar";
 export function executiveDashboardHref(
   period: ExecutivePeriod,
   trend: 30 | 90,
-  opts?: { from?: string | null },
+  opts?: { from?: string | null; to?: string | null },
 ): string {
   const p = new URLSearchParams();
-  if (period === "custom" && opts?.from) {
+  if (period === "custom" && opts?.from && opts?.to) {
     p.set("period", "custom");
     p.set("from", opts.from);
+    p.set("to", opts.to);
     return `/executive?${p.toString()}`;
   }
   if (period !== "month") p.set("period", period);

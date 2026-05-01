@@ -74,6 +74,9 @@ export type ExecutivePeriod = "today" | "week" | "month" | "custom";
 /** Günlük trendde üst sınır; daha uzun aralıkta aylık gruplama kullanılır. */
 export const EXEC_MAX_DAILY_TREND_BUCKETS = 180;
 
+/** Özel dönem: başlangıç–bitiş dahil en fazla bu kadar gün (İstanbul takvimi). */
+export const EXEC_MAX_CUSTOM_RANGE_DAYS = 365;
+
 export function parseExecutivePeriod(v: string | undefined): ExecutivePeriod {
   if (v === "today" || v === "week" || v === "month" || v === "custom") return v;
   return "month";
@@ -119,18 +122,28 @@ export function eachDayYmdInRange(fromYmd: string, toYmd: string): string[] {
   return out;
 }
 
-/** Başlangıç (dahil) → bugün (dahil). Geçersiz veya gelecek tarih → null. */
-export function rangeCustomFromToToday(fromYmd: string, now = new Date()): IstRange | null {
+/**
+ * Özel özet/trend aralığı: başlangıç ve bitiş (İstanbul, her iki uç dahil).
+ * Bitiş bugünü aşamaz; aralık uzunluğu en fazla EXEC_MAX_CUSTOM_RANGE_DAYS gün.
+ */
+export function rangeCustomFromTo(
+  fromYmd: string,
+  toYmd: string,
+  now = new Date(),
+): IstRange | null {
   const today = istYmdNow(now);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(fromYmd)) return null;
-  if (fromYmd > today) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fromYmd) || !/^\d{4}-\d{2}-\d{2}$/.test(toYmd)) return null;
+  if (fromYmd > toYmd) return null;
+  if (toYmd > today || fromYmd > today) return null;
+  const span = istCalendarDaysInclusive(fromYmd, toYmd);
+  if (span > EXEC_MAX_CUSTOM_RANGE_DAYS) return null;
   const start = istMidnightUtc(fromYmd);
-  const endExclusive = istMidnightUtc(addCalendarDaysYmd(today, 1));
+  const endExclusive = istMidnightUtc(addCalendarDaysYmd(toYmd, 1));
   if (start.getTime() >= endExclusive.getTime()) return null;
   return {
     start,
     endExclusive,
-    label: `${fromYmd} → ${today}`,
+    label: `${fromYmd} → ${toYmd}`,
   };
 }
 
