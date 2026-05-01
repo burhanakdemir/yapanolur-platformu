@@ -5,6 +5,7 @@ import { getCategoryCardLabels } from "@/lib/categoryCardLabels";
 export function serializeAuctionForHomeList<
   T extends {
     id: string;
+    listingNumber: number;
     title: string;
     description: string;
     createdAt: Date;
@@ -20,6 +21,7 @@ export function serializeAuctionForHomeList<
   const categoryCard = getCategoryCardLabels(a.category);
   return {
     id: a.id,
+    listingNumber: a.listingNumber,
     title: a.title,
     description: a.description,
     createdAt: a.createdAt.toISOString(),

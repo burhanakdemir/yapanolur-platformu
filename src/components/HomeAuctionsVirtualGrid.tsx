@@ -2,6 +2,7 @@
 
 import { useVirtualizer } from "@tanstack/react-virtual";
 import Image from "next/image";
+import Link from "next/link";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import AuctionCountdown from "@/components/AuctionCountdown";
 import { HOME_MAIN_CATEGORY_TILE_CARD } from "@/lib/homeMainCategoryTileClass";
@@ -9,6 +10,7 @@ import { isAllowedUploadUrl } from "@/lib/uploadUrl";
 
 export type HomeAuctionItem = {
   id: string;
+  listingNumber: number;
   title: string;
   description: string;
   createdAt: string;
@@ -32,7 +34,8 @@ function gridColsForWidth(width: number): number {
   return 4;
 }
 
-const ESTIMATED_ROW_PX = 232;
+/** Kartta ilan no / durum satırı eklendi; sanallaştırıcı tahmini satır yüksekliği. */
+const ESTIMATED_ROW_PX = 248;
 
 function gridColsClass(cols: number): string {
   if (cols <= 2) return "grid-cols-2";
@@ -106,27 +109,35 @@ function ShowcaseRibbon({ showcaseUntil, lang }: { showcaseUntil: string | null;
   );
 }
 
+function cardStatusLabel(ad: HomeAuctionItem, lang: "tr" | "en"): string {
+  const ends = ad.auctionEndsAt ? new Date(ad.auctionEndsAt).getTime() : null;
+  const now = Date.now();
+  if (ends !== null && !Number.isNaN(ends) && ends <= now) {
+    return lang === "tr" ? "Süresi doldu" : "Ended";
+  }
+  return lang === "tr" ? "Açık ihale" : "Open";
+}
+
 const AuctionGridCard = memo(function AuctionGridCard({
   ad,
   lang,
-  onOpen,
 }: {
   ad: HomeAuctionItem;
   lang: "tr" | "en";
-  onOpen: (id: string) => void;
 }) {
   const categoryImageUrl = ad.categoryCard?.imageUrl?.trim() || null;
+  const href = lang === "en" ? `/ads/${ad.id}?lang=en` : `/ads/${ad.id}`;
 
   return (
-    <button
-      type="button"
+    <Link
+      href={href}
+      prefetch={false}
       aria-label={
         lang === "tr"
-          ? `${ad.title}. Detay ve erişim için tıklayın.`
-          : `${ad.title}. Click for details and access.`
+          ? `${ad.title}. İlan detayına git.`
+          : `${ad.title}. Go to listing page.`
       }
       className="glass-card group flex h-full min-h-[158px] w-full min-w-0 cursor-pointer touch-manipulation flex-col gap-0 rounded-lg border border-transparent p-1 sm:min-h-[176px] sm:p-1.5 text-left shadow-sm transition-[border-color,box-shadow,background-color,color] duration-150 hover:!border-orange-400/80 hover:!bg-orange-200/85 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400 active:scale-[0.98]"
-      onClick={() => onOpen(ad.id)}
     >
       <ShowcaseRibbon showcaseUntil={ad.showcaseUntil} lang={lang} />
       <div className="flex min-h-0 flex-col gap-0 leading-none">
@@ -145,6 +156,15 @@ const AuctionGridCard = memo(function AuctionGridCard({
         <p className="line-clamp-1 text-[11px] font-bold leading-none text-slate-600">
           <span className="text-slate-600">{lang === "tr" ? "Konum:" : "Loc.:"}</span> {ad.province} /{" "}
           {ad.district}
+        </p>
+        <p className="mt-0.5 text-[10px] font-semibold leading-none text-slate-500">
+          <span className="tabular-nums text-slate-600">
+            {lang === "tr" ? "İlan no" : "Listing"} #{ad.listingNumber}
+          </span>
+          <span className="mx-1 text-slate-300" aria-hidden>
+            ·
+          </span>
+          <span className="text-orange-800/90">{cardStatusLabel(ad, lang)}</span>
         </p>
       </div>
       <div className="mt-1 -mx-1 shrink-0 overflow-hidden rounded border border-slate-200/80 sm:-mx-1.5">
@@ -171,7 +191,7 @@ const AuctionGridCard = memo(function AuctionGridCard({
           {lang === "tr" ? "Detay" : "Details"}
         </span>
       </div>
-    </button>
+    </Link>
   );
 });
 
@@ -181,11 +201,9 @@ const AuctionGridCard = memo(function AuctionGridCard({
 export default function HomeAuctionsVirtualGrid({
   initialAuctions,
   lang,
-  onOpenCard,
 }: {
   initialAuctions: HomeAuctionItem[];
   lang: "tr" | "en";
-  onOpenCard: (id: string) => void;
 }) {
   const scrollParentRef = useRef<HTMLDivElement>(null);
   const gridCols = useResponsiveGridCols();
@@ -239,7 +257,7 @@ export default function HomeAuctionsVirtualGrid({
                   className={`grid h-full items-stretch gap-1.5 sm:gap-2 ${gridColsClass(gridCols)}`}
                 >
                   {row.map((ad) => (
-                    <AuctionGridCard key={ad.id} ad={ad} lang={lang} onOpen={onOpenCard} />
+                    <AuctionGridCard key={ad.id} ad={ad} lang={lang} />
                   ))}
                 </div>
               </div>

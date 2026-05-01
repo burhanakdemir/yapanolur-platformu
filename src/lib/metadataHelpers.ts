@@ -12,6 +12,13 @@ export function truncateForMeta(text: string, max = 155): string {
   return `${t.slice(0, max - 1).trim()}…`;
 }
 
+/** İlan detayında sunucu tarafı özet paragrafı (arama motorları / noscript). */
+export function truncateForSeoPreview(text: string, max = 520): string {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (t.length <= max) return t;
+  return `${t.slice(0, max - 1).trim()}…`;
+}
+
 export function absoluteAssetUrl(url: string | null | undefined): string | undefined {
   if (!url?.trim()) return undefined;
   const u = url.trim();

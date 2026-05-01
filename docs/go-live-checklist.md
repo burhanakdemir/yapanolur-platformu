@@ -5,6 +5,7 @@
 ## Ortam
 
 - [ ] `APP_URL` kanonik **https://** adres (ödeme geri dönüşleri, Open Graph, `robots.txt` / `sitemap.xml`).
+- [ ] Üretimde **veri sorumlusu** bilgisi: `.env` içinde `LEGAL_ENTITY_NAME`, `LEGAL_ENTITY_ADDRESS`, `MERSIS_NUMBER`, `KVKK_CONTACT_EMAIL` (`.env.example`); `/iletisim` ve KVKK §2 ile uyumlu.
 - [ ] `DATABASE_URL` yönetilen Postgres; yerel `127.0.0.1` yok. Neon vb. için gerekirse **`DIRECT_DATABASE_URL`** (migrate).
 - [ ] `AUTH_SECRET`, `OTP_PEPPER` güçlü ve repoda yok.
 - [ ] Çok instance / serverless: **`UPSTASH_REDIS_REST_*`** (oran sınırlama tutarlılığı).
@@ -22,7 +23,9 @@
 ## SEO ve izleme
 
 - [ ] `GET /sitemap.xml` ve `GET /robots.txt` canlı domainde doğrulandı.
-- [ ] **KVKK / Çerez** metinleri hukuk ile gözden geçirildi (`/kvkk`, `/cerez-politikasi` şablon niteliğindedir).
+- [ ] **Google Search Console:** Mülkiyet doğrulama, **Site Haritası** olarak `https://<APP_URL>/sitemap.xml` gönderimi, örnek bir `/ads/<id>` URL’si için **URL denetimi** / dizin durumu kontrolü.
+- [ ] **KVKK / Çerez** metinleri hukuk ile gözden geçirildi (`/kvkk`, `/cerez-politikasi`; çerez bildirimi ve tablo kodla uyumludur).
+- [ ] Üretimde çerez bildirimi ve isteğe bağlı **Sentry** (`NEXT_PUBLIC_SENTRY_DSN`) davranışı test edildi (“Yalnızca zorunlu” ile istemci SDK yüklenmez).
 
 ## Sağlık ve yedek
 

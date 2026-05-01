@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import AdDetailPage from "./AdDetailClient";
+import AdDetailSeoLead from "./AdDetailSeoLead";
 import { prisma } from "@/lib/prisma";
+import { buildAdListingJsonLd, listingPageUrls } from "@/lib/adDetailJsonLd";
 import { absoluteAssetUrl, adDetailMetaStrings, siteName } from "@/lib/metadataHelpers";
 import { getAppUrl } from "@/lib/appUrl";
 import { getLang, type Lang } from "@/lib/i18n";
@@ -46,7 +48,14 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     return {
       title: lang === "en" ? `Not found · ${site}` : `İlan bulunamadı · ${site}`,
       robots: { index: false, follow: false },
-      alternates: { canonical },
+      alternates: {
+        canonical,
+        languages: {
+          "tr-TR": `${base}/ads/${id}`,
+          "en-GB": `${base}/ads/${id}?lang=en`,
+          "x-default": `${base}/ads/${id}`,
+        },
+      },
     };
   }
 
@@ -65,12 +74,23 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
   const title = `${pageTitle} | ${site}`;
   const ogImage = absoluteAssetUrl(ad.photos[0]?.url);
+  const logoOg = `${base}/yapanolur-logo.png`;
+  const ogImages = ogImage
+    ? [{ url: ogImage, alt: pageTitle }]
+    : [{ url: logoOg, width: 440, height: 113, alt: site }];
 
   return {
     title,
     description,
     robots: publicAd ? { index: true, follow: true } : { index: false, follow: false },
-    alternates: { canonical },
+    alternates: {
+      canonical,
+      languages: {
+        "tr-TR": `${base}/ads/${id}`,
+        "en-GB": `${base}/ads/${id}?lang=en`,
+        "x-default": `${base}/ads/${id}`,
+      },
+    },
     openGraph: {
       title,
       description,
@@ -78,17 +98,94 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       siteName: site,
       locale: lang === "en" ? "en_GB" : "tr_TR",
       type: "website",
-      ...(ogImage ? { images: [{ url: ogImage, alt: pageTitle }] } : {}),
+      images: ogImages,
     },
     twitter: {
       card: ogImage ? "summary_large_image" : "summary",
       title,
       description,
-      ...(ogImage ? { images: [ogImage] } : {}),
+      ...(ogImage ? { images: [ogImage] } : { images: [logoOg] }),
     },
   };
 }
 
-export default function AdDetailRoutePage() {
-  return <AdDetailPage />;
+export default async function AdDetailRoutePage({ params, searchParams }: Props) {
+  const { id } = await params;
+  const sp = await searchParams;
+  const lang: Lang = getLang(sp.lang);
+
+  const [ad, settingsRow] = await Promise.all([
+    prisma.ad.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        listingNumber: true,
+        province: true,
+        district: true,
+        neighborhood: true,
+        startingPriceTry: true,
+        auctionEndsAt: true,
+        category: {
+          select: {
+            name: true,
+            parent: { select: { name: true } },
+          },
+        },
+        photos: {
+          take: 1,
+          orderBy: { sortOrder: "asc" },
+          select: { url: true },
+        },
+      },
+    }),
+    prisma.adminSettings.findUnique({
+      where: { id: "singleton" },
+      select: {
+        detailViewFeeEnabled: true,
+        detailViewFeeAmountTry: true,
+      },
+    }),
+  ]);
+
+  const base = getAppUrl().replace(/\/+$/, "");
+  const detailFeeRequired =
+    Boolean(settingsRow?.detailViewFeeEnabled) && (settingsRow?.detailViewFeeAmountTry ?? 0) > 0;
+
+  const imageAbs = absoluteAssetUrl(ad?.photos[0]?.url);
+  const urls = listingPageUrls(base, id);
+  const pageUrl = lang === "en" ? urls.en : urls.tr;
+
+  const jsonLd =
+    ad?.status === "APPROVED"
+      ? buildAdListingJsonLd(
+          {
+            id: ad.id,
+            title: ad.title,
+            description: ad.description,
+            startingPriceTry: ad.startingPriceTry,
+            auctionEndsAt: ad.auctionEndsAt,
+            status: ad.status,
+          },
+          pageUrl,
+          imageAbs,
+        )
+      : null;
+
+  return (
+    <>
+      {jsonLd ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      ) : null}
+      {ad?.status === "APPROVED" ? (
+        <AdDetailSeoLead ad={ad} lang={lang} detailFeeRequired={detailFeeRequired} />
+      ) : null}
+      <AdDetailPage />
+    </>
+  );
 }

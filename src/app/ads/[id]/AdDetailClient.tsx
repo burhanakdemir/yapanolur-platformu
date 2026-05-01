@@ -243,10 +243,10 @@ function AdDetailInner() {
           <HomeBackButtonLink href={homeHref}>
             {lang === "en" ? "← Home" : "← Ana Sayfa"}
           </HomeBackButtonLink>
-          <p className="text-sm text-slate-700">
+          <p className="text-sm leading-relaxed text-slate-700">
             {lang === "tr"
-              ? "Bu ilanın açıklama ve görsellerini görmek için aşağıdaki pencereden üyelik veya ödeme adımlarını tamamlayın."
-              : "Complete membership or payment in the dialog below to view this listing’s details."}
+              ? "Bu ilan yayında. Tam açıklama ve fotoğraflar ücretli veya üyelik gerektirebilir; aşağıdaki adımlarla erişimi tamamlayın. Arama motorları için sayfada ilan başlığı ve özet metni yine de yer alır."
+              : "This listing is published. Full description and photos may require membership or a one-time access fee—complete the steps below. A title and summary remain visible on the page for discovery."}
           </p>
         </main>
         <AdAccessModal adId={id} open={accessModalVisible} onClose={closeAccessModal} lang={lang} />
@@ -281,9 +281,9 @@ function AdDetailInner() {
             <span className="font-semibold text-orange-950">{ad.listingNumber}</span>
           </p>
           <div className="w-full rounded-xl border-2 border-orange-600 bg-gradient-to-br from-orange-600 via-orange-500 to-amber-400 px-4 py-4 shadow-lg shadow-orange-600/35 ring-2 ring-amber-300/50 ring-offset-0 sm:px-5 sm:py-5">
-            <h1 className="w-full text-3xl font-bold tracking-tight break-words text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]">
+            <h2 className="w-full text-3xl font-bold tracking-tight break-words text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]">
               {displayAdTitle(ad.title)}
-            </h1>
+            </h2>
             {sessionUser &&
               ((sessionUser.userId && sessionUser.userId === ad.ownerId) ||
                 sessionUser.email === ad.owner.email) && (

@@ -1,21 +1,30 @@
 import StaticSitePage from "@/components/StaticSitePage";
+import DataControllerDisclosure from "@/components/legal/DataControllerDisclosure";
 import Link from "next/link";
+import { getCanonicalHostname, getPublicLegalEntity } from "@/lib/legalEntity";
 import { getLang } from "@/lib/i18n";
+import { prisma } from "@/lib/prisma";
 
 type Props = {
   searchParams: Promise<{ lang?: string }>;
 };
 
-const LAST_UPDATED_TR = "28.04.2026";
-const LAST_UPDATED_EN = "28 April 2026";
+const LAST_UPDATED_TR = "1 Mayıs 2026";
+const LAST_UPDATED_EN = "1 May 2026";
 
-/**
- * KVKK md. 10 aydınlatma yükümlülüğü çerçevesinde örnek metin.
- * Ticari unvan, MERSİS, adres ve veri sorumlusu temsilcisi — operasyonunuzca kesinleştirilmeli.
- */
+/** KVKK md. 10 aydınlatma metni — veri sorumlusu kimliği `LEGAL_ENTITY_*` ortam değişkenleri ve site iletişim ayarıyla kesinleştirilir. */
 export default async function KvkkPage({ searchParams }: Props) {
   const params = await searchParams;
   const lang = getLang(params.lang);
+  const legal = getPublicLegalEntity();
+  const canonicalHost = getCanonicalHostname();
+  const adminSettings = await prisma.adminSettings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: { id: "singleton" },
+  });
+  const contactPublished = adminSettings.homeFooterContact ?? "";
+
   const title =
     lang === "tr"
       ? "Kişisel Verilerin Korunması ve İşlenmesi Hakkında Aydınlatma Metni"
@@ -45,19 +54,13 @@ export default async function KvkkPage({ searchParams }: Props) {
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold text-slate-900">2. Veri sorumlusu</h2>
-            <p>
-              Kişisel verileriniz, KVKK kapsamında veri sorumlusu sıfatıyla <strong>platform işleteni</strong>{" "}
-              tarafından işlenmektedir. Ticari unvan, adres, MERSİS numarası ve varsa veri sorumlusu
-              başvuru adresi; yürürlükteki mevzuat ve duyuru yükümlülükleri çerçevesinde{" "}
-              <Link href={iletisimHref} className="font-medium text-orange-800 underline">
-                İletişim
-              </Link>{" "}
-              sayfasında veya site üzerinde gösterilen yasal bildirim alanlarında yayımlanır. Başvurularınızı
-              öncelikle bu kanallarda bildirilen iletişim adresine iletebilirsiniz.
-            </p>
-          </section>
+          <DataControllerDisclosure
+            lang="tr"
+            canonicalHost={canonicalHost}
+            legal={legal}
+            contactPublished={contactPublished}
+            iletisimHref={iletisimHref}
+          />
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-900">3. İşlenen kişisel veri kategorileri</h2>
@@ -214,7 +217,9 @@ export default async function KvkkPage({ searchParams }: Props) {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-900">11. Çerezler ve benzeri teknolojiler</h2>
             <p>
-              Oturum, güvenlik ve tercihler için çerez ve benzeri teknolojiler kullanılabilir. Ayrıntılar için{" "}
+              Oturum, güvenlik ve kayıt doğrulaması için zorunlu çerezler kullanılır. Çerez tercihiniz ekran altı
+              bildirimi ile kaydedilir; istemci tarafında üçüncü taraf hata izleme (Sentry) yalnızca “Tümünü
+              kabul et” seçilirse yüklenir. Güncel liste ve süreler için{" "}
               <Link href={cerezHref} className="font-medium text-orange-800 underline">
                 Çerez politikası
               </Link>{" "}
@@ -230,9 +235,12 @@ export default async function KvkkPage({ searchParams }: Props) {
             </p>
           </section>
 
-          <p className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-xs text-amber-950">
-            <strong>Not:</strong> Bu metin genel bilgilendirme amaçlıdır. Şirket unvanı, adres, MERSİS, veri
-            sorumlusu temsilciliği veya sektöre özel yükümlülükler için hukuk danışmanınızla kesinleştiriniz.
+          <p className="rounded-lg border border-orange-200/90 bg-orange-50/50 p-4 text-xs leading-relaxed text-slate-700">
+            <strong className="text-orange-950">Yürürlük:</strong> Bu metin{" "}
+            <strong className="font-semibold text-slate-900">{canonicalHost}</strong> hizmeti için hazırlanmıştır.
+            Ticari unvan, adres ve MERSİS için üretim ortamında{" "}
+            <code className="rounded bg-white px-1 text-[11px]">LEGAL_ENTITY_*</code> değişkenlerini ve paneldeki
+            iletişim metnini güncel tutunuz.
           </p>
         </div>
       ) : (
@@ -249,18 +257,13 @@ export default async function KvkkPage({ searchParams }: Props) {
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold text-slate-900">2. Data controller</h2>
-            <p>
-              The <strong>platform operator</strong> acts as the data controller. Legal name, address, trade
-              registry details and, where applicable, the data controller representative are published on our{" "}
-              <Link href={iletisimHref} className="font-medium text-orange-800 underline">
-                Contact
-              </Link>{" "}
-              page or in other legal notice areas of the site. Please direct requests primarily to the
-              contact channels shown there.
-            </p>
-          </section>
+          <DataControllerDisclosure
+            lang="en"
+            canonicalHost={canonicalHost}
+            legal={legal}
+            contactPublished={contactPublished}
+            iletisimHref={iletisimHref}
+          />
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-900">3. Categories of data</h2>
@@ -353,11 +356,13 @@ export default async function KvkkPage({ searchParams }: Props) {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-900">9. Cookies</h2>
             <p>
-              See our{" "}
+              Essential cookies are used for session, security and signup verification. Preferences can be set via
+              the bottom banner; optional third‑party client monitoring (Sentry) loads only if you choose{" "}
+              <strong>Accept all</strong>. See the{" "}
               <Link href={cerezHref} className="font-medium text-orange-800 underline">
                 Cookie policy
               </Link>{" "}
-              for details.
+              for names, durations and storage keys.
             </p>
           </section>
 
@@ -369,10 +374,11 @@ export default async function KvkkPage({ searchParams }: Props) {
             </p>
           </section>
 
-          <p className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-xs text-amber-950">
-            <strong>Note:</strong> This text is for general information. Have your legal counsel confirm
-            entity details, representative appointments, sector-specific duties, and English/Turkish
-            publication requirements before go-live.
+          <p className="rounded-lg border border-orange-200/90 bg-orange-50/50 p-4 text-xs leading-relaxed text-slate-700">
+            <strong className="text-orange-950">Publication:</strong> This notice applies to the service at{" "}
+            <strong className="font-semibold text-slate-900">{canonicalHost}</strong>. Set{" "}
+            <code className="rounded bg-white px-1 text-[11px]">LEGAL_ENTITY_*</code> in production and keep the
+            admin contact line current.
           </p>
         </div>
       )}
