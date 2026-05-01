@@ -56,5 +56,20 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
-export const prisma: PrismaClient =
-  globalForPrisma.prisma ?? (globalForPrisma.prisma = createPrismaClient());
+/**
+ * Şema güncellemesinden sonra (ör. yeni model) dev/HMR global’daki eski Prisma örneği
+ * bazen yeni delegate’leri taşımaz → `prisma.homeHeroSlide` undefined olur.
+ * Beklenen API varsa önbelleği kullan, yoksa istemciyi yeniden oluştur.
+ */
+function getOrRefreshPrismaSingleton(): PrismaClient {
+  const cached = globalForPrisma.prisma;
+  const hasHeroSlide =
+    cached &&
+    typeof (cached as unknown as { homeHeroSlide?: { findMany?: unknown } }).homeHeroSlide?.findMany === "function";
+  if (hasHeroSlide) return cached;
+  const fresh = createPrismaClient();
+  globalForPrisma.prisma = fresh;
+  return fresh;
+}
+
+export const prisma: PrismaClient = getOrRefreshPrismaSingleton();

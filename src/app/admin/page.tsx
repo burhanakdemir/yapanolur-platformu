@@ -204,7 +204,7 @@ export default async function AdminPage() {
   const strongTextClass = isSuper ? "text-amber-50" : isStaff ? "text-teal-50" : "text-white";
 
   return (
-    <main className="mx-auto w-full max-w-7xl space-y-4 px-4 py-6 md:px-6">
+    <main className="mx-auto w-full max-w-7xl space-y-3 px-4 py-4 md:px-6 md:py-5">
       {dbError ? (
         <div className="rounded-xl border border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm">
           <strong>Veritabanına şu an ulaşılamıyor.</strong> Bekleyen sayılar 0 gösterilir. Yerel geliştirmede
@@ -221,7 +221,7 @@ export default async function AdminPage() {
         <AdminStaffScopeBanner session={session} />
       ) : null}
 
-      <header className={`${heroClass} rounded-xl px-4 py-4 text-white md:px-6 md:py-5`}>
+      <header className={`${heroClass} rounded-xl px-4 py-3 text-white md:px-5 md:py-4`}>
         <p className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${heroKickerClass}`}>{heroKicker}</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-3xl">Yönetici paneli</h1>
         <p className={`mt-2 max-w-2xl text-xs leading-snug md:text-sm md:leading-relaxed ${bodyTextClass}`}>
@@ -242,18 +242,18 @@ export default async function AdminPage() {
         ) : null}
       </header>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-start lg:gap-6 xl:gap-8">
-        <div className="min-w-0 space-y-4 lg:space-y-5">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:items-start lg:gap-4 xl:gap-5">
+        <div className="min-w-0 space-y-3 lg:space-y-4">
           <AdminDashboardNav mode={navMode} />
 
           {recentAds.length > 0 || recentMembers.length > 0 ? (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
               {recentAds.length > 0 ? (
-                <div className="glass-card rounded-xl p-3.5 shadow-md md:p-4">
+                <div className="glass-card rounded-xl p-3 shadow-md md:p-3">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-orange-900/80">
                     Son ilanlar (beklemede)
                   </h3>
-                  <ul className="mt-3 max-h-48 space-y-2 overflow-y-auto text-xs">
+                  <ul className="mt-2 max-h-48 space-y-1.5 overflow-y-auto text-xs">
                     {recentAds.map((ad) => (
                       <li key={ad.id} className="truncate border-b border-orange-100/90 pb-2 last:border-0 last:pb-0">
                         <Link href="/admin/listings" className="text-orange-900 hover:underline">
@@ -265,11 +265,11 @@ export default async function AdminPage() {
                 </div>
               ) : null}
               {recentMembers.length > 0 ? (
-                <div className="glass-card rounded-xl p-3.5 shadow-md md:p-4">
+                <div className="glass-card rounded-xl p-3 shadow-md md:p-3">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-orange-900/80">
                     Son üyeler (onay bekliyor)
                   </h3>
-                  <ul className="mt-3 max-h-48 space-y-2 overflow-y-auto text-xs">
+                  <ul className="mt-2 max-h-48 space-y-1.5 overflow-y-auto text-xs">
                     {recentMembers.map((u) => (
                       <li key={u.id} className="truncate border-b border-orange-100/90 pb-2 last:border-0 last:pb-0">
                         <Link href="/admin/members" className="text-orange-900 hover:underline">
@@ -285,16 +285,16 @@ export default async function AdminPage() {
           ) : null}
         </div>
 
-        <aside className="min-w-0 space-y-4 lg:sticky lg:top-0 lg:max-h-[calc(100dvh-1rem)] lg:overflow-y-auto">
-          <div className="glass-card rounded-xl p-3.5 shadow-md md:p-4">
-            <h2 className="border-b border-orange-200/80 pb-2 text-sm font-semibold uppercase tracking-wide text-orange-950">
+        <aside className="min-w-0 space-y-3 lg:sticky lg:top-0 lg:max-h-[calc(100dvh-1rem)] lg:overflow-y-auto">
+          <div className="glass-card rounded-xl p-3 shadow-md md:p-3">
+            <h2 className="border-b border-orange-200/80 pb-1.5 text-xs font-semibold uppercase tracking-wide text-orange-950">
               Bekleyen talepler
             </h2>
 
-            <div className="mt-3 space-y-2">
+            <div className="mt-2 space-y-1.5">
               <Link
                 href="/admin/listings"
-                className="admin-stat-tile flex items-center justify-between rounded-lg px-2.5 py-2.5 text-sm font-medium text-orange-950 transition hover:ring-2 hover:ring-orange-300/60"
+                className="admin-stat-tile flex items-center justify-between rounded-lg px-2 py-2 text-[13px] font-medium leading-snug text-orange-950 transition hover:ring-2 hover:ring-orange-300/60"
               >
                 <span>Yeni ilan talebi</span>
                 <span className="rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-xs font-bold text-white tabular-nums shadow-sm">
@@ -303,7 +303,7 @@ export default async function AdminPage() {
               </Link>
               <Link
                 href="/admin/members"
-                className="admin-stat-tile flex items-center justify-between rounded-lg px-2.5 py-2.5 text-sm font-medium text-orange-950 transition hover:ring-2 hover:ring-orange-300/60"
+                className="admin-stat-tile flex items-center justify-between rounded-lg px-2 py-2 text-[13px] font-medium leading-snug text-orange-950 transition hover:ring-2 hover:ring-orange-300/60"
               >
                 <span>Yeni üye talebi</span>
                 <span className="rounded-full bg-gradient-to-r from-amber-600 to-orange-500 px-2 py-0.5 text-xs font-bold text-white tabular-nums shadow-sm">
@@ -312,7 +312,7 @@ export default async function AdminPage() {
               </Link>
               <Link
                 href="/admin/credit-invoices"
-                className="admin-stat-tile flex items-center justify-between rounded-lg px-2.5 py-2.5 text-sm font-medium text-orange-950 transition hover:ring-2 hover:ring-orange-300/60"
+                className="admin-stat-tile flex items-center justify-between rounded-lg px-2 py-2 text-[13px] font-medium leading-snug text-orange-950 transition hover:ring-2 hover:ring-orange-300/60"
               >
                 <span>Bekleyen faturalar</span>
                 <span className="rounded-full bg-gradient-to-r from-slate-600 to-slate-500 px-2 py-0.5 text-xs font-bold text-white tabular-nums shadow-sm">
@@ -323,7 +323,7 @@ export default async function AdminPage() {
                 <>
                   <Link
                     href="/admin/odeme"
-                    className="admin-stat-tile mt-1 flex items-center justify-between rounded-lg border border-emerald-200/80 bg-emerald-50/90 px-2.5 py-2.5 text-sm font-semibold text-emerald-950 transition hover:ring-2 hover:ring-emerald-300/60"
+                    className="admin-stat-tile mt-0.5 flex items-center justify-between rounded-lg border border-emerald-200/80 bg-emerald-50/90 px-2 py-2 text-[13px] font-semibold leading-snug text-emerald-950 transition hover:ring-2 hover:ring-emerald-300/60"
                   >
                     <span>Ödeme (iyzico / PayTR)</span>
                     <span className="text-emerald-700" aria-hidden>
@@ -332,7 +332,7 @@ export default async function AdminPage() {
                   </Link>
                   <Link
                     href="/admin/signup-sms-provider"
-                    className="admin-stat-tile mt-1 flex items-center justify-between rounded-lg border border-amber-200/80 bg-amber-50/90 px-2.5 py-2.5 text-sm font-semibold text-amber-950 transition hover:ring-2 hover:ring-amber-300/60"
+                    className="admin-stat-tile mt-0.5 flex items-center justify-between rounded-lg border border-amber-200/80 bg-amber-50/90 px-2 py-2 text-[13px] font-semibold leading-snug text-amber-950 transition hover:ring-2 hover:ring-amber-300/60"
                   >
                     <span>Kayıt telefon SMS</span>
                     <span className="text-amber-800" aria-hidden>

@@ -43,6 +43,17 @@ function isoInput(iso: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/** datetime-local → sunucuda güvenilir parse için UTC ISO (tarayıcı yerel saatinden). */
+function localDatetimeToIsoOrNull(value: string): string | null {
+  const t = value.trim();
+  if (!t) return null;
+  const d = new Date(t);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
+const fetchJsonOpts = { credentials: "include" as RequestCredentials };
+
 export default function AdminHomeHeroSlidesPage() {
   const [slides, setSlides] = useState<SlideRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +71,7 @@ export default function AdminHomeHeroSlidesPage() {
   async function reload() {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/home-hero-slides");
+      const res = await fetch("/api/admin/home-hero-slides", { ...fetchJsonOpts });
       const data = await res.json();
       if (!res.ok) throw new Error(apiErrorMessage(data.error, "Liste alınamadı."));
       setSlides(Array.isArray(data) ? data : []);
@@ -101,9 +112,10 @@ export default function AdminHomeHeroSlidesPage() {
   }
 
   function payloadBody() {
+    const sortOrder = Number.isFinite(form.sortOrder) ? Math.trunc(form.sortOrder) : 0;
     return {
       lang: form.lang,
-      sortOrder: form.sortOrder,
+      sortOrder,
       active: form.active,
       title: form.title.trim(),
       subtitle: form.subtitle.trim() || null,
@@ -111,8 +123,8 @@ export default function AdminHomeHeroSlidesPage() {
       ctaUrl: form.ctaUrl.trim() || null,
       ctaLabel: form.ctaLabel.trim() || null,
       isSponsor: form.isSponsor,
-      startsAt: form.startsAt.trim() ? form.startsAt.trim() : null,
-      endsAt: form.endsAt.trim() ? form.endsAt.trim() : null,
+      startsAt: localDatetimeToIsoOrNull(form.startsAt),
+      endsAt: localDatetimeToIsoOrNull(form.endsAt),
     };
   }
 
@@ -129,6 +141,7 @@ export default function AdminHomeHeroSlidesPage() {
       ? `/api/admin/home-hero-slides/${editingId}`
       : "/api/admin/home-hero-slides";
     const res = await fetch(url, {
+      ...fetchJsonOpts,
       method: editingId ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -146,7 +159,10 @@ export default function AdminHomeHeroSlidesPage() {
   async function onDelete(id: string) {
     if (!window.confirm("Bu slaytı silmek istediğinize emin misiniz?")) return;
     setMessage("");
-    const res = await fetch(`/api/admin/home-hero-slides/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/admin/home-hero-slides/${id}`, {
+      ...fetchJsonOpts,
+      method: "DELETE",
+    });
     const data = await res.json();
     if (!res.ok) {
       setMessage(apiErrorMessage(data.error, "Silinemedi."));

@@ -19,7 +19,7 @@ import SearchFilters from "@/components/SearchFilters";
 import EngineerSearch from "@/components/EngineerSearch";
 import HomeHeaderActions from "@/components/HomeHeaderActions";
 import HomePostListingStrip from "@/components/HomePostListingStrip";
-import HomeHeroCarousel from "@/components/HomeHeroCarousel";
+import HomeHeroMarqueeStrip from "@/components/HomeHeroMarqueeStrip";
 import { fetchActiveHomeHeroSlides, toHomeHeroSlidePayload } from "@/lib/homeHeroSlidesQuery";
 import { findManyAuctionsShowcaseFirst, HOME_AUCTIONS_LIMIT } from "@/lib/auctionListing";
 import { serializeAuctionForHomeList } from "@/lib/serializeHomeAuction";
@@ -220,6 +220,10 @@ export default async function Home({ searchParams }: Props) {
       lang === "tr"
         ? adminSettings.homeHeroSubtitleTr || t.home.heroSubtitle
         : adminSettings.homeHeroSubtitleEn || t.home.heroSubtitle;
+    const heroPrimaryLabel =
+      lang === "tr"
+        ? adminSettings.homePrimaryButtonTr?.trim() || t.home.primaryButton
+        : adminSettings.homePrimaryButtonEn?.trim() || t.home.primaryButton;
 
     const token = (await cookies()).get("session_token")?.value;
     const session = await verifySessionToken(token);
@@ -232,8 +236,8 @@ export default async function Home({ searchParams }: Props) {
 
     return (
     <main className="mx-auto w-full max-w-7xl space-y-6 px-3 pt-4 pb-[max(1.25rem,calc(0.5rem+env(safe-area-inset-bottom,0px)))] sm:space-y-8 sm:px-6 sm:pt-6 sm:pb-[max(1.75rem,calc(1rem+env(safe-area-inset-bottom,0px)))]">
-      <header className="space-y-6">
-        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+      <div className="space-y-6">
+        <header className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div className="flex shrink-0 items-center gap-4">
             <Image
               src="/yapanolur-logo.png"
@@ -255,20 +259,20 @@ export default async function Home({ searchParams }: Props) {
               neighborhood: params.neighborhood,
             }}
           />
-        </div>
+        </header>
 
-        <HomeHeroCarousel
+        <HomeHeroMarqueeStrip
           lang={lang}
           slides={heroSlides}
-          fallbackTitle={fallbackHeroTitle}
-          fallbackSubtitle={fallbackHeroSubtitle}
+          title={fallbackHeroTitle}
+          subtitle={fallbackHeroSubtitle}
           showHeroAuthLinks={showHeroAuthLinks}
           primaryButtonHref={lang === "en" ? "/login?lang=en" : "/login"}
           secondaryButtonHref={lang === "en" ? "/members?lang=en" : "/members"}
-          primaryButtonLabel={t.home.primaryButton}
+          primaryButtonLabel={heroPrimaryLabel}
           secondaryButtonLabel={t.home.secondaryButton}
         />
-      </header>
+      </div>
 
       <section className="grid max-lg:gap-5 gap-4 lg:grid-cols-[280px_1fr] lg:items-stretch">
         {/* Mobilde ilanlar önce: sıra lg’de normale döner */}

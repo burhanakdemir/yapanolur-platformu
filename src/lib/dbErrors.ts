@@ -61,7 +61,8 @@ export function isLikelyDatabaseConnectionError(error: unknown): boolean {
  */
 export function isLikelyPrismaSchemaColumnMissing(error: unknown): boolean {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    if (error.code === "P2022") {
+    /** P2022: kolon yok · P2021: tablo yok (migration eksik) */
+    if (error.code === "P2022" || error.code === "P2021") {
       return true;
     }
   }

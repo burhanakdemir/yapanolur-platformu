@@ -16,12 +16,16 @@ function isSuperAdminOnlyPath(pathname: string) {
   return (
     pathname === "/admin/admins" ||
     pathname.startsWith("/admin/admins/") ||
+    pathname === "/admin/sponsor-hero" ||
+    pathname.startsWith("/admin/sponsor-hero/") ||
     pathname === "/admin/signup-sms-provider" ||
     pathname.startsWith("/admin/signup-sms-provider/") ||
     pathname === "/admin/signup-verification" ||
     pathname.startsWith("/admin/signup-verification/") ||
     pathname === "/api/admin/team" ||
     pathname.startsWith("/api/admin/team/") ||
+    pathname === "/api/admin/sponsor-hero" ||
+    pathname.startsWith("/api/admin/sponsor-hero/") ||
     pathname === "/api/admin/signup-sms-provider" ||
     pathname.startsWith("/api/admin/signup-sms-provider/")
   );

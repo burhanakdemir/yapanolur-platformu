@@ -125,6 +125,8 @@ const bodySchema = z.object({
     },
     z.boolean().optional(),
   ),
+  sponsorHeroFeeAmountTry: z.number().int().min(0).optional(),
+  sponsorHeroPeriodDays: z.number().int().min(1).max(3650).optional(),
 });
 
 type Body = z.infer<typeof bodySchema>;
@@ -185,6 +187,12 @@ function buildAdminSettingsUpdateInput(
   if (data.signupPhoneVerificationRequired !== undefined) {
     p.signupPhoneVerificationRequired = data.signupPhoneVerificationRequired;
   }
+  if (data.sponsorHeroFeeAmountTry !== undefined) {
+    p.sponsorHeroFeeAmountTry = toInt(data.sponsorHeroFeeAmountTry) ?? data.sponsorHeroFeeAmountTry;
+  }
+  if (data.sponsorHeroPeriodDays !== undefined) {
+    p.sponsorHeroPeriodDays = toInt(data.sponsorHeroPeriodDays) ?? data.sponsorHeroPeriodDays;
+  }
   if (extra.setSmtpPass !== undefined) p.smtpPass = extra.setSmtpPass;
   return p;
 }
@@ -201,16 +209,28 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const json: unknown = await req.json();
+    const c = await cookies();
+    const session = await verifySessionToken(c.get("session_token")?.value);
     if (
       typeof json === "object" &&
       json !== null &&
       ("signupEmailVerificationRequired" in json || "signupPhoneVerificationRequired" in json)
     ) {
-      const c = await cookies();
-      const session = await verifySessionToken(c.get("session_token")?.value);
       if (!isSuperAdminRole(session?.role)) {
         return NextResponse.json(
           { error: "Üye kaydı doğrulama anahtarlarını yalnızca süper yönetici değiştirebilir." },
+          { status: 403 },
+        );
+      }
+    }
+    if (
+      typeof json === "object" &&
+      json !== null &&
+      ("sponsorHeroFeeAmountTry" in json || "sponsorHeroPeriodDays" in json)
+    ) {
+      if (!isSuperAdminRole(session?.role)) {
+        return NextResponse.json(
+          { error: "Ana sayfa sponsor ücretini yalnızca süper yönetici değiştirebilir." },
           { status: 403 },
         );
       }

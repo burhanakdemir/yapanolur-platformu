@@ -163,6 +163,8 @@ export default async function UserPanelPage({ searchParams }: Props) {
   const panelUser = await prisma.user.findUnique({
     where: { id: session.userId },
     select: {
+      role: true,
+      memberNumber: true,
       profilePhotoUrl: true,
       name: true,
       isMemberApproved: true,
@@ -176,6 +178,9 @@ export default async function UserPanelPage({ searchParams }: Props) {
       },
     },
   });
+
+  /** JWT içindeki rol bazen güncel olmayabilir; üye arayüzü DB rolüne göre. */
+  const isMemberAccount = panelUser?.role === "MEMBER";
 
   const t =
     lang === "tr"
@@ -192,6 +197,11 @@ export default async function UserPanelPage({ searchParams }: Props) {
           profileDocs: "Profil ve belgeler",
           engineerSearch: "Mühendis ara",
           topup: "Bakiye yükle",
+          sponsorHero: "Ana sayfa sponsorluğu",
+          sponsorHeroDesc: "Üst şerit görünürlüğü ve ücret bilgisi.",
+          sponsorStripDesc:
+            "Ana sayfadaki kayan sponsor şeridinde görünmek için ücret ve süre platform ayarlarındadır; süper yönetici üye numaranızla yayını ekler.",
+          sponsorStripCta: "Bilgi ve ücretler",
           rangeLabel: "Özet dönemi",
           rangeStart: "Başlangıç",
           rangeEnd: "Bitiş",
@@ -261,6 +271,11 @@ export default async function UserPanelPage({ searchParams }: Props) {
           profileDocs: "Profile & documents",
           engineerSearch: "Find engineers",
           topup: "Add credit",
+          sponsorHero: "Homepage sponsorship",
+          sponsorHeroDesc: "Ticker placement and pricing info.",
+          sponsorStripDesc:
+            "Pricing and duration follow platform settings; a super admin activates your row using your member number.",
+          sponsorStripCta: "Pricing & details",
           rangeLabel: "Summary period",
           rangeStart: "Start",
           rangeEnd: "End",
@@ -471,7 +486,7 @@ export default async function UserPanelPage({ searchParams }: Props) {
     fromUser: { memberNumber: number; name: string | null };
   }[] = [];
 
-  if (session?.role === "MEMBER") {
+  if (isMemberAccount) {
     try {
       memberBalanceTry = await sumUserCreditTry(session.userId);
     } catch (e) {
@@ -507,11 +522,9 @@ export default async function UserPanelPage({ searchParams }: Props) {
     }
   }
 
-  const showPendingBanner =
-    session?.role === "MEMBER" && panelUser && !panelUser.isMemberApproved;
+  const showPendingBanner = isMemberAccount && panelUser && !panelUser.isMemberApproved;
 
-  const newAdEmailOptIn =
-    session?.role === "MEMBER" ? await getUserNewAdEmailOptIn(session.userId) : false;
+  const newAdEmailOptIn = isMemberAccount ? await getUserNewAdEmailOptIn(session.userId) : false;
 
   return (
     <main className="admin-canvas min-h-screen">
@@ -565,7 +578,7 @@ export default async function UserPanelPage({ searchParams }: Props) {
               </div>
 
               <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-start sm:gap-3 lg:gap-4">
-                {session?.role === "MEMBER" ? (
+                {isMemberAccount ? (
                   <div className="flex w-fit shrink-0 justify-center sm:justify-start">
                     <div className="rounded-lg border border-white/40 bg-white/12 px-2.5 py-2 text-center backdrop-blur">
                       <p className="text-[9px] font-semibold uppercase tracking-wide text-orange-100">
@@ -589,7 +602,7 @@ export default async function UserPanelPage({ searchParams }: Props) {
                       <span className="font-medium text-orange-100">{t.activeUser}:</span>{" "}
                       <span className="break-all font-mono text-[0.9em] opacity-95">{session?.email ?? "—"}</span>
                     </p>
-                    {session?.role === "MEMBER" ? (
+                    {isMemberAccount ? (
                       <p className="text-base font-semibold tabular-nums tracking-tight text-white sm:text-lg">
                         {t.balanceLabel}: {memberBalanceTry} TL
                       </p>
@@ -615,7 +628,33 @@ export default async function UserPanelPage({ searchParams }: Props) {
           </div>
         </header>
 
-        {session.role === "MEMBER" ? (
+        {isMemberAccount ? (
+          <section
+            aria-labelledby="panel-sponsor-strip-title"
+            className="rounded-2xl border border-amber-400/80 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 p-4 shadow-md sm:p-5"
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <h2 id="panel-sponsor-strip-title" className="text-lg font-bold text-amber-950">
+                  {t.sponsorHero}
+                </h2>
+                <p className="text-sm leading-relaxed text-slate-700">{t.sponsorStripDesc}</p>
+                <p className="text-xs font-medium tabular-nums text-amber-900/90">
+                  {lang === "tr" ? "Üye numaranız:" : "Member no."}{" "}
+                  <span className="font-mono">{panelUser?.memberNumber ?? "—"}</span>
+                </p>
+              </div>
+              <Link
+                href={lang === "en" ? "/panel/user/sponsorship?lang=en" : "/panel/user/sponsorship"}
+                className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-amber-800 to-orange-600 px-5 py-2.5 text-center text-sm font-bold text-white shadow-md transition hover:opacity-95"
+              >
+                {t.sponsorStripCta}
+              </Link>
+            </div>
+          </section>
+        ) : null}
+
+        {isMemberAccount ? (
           <section
             id="uye-eposta-bildirimleri"
             className="rounded-2xl border border-orange-200/80 bg-white/90 p-4 shadow-sm sm:p-5"
@@ -639,7 +678,7 @@ export default async function UserPanelPage({ searchParams }: Props) {
         ) : null}
 
         {/* Quick actions */}
-        <section aria-label="Quick actions" className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <section aria-label="Quick actions" className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <Link
             href={`/ads/new?lang=${lang}`}
             className="admin-nav-card group rounded-2xl border border-orange-200/80 p-4 no-underline"
@@ -688,6 +727,18 @@ export default async function UserPanelPage({ searchParams }: Props) {
               {lang === "tr" ? "iyzico / PayTR ile kredi." : "Credit via iyzico / PayTR."}
             </span>
           </Link>
+          {isMemberAccount ? (
+            <Link
+              href={lang === "en" ? "/panel/user/sponsorship?lang=en" : "/panel/user/sponsorship"}
+              className="admin-nav-card group rounded-2xl border border-amber-300/90 bg-amber-50/40 p-4 no-underline"
+            >
+              <span className="text-2xl" aria-hidden>
+                ✨
+              </span>
+              <span className="mt-2 block font-semibold text-orange-950">{t.sponsorHero}</span>
+              <span className="mt-1 block text-xs text-slate-600">{t.sponsorHeroDesc}</span>
+            </Link>
+          ) : null}
         </section>
 
         {/* Period + stats */}
@@ -919,7 +970,7 @@ export default async function UserPanelPage({ searchParams }: Props) {
           />
         </PanelCollapsibleSection>
 
-        {session?.role === "MEMBER" ? (
+        {isMemberAccount ? (
           <PanelCollapsibleSection
             sectionId="profile-comments"
             title={t.commentsTitle}

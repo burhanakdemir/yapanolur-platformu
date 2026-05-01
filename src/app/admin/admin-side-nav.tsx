@@ -49,30 +49,30 @@ export default function AdminSideNav({ showTeam, mode }: Props) {
 
   return (
     <aside
-      className={`hidden w-[220px] shrink-0 border-b bg-gradient-to-b ${railTint} lg:sticky lg:top-0 lg:block lg:self-start lg:border-b-0 lg:border-r lg:px-1 lg:pt-6 lg:pb-4`}
+      className={`hidden w-[200px] shrink-0 border-b bg-gradient-to-b ${railTint} lg:sticky lg:top-0 lg:block lg:self-start lg:border-b-0 lg:border-r lg:px-0.5 lg:pt-3 lg:pb-2`}
       aria-label="Yönetici bölümleri"
     >
       <div
-        className={`mx-1 mb-3 rounded-lg border px-2 py-2 text-center text-[9px] font-bold uppercase leading-tight tracking-wide ${badge.className}`}
+        className={`mx-0.5 mb-1.5 rounded-md border px-1 py-1 text-center text-[8px] font-bold uppercase leading-tight tracking-wide ${badge.className}`}
         role="status"
       >
         {badge.label}
       </div>
-      <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-wider text-orange-800/80">Bölümler</p>
-      <div className="max-h-[min(100dvh-6rem,900px)] space-y-3 overflow-y-auto pr-0.5 lg:pl-0">
+      <p className="px-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-orange-800/80">Bölümler</p>
+      <div className="max-h-[min(100dvh-6rem,900px)] space-y-1 overflow-y-auto pr-0.5 lg:pl-0">
         {showTeam ? (
-          <div className="rounded-xl border-2 border-amber-400/90 bg-gradient-to-b from-amber-50/95 to-white/90 p-2.5 shadow-lg ring-2 ring-amber-500/20">
+          <div className="rounded-lg border border-amber-400/80 bg-gradient-to-b from-amber-50/95 to-white/90 p-1 shadow-sm ring-1 ring-amber-500/15">
             <Link
               href={ADMIN_TEAM_SECTION.href}
               className={
                 active(pathname, ADMIN_TEAM_SECTION.href)
-                  ? "block rounded-lg border-2 border-amber-500 bg-amber-100 px-2.5 py-2.5 text-sm font-bold text-amber-950 shadow-md"
-                  : "block rounded-lg border border-amber-300/90 bg-white px-2.5 py-2.5 text-sm font-semibold text-amber-950 shadow-sm transition hover:border-amber-400 hover:shadow"
+                  ? "block rounded-md border border-amber-600 bg-amber-100 px-1.5 py-1 text-[11px] font-bold leading-tight text-amber-950"
+                  : "block rounded-md border border-amber-300/90 bg-white px-1.5 py-1 text-[11px] font-semibold leading-tight text-amber-950 transition hover:border-amber-400 hover:bg-amber-50/80"
               }
             >
               {ADMIN_TEAM_SECTION.title}
             </Link>
-            <p className="mt-1.5 px-0.5 text-[10px] font-medium leading-snug text-amber-900/90">
+            <p className="mt-0.5 px-0.5 text-[8px] font-medium leading-snug text-amber-900/90">
               {ADMIN_TEAM_SECTION.description}
             </p>
           </div>
@@ -80,12 +80,12 @@ export default function AdminSideNav({ showTeam, mode }: Props) {
         {sectionGroups.map((group) => (
           <div
             key={group.id}
-            className="rounded-xl border-2 border-orange-300/90 bg-gradient-to-b from-white to-orange-50/50 p-2.5 shadow-md ring-1 ring-orange-400/35"
+            className="rounded-lg border border-orange-300/85 bg-gradient-to-b from-white to-orange-50/45 p-1 shadow-sm ring-1 ring-orange-400/25"
           >
-            <h3 className="mb-2.5 border-b-2 border-orange-200/90 pb-2 pl-0.5 text-[9px] font-bold uppercase tracking-wider text-orange-900">
+            <h3 className="mb-1 border-b border-orange-200/90 pb-0.5 pl-0.5 text-[8px] font-bold uppercase tracking-wider text-orange-900">
               {group.label}
             </h3>
-            <ul className="space-y-1.5">
+            <ul className="space-y-0.5">
               {group.sections.map((s) => {
                 const on = active(pathname, s.href);
                 return (
@@ -94,8 +94,8 @@ export default function AdminSideNav({ showTeam, mode }: Props) {
                       href={s.href}
                       className={
                         on
-                          ? "block rounded-lg border-2 border-orange-400 bg-gradient-to-r from-orange-500 to-amber-600 px-2.5 py-2 text-sm font-semibold text-white shadow-md"
-                          : "block rounded-lg border border-orange-200/80 bg-white/90 px-2.5 py-2 text-sm font-medium text-orange-950 shadow-sm transition hover:border-orange-300 hover:bg-amber-50/90 hover:shadow"
+                          ? "block rounded-md border border-orange-500 bg-gradient-to-r from-orange-500 to-amber-600 px-1.5 py-1 text-[11px] font-semibold leading-snug text-white shadow-sm"
+                          : "block rounded-md border border-orange-200/80 bg-white/90 px-1.5 py-1 text-[11px] font-medium leading-snug text-orange-950 transition hover:border-orange-300 hover:bg-amber-50/90"
                       }
                     >
                       {s.title}

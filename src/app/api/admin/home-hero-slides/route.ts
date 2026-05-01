@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { verifySessionToken } from "@/lib/auth";
-import { isStaffAdminRole } from "@/lib/adminRoles";
+import { Prisma } from "@/generated/prisma/client";
 import {
   DatabaseConnectionError,
   isLikelyDatabaseConnectionError,
 } from "@/lib/dbErrors";
 import { isAllowedHeroCtaUrl, isAllowedHeroImageUrl } from "@/lib/homeHeroSlideValidate";
-
-const slideLangSchema = z.enum(["tr", "en"]);
+import { canStaffAdminOrGateAdmin } from "@/lib/adminStaffOrGateAuth";
+import {
+  formatHomeHeroSlideZodError,
+  homeHeroSlideCreateBodySchema,
+} from "@/lib/homeHeroSlideApiSchema";
 
 function trimOrNull(v: string | null | undefined): string | null {
   if (v === undefined || v === null) return null;
@@ -26,26 +26,13 @@ function parseOptionalDate(v: unknown): Date | null | undefined {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export const createBodySchema = z.object({
-  lang: slideLangSchema,
-  sortOrder: z.number().int().optional(),
-  active: z.boolean().optional(),
-  title: z.string().trim().min(1).max(500),
-  subtitle: z.string().max(2000).optional().nullable(),
-  imageUrl: z.string().max(2000).optional().nullable(),
-  ctaUrl: z.string().max(2000).optional().nullable(),
-  ctaLabel: z.string().max(200).optional().nullable(),
-  isSponsor: z.boolean().optional(),
-  startsAt: z.union([z.string(), z.null()]).optional(),
-  endsAt: z.union([z.string(), z.null()]).optional(),
-});
-
 export async function GET() {
   try {
-    const token = (await cookies()).get("session_token")?.value;
-    const session = await verifySessionToken(token);
-    if (!session || !isStaffAdminRole(session.role)) {
-      return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+    if (!(await canStaffAdminOrGateAdmin())) {
+      return NextResponse.json(
+        { error: "Yetkisiz. Yönetici oturumu veya panel şifresi gerekir." },
+        { status: 403 },
+      );
     }
 
     const slides = await prisma.homeHeroSlide.findMany({
@@ -65,16 +52,17 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const token = (await cookies()).get("session_token")?.value;
-    const session = await verifySessionToken(token);
-    if (!session || !isStaffAdminRole(session.role)) {
-      return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+    if (!(await canStaffAdminOrGateAdmin())) {
+      return NextResponse.json(
+        { error: "Yetkisiz. Yönetici oturumu veya panel şifresi gerekir." },
+        { status: 403 },
+      );
     }
 
     const raw = await req.json().catch(() => null);
-    const parsed = createBodySchema.safeParse(raw);
+    const parsed = homeHeroSlideCreateBodySchema.safeParse(raw);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Geçersiz istek gövdesi." }, { status: 400 });
+      return NextResponse.json({ error: formatHomeHeroSlideZodError(parsed) }, { status: 400 });
     }
 
     const data = parsed.data;
@@ -114,6 +102,15 @@ export async function POST(req: Request) {
     revalidatePath("/");
     return NextResponse.json(slide);
   } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2021") {
+      return NextResponse.json(
+        {
+          error:
+            "HomeHeroSlide tablosu bulunamadı. Üretimde veya yerelde şema güncelleyin: npx prisma migrate deploy",
+        },
+        { status: 503 },
+      );
+    }
     if (e instanceof DatabaseConnectionError || isLikelyDatabaseConnectionError(e)) {
       return NextResponse.json(
         { error: e instanceof Error ? e.message : "Veritabanı bağlantısı yok." },

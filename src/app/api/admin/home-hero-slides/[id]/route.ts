@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { verifySessionToken } from "@/lib/auth";
-import { isStaffAdminRole } from "@/lib/adminRoles";
+import { Prisma } from "@/generated/prisma/client";
 import {
   DatabaseConnectionError,
   isLikelyDatabaseConnectionError,
 } from "@/lib/dbErrors";
 import { isAllowedHeroCtaUrl, isAllowedHeroImageUrl } from "@/lib/homeHeroSlideValidate";
-import { createBodySchema } from "../route";
-
-const patchBodySchema = createBodySchema.partial();
+import { canStaffAdminOrGateAdmin } from "@/lib/adminStaffOrGateAuth";
+import {
+  formatHomeHeroSlideZodError,
+  homeHeroSlidePatchBodySchema,
+} from "@/lib/homeHeroSlideApiSchema";
 
 function trimOrNull(v: string | null | undefined): string | null {
   if (v === undefined || v === null) return null;
@@ -30,10 +30,11 @@ type RouteCtx = { params: Promise<{ id: string }> };
 
 export async function PATCH(req: Request, ctx: RouteCtx) {
   try {
-    const token = (await cookies()).get("session_token")?.value;
-    const session = await verifySessionToken(token);
-    if (!session || !isStaffAdminRole(session.role)) {
-      return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+    if (!(await canStaffAdminOrGateAdmin())) {
+      return NextResponse.json(
+        { error: "Yetkisiz. Yönetici oturumu veya panel şifresi gerekir." },
+        { status: 403 },
+      );
     }
 
     const { id } = await ctx.params;
@@ -43,9 +44,9 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
     }
 
     const raw = await req.json().catch(() => null);
-    const parsed = patchBodySchema.safeParse(raw);
+    const parsed = homeHeroSlidePatchBodySchema.safeParse(raw);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Geçersiz istek gövdesi." }, { status: 400 });
+      return NextResponse.json({ error: formatHomeHeroSlideZodError(parsed) }, { status: 400 });
     }
 
     const data = parsed.data;
@@ -92,6 +93,15 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
     revalidatePath("/");
     return NextResponse.json(slide);
   } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2021") {
+      return NextResponse.json(
+        {
+          error:
+            "HomeHeroSlide tablosu bulunamadı. Üretimde veya yerelde şema güncelleyin: npx prisma migrate deploy",
+        },
+        { status: 503 },
+      );
+    }
     if (e instanceof DatabaseConnectionError || isLikelyDatabaseConnectionError(e)) {
       return NextResponse.json(
         { error: e instanceof Error ? e.message : "Veritabanı bağlantısı yok." },
@@ -104,10 +114,11 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
 
 export async function DELETE(_req: Request, ctx: RouteCtx) {
   try {
-    const token = (await cookies()).get("session_token")?.value;
-    const session = await verifySessionToken(token);
-    if (!session || !isStaffAdminRole(session.role)) {
-      return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+    if (!(await canStaffAdminOrGateAdmin())) {
+      return NextResponse.json(
+        { error: "Yetkisiz. Yönetici oturumu veya panel şifresi gerekir." },
+        { status: 403 },
+      );
     }
 
     const { id } = await ctx.params;
@@ -120,6 +131,15 @@ export async function DELETE(_req: Request, ctx: RouteCtx) {
     revalidatePath("/");
     return NextResponse.json({ ok: true });
   } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2021") {
+      return NextResponse.json(
+        {
+          error:
+            "HomeHeroSlide tablosu bulunamadı. Üretimde veya yerelde şema güncelleyin: npx prisma migrate deploy",
+        },
+        { status: 503 },
+      );
+    }
     if (e instanceof DatabaseConnectionError || isLikelyDatabaseConnectionError(e)) {
       return NextResponse.json(
         { error: e instanceof Error ? e.message : "Veritabanı bağlantısı yok." },

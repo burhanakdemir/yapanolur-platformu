@@ -371,3 +371,161 @@ a.admin-back-link:hover {
     will-change: auto;
   }
 }
+
+/* Sponsor ticker — lacivert dolgu + beyaz çevre (turuncu şeritte kontrast) */
+.home-hero-sponsor-ticker-white-ring {
+  text-shadow:
+    -1px -1px 0 #fff,
+    1px -1px 0 #fff,
+    -1px 1px 0 #fff,
+    1px 1px 0 #fff,
+    0 -1px 0 #fff,
+    -1px 0 0 #fff,
+    1px 0 0 #fff,
+    0 1px 0 #fff,
+    0 0 1px #fff,
+    0 0 6px rgba(255 255 255 / 0.92);
+}
+
+@keyframes home-hero-sponsor-ticker-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(0.93) saturate(0.98);
+    text-shadow:
+      -1px -1px 0 rgba(255 255 255 / 0.55),
+      1px -1px 0 rgba(255 255 255 / 0.55),
+      -1px 1px 0 rgba(255 255 255 / 0.55),
+      1px 1px 0 rgba(255 255 255 / 0.55),
+      0 -1px 0 rgba(255 255 255 / 0.55),
+      -1px 0 0 rgba(255 255 255 / 0.55),
+      1px 0 0 rgba(255 255 255 / 0.55),
+      0 1px 0 rgba(255 255 255 / 0.55),
+      0 0 2px rgba(255 255 255 / 0.35),
+      0 0 10px rgba(255 255 255 / 0.22);
+  }
+  28% {
+    opacity: 0.72;
+    filter: brightness(0.78) saturate(0.94);
+    text-shadow:
+      -1px -1px 0 rgba(255 255 255 / 0.28),
+      1px -1px 0 rgba(255 255 255 / 0.28),
+      -1px 1px 0 rgba(255 255 255 / 0.28),
+      1px 1px 0 rgba(255 255 255 / 0.28),
+      0 -1px 0 rgba(255 255 255 / 0.28),
+      -1px 0 0 rgba(255 255 255 / 0.28),
+      1px 0 0 rgba(255 255 255 / 0.28),
+      0 1px 0 rgba(255 255 255 / 0.28),
+      0 0 4px rgba(255 255 255 / 0.12);
+  }
+  52% {
+    opacity: 1;
+    filter: brightness(1.32) saturate(1.12);
+    text-shadow:
+      -2px -2px 0 #fff,
+      2px -2px 0 #fff,
+      -2px 2px 0 #fff,
+      2px 2px 0 #fff,
+      0 -2px 0 #fff,
+      -2px 0 0 #fff,
+      2px 0 0 #fff,
+      0 2px 0 #fff,
+      -1px -1px 0 #fff,
+      1px -1px 0 #fff,
+      -1px 1px 0 #fff,
+      1px 1px 0 #fff,
+      0 0 8px #fff,
+      0 0 24px rgba(255 255 255 / 0.98),
+      0 0 42px rgba(255 255 255 / 0.72),
+      0 0 56px rgba(255 255 255 / 0.38);
+  }
+  76% {
+    opacity: 0.95;
+    filter: brightness(1.05) saturate(1.02);
+    text-shadow:
+      -1px -1px 0 rgba(255 255 255 / 0.88),
+      1px -1px 0 rgba(255 255 255 / 0.88),
+      -1px 1px 0 rgba(255 255 255 / 0.88),
+      1px 1px 0 rgba(255 255 255 / 0.88),
+      0 -1px 0 rgba(255 255 255 / 0.88),
+      -1px 0 0 rgba(255 255 255 / 0.88),
+      1px 0 0 rgba(255 255 255 / 0.88),
+      0 1px 0 rgba(255 255 255 / 0.88),
+      0 0 4px rgba(255 255 255 / 0.75),
+      0 0 16px rgba(255 255 255 / 0.45);
+  }
+}
+
+.home-hero-sponsor-ticker-pulse {
+  animation: home-hero-sponsor-ticker-pulse 2.35s ease-in-out infinite;
+  will-change: filter, text-shadow, opacity;
+}
+
+/* Sponsor şeridi — kesintisiz döngü (iki kopya %50 kaydırma) */
+@keyframes home-hero-loop-rtl {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Sponsor ticker satırı — kayma transform üst elemanda; parlama çocukta */
+@keyframes home-hero-sponsor-text-glow {
+  0%,
+  100% {
+    opacity: 1;
+    text-shadow:
+      0 0 10px rgba(255 251 235 / 0.45),
+      0 1px 2px rgba(124 45 18 / 0.35);
+    filter: brightness(1) saturate(1);
+  }
+  22% {
+    opacity: 1;
+    text-shadow:
+      0 0 18px rgba(255 255 255 / 0.95),
+      0 0 32px rgba(254 215 170 / 0.85),
+      0 0 48px rgba(251 146 60 / 0.45);
+    filter: brightness(1.22) saturate(1.18);
+  }
+  46% {
+    opacity: 0.92;
+    text-shadow: 0 0 8px rgba(255 237 213 / 0.5);
+    filter: brightness(0.94) saturate(0.92);
+  }
+  66% {
+    opacity: 1;
+    text-shadow:
+      0 0 16px rgba(255 251 235 / 0.75),
+      0 0 26px rgba(249 115 22 / 0.35);
+    filter: brightness(1.12) saturate(1.1);
+  }
+}
+
+.home-hero-sponsor-text-glow {
+  animation: home-hero-sponsor-text-glow 1.45s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+  will-change: filter, text-shadow, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero-marquee-loop {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .home-hero-sponsor-text-glow {
+    animation: none !important;
+    filter: none !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+    will-change: auto;
+  }
+
+  .home-hero-sponsor-ticker-pulse {
+    animation: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    will-change: auto;
+  }
+}

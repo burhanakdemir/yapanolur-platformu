@@ -30,6 +30,7 @@ export const ADMIN_QUICK_LINKS: readonly AdminQuickLink[] = [
   { href: "/executive", label: "İş özeti", superOnly: true },
   { href: "/admin/site-settings", label: "Site" },
   { href: "/admin/home-hero-slides", label: "Hero slayt" },
+  { href: "/admin/sponsor-hero", label: "Sponsor hero", superOnly: true },
   { href: "/admin/odeme", label: "Ödeme", superOnly: true },
   { href: "/admin/signup-sms-provider", label: "Kayıt SMS", superOnly: true },
   { href: "/admin/signup-verification", label: "Kayıt OTP", superOnly: true },
@@ -76,6 +77,14 @@ export const ADMIN_SECTION_GROUPS: AdminNavGroup[] = [
         title: "Ana sayfa hero slaytları",
         description: "Üst carousel: duyuru ve sponsor slaytları, sıralama ve zaman aralığı.",
         href: "/admin/home-hero-slides",
+      },
+      {
+        id: "sponsor-hero",
+        title: "Ana sayfa sponsor ücreti & üye ekleme",
+        description:
+          "Sponsorluk ücreti ve süresi; üye numarasıyla TR/EN sponsor satırı oluşturma (süper yönetici).",
+        href: "/admin/sponsor-hero",
+        superOnly: true,
       },
       {
         id: "support",

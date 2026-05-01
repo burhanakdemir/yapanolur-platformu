@@ -139,6 +139,8 @@ model User {
   adminProvinceAccesses       AdminProvinceAccess[]
   creditInvoiceRequests       CreditInvoiceRequest[] @relation("CreditInvoiceBuyer")
   creditInvoiceApprovals      CreditInvoiceRequest[] @relation("CreditInvoiceApprover")
+  /** Ana sayfa hero sponsor slaytı (ücretli görünürlük) */
+  homeHeroSponsorSlides       HomeHeroSlide[]        @relation("SponsorHeroSlides")
 }
 
 /** Uye profiline ucretli (kredi) yorum */
@@ -459,6 +461,10 @@ model AdminSettings {
   signupEmailVerificationRequired Boolean @default(true)
   /** false: kayıtta telefon OTP istenmez; telefon alanı isteğe bağlı (demo). */
   signupPhoneVerificationRequired Boolean @default(true)
+  /** Ana sayfa sponsor şeridi — dönem başına ücret (TL, kredi ile tahsil önerilir) */
+  sponsorHeroFeeAmountTry       Int      @default(0)
+  /** Yayın süresi gün (slayt bitiş tarihi için varsayılan) */
+  sponsorHeroPeriodDays         Int      @default(30)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
@@ -480,12 +486,16 @@ model HomeHeroSlide {
   ctaUrl    String?
   ctaLabel  String?
   isSponsor Boolean           @default(false)
+  /** Sponsor satırı hangi üyeye ait (süper yönetici üye no ile ekler) */
+  sponsorUserId String?
+  sponsorUser   User?         @relation("SponsorHeroSlides", fields: [sponsorUserId], references: [id], onDelete: SetNull)
   startsAt  DateTime?
   endsAt    DateTime?
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
 
   @@index([lang, active, sortOrder])
+  @@index([sponsorUserId])
 }
 
 model Category {
