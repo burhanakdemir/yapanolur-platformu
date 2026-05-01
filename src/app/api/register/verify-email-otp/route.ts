@@ -11,6 +11,7 @@ import { createSignupEmailProofToken, SIGNUP_EMAIL_COOKIE } from "@/lib/signupEm
 import { SIGNUP_PHONE_COOKIE } from "@/lib/signupPhoneProof";
 import { shouldUseSecureCookie } from "@/lib/cookieSecure";
 import { rateLimitGuard } from "@/lib/rateLimit";
+import { getSignupVerificationFlags } from "@/lib/signupVerificationSettings";
 
 const bodySchema = z.object({
   email: z.preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase() : v), z.string().email()),
@@ -23,6 +24,11 @@ export async function POST(req: Request) {
 
   try {
     const data = bodySchema.parse(await req.json());
+    const flags = await getSignupVerificationFlags(prisma);
+    if (!flags.signupEmailVerificationRequired) {
+      return NextResponse.json({ ok: true, verificationDisabled: true });
+    }
+
     const existing = await prisma.user.findUnique({
       where: { email: data.email },
       select: { id: true },

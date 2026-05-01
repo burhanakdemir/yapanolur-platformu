@@ -15,6 +15,7 @@ import { rateLimitGuard } from "@/lib/rateLimit";
 import { verifySignupEmailProofToken, SIGNUP_EMAIL_COOKIE } from "@/lib/signupEmailProof";
 import { SIGNUP_PHONE_COOKIE } from "@/lib/signupPhoneProof";
 import { shouldUseSecureCookie } from "@/lib/cookieSecure";
+import { getSignupVerificationFlags } from "@/lib/signupVerificationSettings";
 
 const bodySchema = z.object({
   email: z.preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase() : v), z.string().email()),
@@ -27,13 +28,26 @@ export async function POST(req: Request) {
 
   try {
     const { phone, email } = bodySchema.parse(await req.json());
-    const proofCookie = (await cookies()).get(SIGNUP_EMAIL_COOKIE)?.value;
-    const emailOk = await verifySignupEmailProofToken(proofCookie, email);
-    if (!emailOk) {
-      return NextResponse.json(
-        { error: "Önce e-postanızı doğrulayın; telefon kodu yalnızca doğrulanmış e-posta ile istenebilir." },
-        { status: 400 },
-      );
+    const flags = await getSignupVerificationFlags(prisma);
+    if (!flags.signupPhoneVerificationRequired) {
+      return NextResponse.json({
+        ok: true,
+        verificationDisabled: true,
+        otpTtlMinutes: OTP_SIGNUP_PHONE_TTL_MINUTES,
+        smsSent: false,
+        hint: "Site yöneticisi telefon doğrulamasını kapattı; kayıt için SMS OTP gerekmez.",
+      });
+    }
+
+    if (flags.signupEmailVerificationRequired) {
+      const proofCookie = (await cookies()).get(SIGNUP_EMAIL_COOKIE)?.value;
+      const emailOk = await verifySignupEmailProofToken(proofCookie, email);
+      if (!emailOk) {
+        return NextResponse.json(
+          { error: "Önce e-postanızı doğrulayın; telefon kodu yalnızca doğrulanmış e-posta ile istenebilir." },
+          { status: 400 },
+        );
+      }
     }
 
     const target = normalizePhoneInputToE164(phone.trim());

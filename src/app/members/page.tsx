@@ -74,6 +74,9 @@ function MembersPageContent() {
   const [lang, setLang] = useState<Lang>("tr");
   /** Sunucu SIGNUP_OTP_TTL_MINUTES ile uyumlu; API yanıtındaki otpTtlMinutes ile güncellenir. */
   const [signupOtpTtlMinutes, setSignupOtpTtlMinutes] = useState(15);
+  /** null: henüz /api/register/options yüklenmedi — güvenli varsayılan OTP zorunlu. */
+  const [signupEmailRequired, setSignupEmailRequired] = useState<boolean | null>(null);
+  const [signupPhoneRequired, setSignupPhoneRequired] = useState<boolean | null>(null);
   const [message, setMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -177,8 +180,11 @@ function MembersPageContent() {
     [phoneCountryIso, phoneNational],
   );
   const isReadonly = Boolean(savedProfile);
-  const blockUntilEmailVerified = !isReadonly && !emailVerified;
-  const blockUntilFullyVerified = !isReadonly && (!emailVerified || !phoneVerified);
+  const emailOtpGate = signupEmailRequired !== false;
+  const phoneOtpGate = signupPhoneRequired !== false;
+  const blockUntilEmailVerified = !isReadonly && emailOtpGate && !emailVerified;
+  const blockUntilFullyVerified =
+    !isReadonly && ((emailOtpGate && !emailVerified) || (phoneOtpGate && !phoneVerified));
   const displayMemberNumber =
     savedProfile?.memberNumber ?? (pendingMemberNumber !== null ? pendingMemberNumber : null);
   const savedDocuments = {
@@ -226,6 +232,34 @@ function MembersPageContent() {
     fetch(clientApiUrl("/api/professions"), { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => setProfessions(Array.isArray(d) ? d : []));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(clientApiUrl("/api/register/options"), { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: unknown) => {
+        if (cancelled || !d || typeof d !== "object") return;
+        const o = d as {
+          signupEmailVerificationRequired?: boolean;
+          signupPhoneVerificationRequired?: boolean;
+        };
+        const em = o.signupEmailVerificationRequired !== false;
+        const ph = o.signupPhoneVerificationRequired !== false;
+        setSignupEmailRequired(em);
+        setSignupPhoneRequired(ph);
+        if (!em) setEmailVerified(true);
+        if (!ph) setPhoneVerified(true);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSignupEmailRequired(true);
+          setSignupPhoneRequired(true);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -540,11 +574,11 @@ function MembersPageContent() {
     const givenName = String(form.get("givenName") || "").trim();
     const familyName = String(form.get("familyName") || "").trim();
     const fullNameFromParts = `${givenName} ${familyName}`.trim();
-    if (!isReadonly && !emailVerified) {
+    if (!isReadonly && emailOtpGate && !emailVerified) {
       setMessage("Önce e-posta kodunu alıp «E-postayı doğrula» ile onaylayın.");
       return;
     }
-    if (!isReadonly && !phoneVerified) {
+    if (!isReadonly && phoneOtpGate && !phoneVerified) {
       setMessage("Önce telefon kodunu alıp «Telefonu doğrula» ile onaylayın.");
       return;
     }
@@ -556,20 +590,34 @@ function MembersPageContent() {
         return;
       }
       setRegEmailError("");
-      const nat = phoneNational.replace(/\D/g, "");
-      const natEff = phoneCountryIso === "TR" && nat.startsWith("0") ? nat.slice(1) : nat;
-      if (!natEff) {
-        setPhoneFieldError("Telefon numarası zorunludur.");
-        setMessage("Kayıt için geçerli bir telefon numarası girin.");
-        return;
+      if (phoneOtpGate) {
+        const nat = phoneNational.replace(/\D/g, "");
+        const natEff = phoneCountryIso === "TR" && nat.startsWith("0") ? nat.slice(1) : nat;
+        if (!natEff) {
+          setPhoneFieldError("Telefon numarası zorunludur.");
+          setMessage("Kayıt için geçerli bir telefon numarası girin.");
+          return;
+        }
+        const e164Submit = tryFormatE164(phoneCountryIso, phoneNational);
+        if (!e164Submit) {
+          setPhoneFieldError("Telefon numarası geçersiz veya eksik görünüyor.");
+          setMessage("Telefon numaranızı kontrol edin (ülke kodu ve hat).");
+          return;
+        }
+        setPhoneFieldError("");
+      } else {
+        const nat = phoneNational.replace(/\D/g, "");
+        const natEff = phoneCountryIso === "TR" && nat.startsWith("0") ? nat.slice(1) : nat;
+        if (natEff) {
+          const e164Submit = tryFormatE164(phoneCountryIso, phoneNational);
+          if (!e164Submit) {
+            setPhoneFieldError("Telefon numarası geçersiz veya eksik görünüyor.");
+            setMessage("Telefon numaranızı kontrol edin (ülke kodu ve hat).");
+            return;
+          }
+        }
+        setPhoneFieldError("");
       }
-      const e164Submit = tryFormatE164(phoneCountryIso, phoneNational);
-      if (!e164Submit) {
-        setPhoneFieldError("Telefon numarası geçersiz veya eksik görünüyor.");
-        setMessage("Telefon numaranızı kontrol edin (ülke kodu ve hat).");
-        return;
-      }
-      setPhoneFieldError("");
       if (!givenName || !familyName) {
         setMessage("Ad ve soyad ayrı ayrı doldurulmalıdır.");
         return;
@@ -934,11 +982,30 @@ function MembersPageContent() {
             )}
           </>
         )}
-        {!isReadonly && (
+        {!isReadonly &&
+          signupEmailRequired !== null &&
+          (signupEmailRequired === false || signupPhoneRequired === false) && (
+            <p
+              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+              role="status"
+            >
+              Yönetici ayarlarıyla bazı doğrulama adımları kapalı; kayıt OTP olmadan ilerleyebilir. Bu yalnızca
+              demo / geliştirme içindir — üretimde her iki doğrulamayı da açık tutun.
+            </p>
+          )}
+        {!isReadonly && emailOtpGate && (
           <>
             <p id="email-verify-hint" className="text-xs text-slate-600 leading-relaxed">
-              Önce e-postanızı, ardından telefonunuzu doğrulamanız gerekir; ikisi tamamlanmadan kayıt alanları
-              açılmaz. E-posta kodu{" "}
+              {emailOtpGate && phoneOtpGate && (
+                <>
+                  Önce e-postanızı, ardından telefonunuzu doğrulamanız gerekir; ikisi tamamlanmadan kayıt alanları
+                  açılmaz.{" "}
+                </>
+              )}
+              {emailOtpGate && !phoneOtpGate && (
+                <>E-postanızı doğruladıktan sonra kayıt alanları açılır (telefon SMS doğrulaması bu sitede kapalı). </>
+              )}
+              E-posta kodu{" "}
               <strong className="font-medium text-slate-800">{formatSignupOtpTtlTr(signupOtpTtlMinutes)}</strong>{" "}
               geçerlidir; süre dolunca yeni kod isteyin.
             </p>
@@ -1002,15 +1069,21 @@ function MembersPageContent() {
         )}
         <div className="space-y-1">
           <span id="member-phone-label" className="block text-sm font-medium text-slate-700">
-            Telefon <span className="font-normal text-slate-500">(zorunlu — SMS doğrulama)</span>
+            Telefon{" "}
+            <span className="font-normal text-slate-500">
+              {phoneOtpGate ? "(zorunlu — SMS doğrulama)" : "(isteğe bağlı — SMS doğrulama kapalı)"}
+            </span>
           </span>
           {!isReadonly && (
             <input type="hidden" name="phone" value={phoneHiddenValue} readOnly aria-hidden="true" />
           )}
           <p id="member-phone-hint" className="text-xs text-slate-600">
             Ülke kodunu seçin; hat numarasını ulusal formatta yazın. Türkiye için başta 0 olmadan da
-            girebilirsiniz. E-posta doğrulandıktan sonra SMS kodu alıp «Telefonu doğrula» ile onaylayın. Kayıt E.164
-            formatında saklanır.
+            girebilirsiniz.
+            {phoneOtpGate
+              ? " E-posta doğrulandıktan sonra SMS kodu alıp «Telefonu doğrula» ile onaylayın."
+              : " Telefon doğrulaması kapalıysa numarayı boş bırakabilir veya isteğe bağlı girersiniz; doluysa E.164 formatında saklanır."}{" "}
+            Kayıt E.164 formatında saklanır.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
             <div className="sm:w-[min(100%,15rem)] shrink-0">
@@ -1074,7 +1147,7 @@ function MembersPageContent() {
             </p>
           )}
         </div>
-        {!isReadonly && (
+        {!isReadonly && phoneOtpGate && (
           <div
             className={`space-y-2 rounded-lg border border-orange-100 bg-orange-50/50 p-2 ${blockUntilEmailVerified ? "opacity-60" : ""}`}
           >

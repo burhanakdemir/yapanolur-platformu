@@ -1,6 +1,9 @@
+import { cookies } from "next/headers";
 import { Prisma, type AdminSettings } from "@/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { verifySessionToken } from "@/lib/auth";
+import { isSuperAdminRole } from "@/lib/adminRoles";
 import { collectErrorChainText, isLikelyPrismaSchemaColumnMissing } from "@/lib/dbErrors";
 import { prisma } from "@/lib/prisma";
 
@@ -106,6 +109,22 @@ const bodySchema = z.object({
     },
     z.boolean().optional(),
   ),
+  signupEmailVerificationRequired: z.preprocess(
+    (v) => {
+      if (v === "true" || v === "1" || v === 1 || v === true) return true;
+      if (v === "false" || v === "0" || v === 0 || v === false) return false;
+      return v;
+    },
+    z.boolean().optional(),
+  ),
+  signupPhoneVerificationRequired: z.preprocess(
+    (v) => {
+      if (v === "true" || v === "1" || v === 1 || v === true) return true;
+      if (v === "false" || v === "0" || v === 0 || v === false) return false;
+      return v;
+    },
+    z.boolean().optional(),
+  ),
 });
 
 type Body = z.infer<typeof bodySchema>;
@@ -160,6 +179,12 @@ function buildAdminSettingsUpdateInput(
   if (data.smtpPort !== undefined) p.smtpPort = toInt(data.smtpPort) ?? data.smtpPort;
   if (data.smtpUser !== undefined) p.smtpUser = strIn(data.smtpUser);
   if (data.smtpSecure !== undefined) p.smtpSecure = data.smtpSecure;
+  if (data.signupEmailVerificationRequired !== undefined) {
+    p.signupEmailVerificationRequired = data.signupEmailVerificationRequired;
+  }
+  if (data.signupPhoneVerificationRequired !== undefined) {
+    p.signupPhoneVerificationRequired = data.signupPhoneVerificationRequired;
+  }
   if (extra.setSmtpPass !== undefined) p.smtpPass = extra.setSmtpPass;
   return p;
 }
@@ -175,7 +200,22 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const data = bodySchema.parse(await req.json());
+    const json: unknown = await req.json();
+    if (
+      typeof json === "object" &&
+      json !== null &&
+      ("signupEmailVerificationRequired" in json || "signupPhoneVerificationRequired" in json)
+    ) {
+      const c = await cookies();
+      const session = await verifySessionToken(c.get("session_token")?.value);
+      if (!isSuperAdminRole(session?.role)) {
+        return NextResponse.json(
+          { error: "Üye kaydı doğrulama anahtarlarını yalnızca süper yönetici değiştirebilir." },
+          { status: 403 },
+        );
+      }
+    }
+    const data = bodySchema.parse(json);
     const showcaseDailyPricingJson =
       data.showcaseDailyPricing !== undefined ? JSON.stringify(data.showcaseDailyPricing) : undefined;
     const smtpPassToSet =

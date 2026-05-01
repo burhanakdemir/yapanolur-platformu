@@ -18,6 +18,7 @@ Uygulama kayit e-posta kodunu **SMTP (nodemailer)** ile gonderir; ayar yoksa `/a
 - Panel: `/admin` SMTP alanlari **veya** Render ortaminda `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, istege bagli `SMTP_FROM`.
 - Yaygin hatalar: `ETIMEDOUT` / `ECONNREFUSED` (host-port-guvenlik duvari), `535` (kimlik), `554`/`553` (From / SPF-DMARC).
 - SMS OTP ayri kanal: `/admin/signup-sms-provider` veya `SIGNUP_OTP_ALLOW_LOG_FALLBACK` (yalnizca acil/test).
+- Demo/staging: süper yönetici `/admin/signup-verification` ile kayıt e-posta ve/veya telefon OTP adımlarını kapatabilir (`AdminSettings`, varsayılan ikisi de açık). Üretimde açık bırakın.
 
 ## 2) Kalici upload/storage (Render)
 

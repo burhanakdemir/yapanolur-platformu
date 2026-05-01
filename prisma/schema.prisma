@@ -455,6 +455,10 @@ model AdminSettings {
   iletiMerkeziUser    String   @default("")
   iletiMerkeziPass   String   @default("")
   iletiMerkeziSender String   @default("")
+  /** false: kayıtta e-posta OTP / kanıt çerezi istenmez (demo; üretimde true tutun). */
+  signupEmailVerificationRequired Boolean @default(true)
+  /** false: kayıtta telefon OTP istenmez; telefon alanı isteğe bağlı (demo). */
+  signupPhoneVerificationRequired Boolean @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }

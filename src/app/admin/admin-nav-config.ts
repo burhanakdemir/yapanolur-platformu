@@ -30,6 +30,7 @@ export const ADMIN_QUICK_LINKS: readonly AdminQuickLink[] = [
   { href: "/admin/site-settings", label: "Site" },
   { href: "/admin/odeme", label: "Ödeme", superOnly: true },
   { href: "/admin/signup-sms-provider", label: "Kayıt SMS", superOnly: true },
+  { href: "/admin/signup-verification", label: "Kayıt OTP", superOnly: true },
   { href: "/admin/ileti-merkezi-json", label: "İleti SMS", superOnly: true },
   { href: "/admin/payments", label: "Vitrin" },
   { href: "/admin/categories", label: "Kategoriler" },
@@ -102,6 +103,13 @@ export const ADMIN_SECTION_GROUPS: AdminNavGroup[] = [
         title: "Kayıt telefon SMS",
         description: "Üye kaydı telefon OTP için HTTP webhook veya Twilio yedek; test gönderimi.",
         href: "/admin/signup-sms-provider",
+        superOnly: true,
+      },
+      {
+        id: "signup-verification",
+        title: "Kayıt e-posta / telefon OTP",
+        description: "Demo için e-posta veya SMS doğrulamasını açıp kapatma (varsayılan: ikisi açık).",
+        href: "/admin/signup-verification",
         superOnly: true,
       },
       {

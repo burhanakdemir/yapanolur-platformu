@@ -11,6 +11,7 @@ import { hashPassword } from "@/lib/passwordHash";
 import { SIGNUP_EMAIL_COOKIE, verifySignupEmailProofToken } from "@/lib/signupEmailProof";
 import { SIGNUP_PHONE_COOKIE, verifySignupPhoneProofToken } from "@/lib/signupPhoneProof";
 import { shouldUseSecureCookie } from "@/lib/cookieSecure";
+import { getSignupVerificationFlags } from "@/lib/signupVerificationSettings";
 
 /** Kayıtta e-posta ve telefon verify-* ile doğrulanır (httpOnly kanıt çerezleri). */
 function optionalTrimmedString() {
@@ -38,10 +39,7 @@ const bodySchema = z
     name: z.string().min(2),
     password: z.string().min(4),
     profilePhotoUrl: optionalProfilePhotoUrl(),
-    phone: z.preprocess(
-      (v) => (v === null || v === undefined ? "" : String(v).trim()),
-      z.string().min(1, "Telefon numarası zorunludur."),
-    ),
+    phone: z.preprocess((v) => (v === null || v === undefined ? "" : String(v).trim()), z.string()),
     province: z.string().min(1, "Il secin."),
     district: z.string().min(1, "Ilce secin."),
     professionId: z.string().min(1, "Meslek secin."),
@@ -106,15 +104,6 @@ const bodySchema = z
         });
       }
     }
-    const e164 = normalizePhoneInputToE164(data.phone);
-    if (!e164) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
-          "Geçerli bir telefon numarası girin (ör. +905551234567 veya seçtiğiniz ülkenin ulusal numarası).",
-        path: ["phone"],
-      });
-    }
   });
 
 function clearSignupEmailProofCookie(res: NextResponse, req: Request) {
@@ -143,40 +132,52 @@ export async function POST(req: Request) {
 
   try {
     const data = bodySchema.parse(await req.json());
-    const proofCookie = (await cookies()).get(SIGNUP_EMAIL_COOKIE)?.value;
-    const proofOk = await verifySignupEmailProofToken(proofCookie, data.email);
-    if (!proofOk) {
+    const flags = await getSignupVerificationFlags(prisma);
+
+    if (flags.signupEmailVerificationRequired) {
+      const proofCookie = (await cookies()).get(SIGNUP_EMAIL_COOKIE)?.value;
+      const proofOk = await verifySignupEmailProofToken(proofCookie, data.email);
+      if (!proofOk) {
+        return NextResponse.json(
+          {
+            error:
+              "E-posta dogrulanmamis veya suresi dolmus. Once «E-postayi dogrula» ile kodu onaylayin.",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
+    const phoneE164 = data.phone.trim() ? normalizePhoneInputToE164(data.phone) : null;
+    if (flags.signupPhoneVerificationRequired) {
+      if (!phoneE164) {
+        return NextResponse.json(
+          { error: "Geçerli bir telefon numarası gerekli." },
+          { status: 400 },
+        );
+      }
+      const phoneProofCookie = (await cookies()).get(SIGNUP_PHONE_COOKIE)?.value;
+      const phoneProofOk = await verifySignupPhoneProofToken(phoneProofCookie, data.email, phoneE164);
+      if (!phoneProofOk) {
+        return NextResponse.json(
+          {
+            error:
+              "Telefon doğrulanmamış veya süresi dolmuş. «Telefonu doğrula» ile kodu onaylayın veya yeni kod isteyin.",
+          },
+          { status: 400 },
+        );
+      }
+    } else if (data.phone.trim() && !phoneE164) {
       return NextResponse.json(
         {
           error:
-            "E-posta dogrulanmamis veya suresi dolmus. Once «E-postayi dogrula» ile kodu onaylayin.",
+            "Geçerli bir telefon numarası girin (ör. +905551234567 veya seçtiğiniz ülkenin ulusal numarası).",
         },
         { status: 400 },
       );
     }
 
-    const phoneE164Required = normalizePhoneInputToE164(data.phone);
-    if (!phoneE164Required) {
-      return NextResponse.json(
-        { error: "Geçerli bir telefon numarası gerekli." },
-        { status: 400 },
-      );
-    }
-    const phoneProofCookie = (await cookies()).get(SIGNUP_PHONE_COOKIE)?.value;
-    const phoneProofOk = await verifySignupPhoneProofToken(
-      phoneProofCookie,
-      data.email,
-      phoneE164Required,
-    );
-    if (!phoneProofOk) {
-      return NextResponse.json(
-        {
-          error:
-            "Telefon doğrulanmamış veya süresi dolmuş. «Telefonu doğrula» ile kodu onaylayın veya yeni kod isteyin.",
-        },
-        { status: 400 },
-      );
-    }
+    const phoneForRegister = phoneE164;
 
     const professionOk = await prisma.profession.findUnique({
       where: { id: data.professionId },
@@ -210,7 +211,7 @@ export async function POST(req: Request) {
         newAdEmailOptIn: data.newAdEmailOptIn,
       });
 
-      const phoneForProfile = normalizePhoneInputToE164(data.phone) ?? null;
+      const phoneForProfile = phoneForRegister;
 
       const tcStore =
         data.billingAccountType === "INDIVIDUAL" ? digitsOnly(data.billingTcKimlik ?? "") : null;

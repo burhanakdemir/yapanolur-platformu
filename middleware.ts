@@ -18,6 +18,8 @@ function isSuperAdminOnlyPath(pathname: string) {
     pathname.startsWith("/admin/admins/") ||
     pathname === "/admin/signup-sms-provider" ||
     pathname.startsWith("/admin/signup-sms-provider/") ||
+    pathname === "/admin/signup-verification" ||
+    pathname.startsWith("/admin/signup-verification/") ||
     pathname === "/api/admin/team" ||
     pathname.startsWith("/api/admin/team/") ||
     pathname === "/api/admin/signup-sms-provider" ||

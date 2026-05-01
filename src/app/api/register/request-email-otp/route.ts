@@ -11,6 +11,7 @@ import {
 import { sendSignupEmailOtp } from "@/lib/mailer";
 import { rateLimitGuard } from "@/lib/rateLimit";
 import { SIGNUP_EMAIL_OTP_REQUEST_PUBLIC_HINT_TR } from "@/lib/signupEmailOtpHint";
+import { getSignupVerificationFlags } from "@/lib/signupVerificationSettings";
 
 const bodySchema = z.object({
   email: z.preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase() : v), z.string().email()),
@@ -25,6 +26,16 @@ export async function POST(req: Request) {
     const { email } = bodySchema.parse(await req.json());
     const target = email.toLowerCase().trim();
     emailForLog = target;
+
+    const flags = await getSignupVerificationFlags(prisma);
+    if (!flags.signupEmailVerificationRequired) {
+      return NextResponse.json({
+        ok: true,
+        verificationDisabled: true,
+        hint: "Site yöneticisi e-posta doğrulamasını kapattı; kayıt için OTP gerekmez.",
+        otpTtlMinutes: OTP_SIGNUP_EMAIL_TTL_MINUTES,
+      });
+    }
 
     const existing = await prisma.user.findUnique({
       where: { email: target },

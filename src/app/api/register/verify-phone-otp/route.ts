@@ -11,6 +11,7 @@ import {
 import { formatSignupOtpTtlTr } from "@/lib/signupOtpTtl";
 import { shouldUseSecureCookie } from "@/lib/cookieSecure";
 import { rateLimitGuard } from "@/lib/rateLimit";
+import { getSignupVerificationFlags } from "@/lib/signupVerificationSettings";
 import { verifySignupEmailProofToken, SIGNUP_EMAIL_COOKIE } from "@/lib/signupEmailProof";
 import {
   createSignupPhoneProofToken,
@@ -39,13 +40,20 @@ export async function POST(req: Request) {
 
   try {
     const data = bodySchema.parse(await req.json());
-    const proofEmail = (await cookies()).get(SIGNUP_EMAIL_COOKIE)?.value;
-    const emailOk = await verifySignupEmailProofToken(proofEmail, data.email);
-    if (!emailOk) {
-      return NextResponse.json(
-        { error: "Önce e-postanızı doğrulayın veya oturum süresi dolmuş; yeni e-posta kodu alın." },
-        { status: 400 },
-      );
+    const flags = await getSignupVerificationFlags(prisma);
+    if (!flags.signupPhoneVerificationRequired) {
+      return NextResponse.json({ ok: true, verificationDisabled: true });
+    }
+
+    if (flags.signupEmailVerificationRequired) {
+      const proofEmail = (await cookies()).get(SIGNUP_EMAIL_COOKIE)?.value;
+      const emailOk = await verifySignupEmailProofToken(proofEmail, data.email);
+      if (!emailOk) {
+        return NextResponse.json(
+          { error: "Önce e-postanızı doğrulayın veya oturum süresi dolmuş; yeni e-posta kodu alın." },
+          { status: 400 },
+        );
+      }
     }
 
     const phoneE164 = normalizePhoneInputToE164(data.phone.trim());
