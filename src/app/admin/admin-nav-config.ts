@@ -39,6 +39,7 @@ export const ADMIN_QUICK_LINKS: readonly AdminQuickLink[] = [
   { href: "/admin/categories", label: "Kategoriler" },
   { href: "/admin/members", label: "Üyeler" },
   { href: "/admin/listings", label: "İlanlar" },
+  { href: "/admin/sponsor-purchases", label: "Sponsor onayı" },
   { href: "/admin/ilan-eposta", label: "İlan e-posta" },
   { href: "/admin/bid-settings", label: "Teklif fiyatı" },
   { href: "/admin/bids", label: "Teklifler" },
@@ -82,9 +83,16 @@ export const ADMIN_SECTION_GROUPS: AdminNavGroup[] = [
         id: "sponsor-hero",
         title: "Ana sayfa sponsor ücreti & üye ekleme",
         description:
-          "Sponsorluk ücreti ve süresi; üye numarasıyla TR/EN sponsor satırı oluşturma (süper yönetici).",
+          "4–30 gün paket fiyatları; üye numarasıyla TR sponsor satırı ve yayın süresi (süper yönetici).",
         href: "/admin/sponsor-hero",
         superOnly: true,
+      },
+      {
+        id: "sponsor-purchases",
+        title: "Sponsorluk onayı",
+        description:
+          "Üyenin bakiyeden ödediği paketler; onayda yayın başlar, reddedilirse ücret iade edilir.",
+        href: "/admin/sponsor-purchases",
       },
       {
         id: "support",

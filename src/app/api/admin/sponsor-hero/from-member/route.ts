@@ -10,9 +10,20 @@ import {
   DatabaseConnectionError,
   isLikelyDatabaseConnectionError,
 } from "@/lib/dbErrors";
+import { createSponsorHeroSlideForMemberTx } from "@/lib/createSponsorHeroSlideForMemberTx";
+import { isSponsorHeroDurationDays } from "@/lib/sponsorHeroPricing";
 
 const bodySchema = z.object({
   memberNumber: z.number().int().min(1),
+  /** Yayın süresi (gün); bitiş tarihi buna göre hesaplanır. */
+  periodDays: z
+    .number()
+    .int()
+    .refine((n) => isSponsorHeroDurationDays(n), {
+      message: "periodDays must be one of sponsor tiers",
+    })
+    .optional()
+    .default(30),
 });
 
 export async function POST(req: Request) {
@@ -29,7 +40,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Geçerli bir üye numarası girin." }, { status: 400 });
     }
 
-    const { memberNumber } = parsed.data;
+    const { memberNumber, periodDays } = parsed.data;
 
     const user = await prisma.user.findUnique({
       where: { memberNumber },
@@ -58,46 +69,20 @@ export async function POST(req: Request) {
       );
     }
 
-    /**
-     * Tarih aralığı sınırı saat dilimi / saat eşleşmesiyle slaytı dışlayabiliyordu.
-     * Üye no ile eklenen sponsorlar: süre bitişi panelde / hero düzenlemede ayarlanana kadar her zaman aktif.
-     */
-    const startsAt: null = null;
-    const endsAt: null = null;
-
-    const titleBase = user.name?.trim() || `Üye ${user.memberNumber}`;
-    const subtitleParts = [user.memberProfile?.profession?.name, user.memberProfile?.province].filter(
-      (x): x is string => Boolean(x?.trim()),
-    );
-    const subtitle = subtitleParts.length > 0 ? subtitleParts.join(" · ") : null;
-
     /** Tek kayıt: yalnızca TR slayt (liste ve panelde çift satır oluşmasın). İngilizce metin için Hero slayt’tan EN ekleyin. */
-    const slide = await prisma.$transaction(async (tx) => {
-      await tx.homeHeroSlide.deleteMany({ where: { sponsorUserId: user.id } });
-
-      const maxTr = await tx.homeHeroSlide.aggregate({
-        where: { lang: "tr" },
-        _max: { sortOrder: true },
-      });
-      const sortTr = (maxTr._max.sortOrder ?? -1) + 1;
-
-      return tx.homeHeroSlide.create({
-        data: {
-          lang: "tr",
-          sortOrder: sortTr,
-          active: true,
-          title: titleBase,
-          subtitle,
-          imageUrl: null,
-          ctaUrl: `/uye/${user.id}`,
-          ctaLabel: "Profil",
-          isSponsor: true,
-          sponsorUserId: user.id,
-          startsAt,
-          endsAt,
+    const slide = await prisma.$transaction(async (tx) =>
+      createSponsorHeroSlideForMemberTx(
+        tx,
+        {
+          userId: user.id,
+          memberNumber: user.memberNumber,
+          name: user.name,
+          professionName: user.memberProfile?.profession?.name ?? null,
+          province: user.memberProfile?.province ?? null,
         },
-      });
-    });
+        periodDays,
+      ),
+    );
 
     revalidatePath("/");
     revalidatePath("/", "layout");

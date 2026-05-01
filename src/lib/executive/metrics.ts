@@ -33,6 +33,7 @@ const CREDIT_TYPE_LABEL: Record<CreditTransactionType, string> = {
   MEMBER_CONTACT_FEE: "Üye iletişim ücreti",
   MEMBER_COMMENT_FEE: "Profil yorum ücreti",
   MEMBER_COMMENT_REPLY_FEE: "Yorum yanıt ücreti",
+  SPONSOR_HERO_FEE: "Ana sayfa sponsorluğu",
 };
 
 const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {

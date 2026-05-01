@@ -3,7 +3,7 @@
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
 import { displayAdTitle } from "@/lib/adTitleDisplay";
 import { SHOWCASE_DAY_OPTIONS } from "@/lib/showcaseDurations";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type AdItem = {
   id: string;
@@ -24,8 +24,14 @@ export default function UserShowcaseList({
   /** Üst başlık ve kart çerçevesi dışarıda (ör. PanelCollapsibleSection) */
   embedded?: boolean;
 }) {
-  const [nowMs] = useState(() => Date.now());
+  const [clockMs, setClockMs] = useState<number | null>(null);
   const [ads, setAds] = useState<AdItem[]>(initialAds);
+
+  useEffect(() => {
+    queueMicrotask(() => setClockMs(Date.now()));
+    const id = window.setInterval(() => setClockMs(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
   const [message, setMessage] = useState("");
   const [selectedDays, setSelectedDays] = useState<Record<string, number>>({});
 
@@ -51,7 +57,8 @@ export default function UserShowcaseList({
     <div className="space-y-1.5">
       {ads.length === 0 && <p className="text-sm">Ilan bulunamadi.</p>}
       {ads.map((ad) => {
-        const active = ad.showcaseUntil ? new Date(ad.showcaseUntil).getTime() > nowMs : false;
+        const active =
+          ad.showcaseUntil && clockMs !== null ? new Date(ad.showcaseUntil).getTime() > clockMs : false;
         const days = selectedDays[ad.id] || 7;
         const fee = Number(showcaseDailyPricing[String(days)] ?? showcaseFeeAmountTry * days);
         return (

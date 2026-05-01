@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getPrismaClient } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, service: "ilan" });
   }
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await getPrismaClient().$queryRaw`SELECT 1`;
     return NextResponse.json({ ok: true, service: "ilan", database: "up" });
   } catch {
     return NextResponse.json(

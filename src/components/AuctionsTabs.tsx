@@ -5,6 +5,7 @@ import HomeAuctionsVirtualGrid, { type HomeAuctionItem } from "@/components/Home
 export default function AuctionsTabs({
   initialAuctions,
   lang,
+  hydrationNowMs,
 }: {
   initialTab?: "live" | "upcoming" | "expired";
   initialAuctions: HomeAuctionItem[];
@@ -16,6 +17,7 @@ export default function AuctionsTabs({
     lang?: "tr" | "en";
   };
   lang: "tr" | "en";
+  hydrationNowMs: number;
 }) {
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-hidden">
@@ -24,7 +26,7 @@ export default function AuctionsTabs({
           {lang === "tr" ? "Proje İlanları ve Yapım İlanları" : "Project listings & construction listings"}
         </h3>
       </div>
-      <HomeAuctionsVirtualGrid initialAuctions={initialAuctions} lang={lang} />
+      <HomeAuctionsVirtualGrid initialAuctions={initialAuctions} lang={lang} hydrationNowMs={hydrationNowMs} />
     </section>
   );
 }

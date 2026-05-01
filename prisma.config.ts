@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
+import { assertReasonableDatabaseUrl } from "./src/lib/databaseUrlSanity";
 import { resolveDatabaseUrl } from "./src/lib/resolveDatabaseUrl";
 
 const rawUrl = process.env["DATABASE_URL"]?.trim();
@@ -13,6 +14,8 @@ if (rawUrl.startsWith("file:")) {
     "DATABASE_URL artık SQLite (file:...) değil; PostgreSQL kullanın. Örnek: postgresql://ilan:ilan@127.0.0.1:5432/ilan_dev — docker compose up -d. Bkz. .env.example",
   );
 }
+
+assertReasonableDatabaseUrl(rawUrl);
 
 const rawDirect = process.env["DIRECT_DATABASE_URL"]?.trim();
 /**

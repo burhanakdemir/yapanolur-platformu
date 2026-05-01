@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cookies } from "next/headers";
 import { verifySessionToken } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getPrismaClient } from "@/lib/prisma";
 import {
   DatabaseConnectionError,
   isLikelyDatabaseConnectionError,
@@ -76,6 +76,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const canonical = qs ? `${base}/?${qs}` : `${base}/`;
 
   try {
+    const prisma = getPrismaClient();
     let category: { name: string; parent: { name: string } | null } | null = null;
     if (categoryId) {
       category = await prisma.category.findUnique({
@@ -173,6 +174,7 @@ export default async function Home({ searchParams }: Props) {
     | "expired";
 
   try {
+    const prisma = getPrismaClient();
     await ensureDefaultTopCategories();
     const categoryTree = await getCategoryTreeCached();
 
@@ -208,6 +210,8 @@ export default async function Home({ searchParams }: Props) {
       adminSettings = await prisma.adminSettings.create({ data: { id: "singleton" } });
     }
     const serializedInitialAuctions = initialAuctions.map((a) => serializeAuctionForHomeList(a));
+    /** İstemci kartlarında Date.now() sapmasını önlemek için tek kaynak zaman damgası */
+    const hydrationNowMs = Date.now();
     const flatCategories = flattenCategories(categoryTree as CategoryTreeNode[]);
 
     const heroSlidesRaw = await fetchActiveHomeHeroSlides(lang);
@@ -235,7 +239,7 @@ export default async function Home({ searchParams }: Props) {
         : `/members?${new URLSearchParams({ next: adsNewHref, ...(lang === "en" ? { lang: "en" } : {}) }).toString()}`;
 
     return (
-    <main className="mx-auto w-full max-w-7xl space-y-6 px-3 pt-4 pb-[max(1.25rem,calc(0.5rem+env(safe-area-inset-bottom,0px)))] sm:space-y-8 sm:px-6 sm:pt-6 sm:pb-[max(1.75rem,calc(1rem+env(safe-area-inset-bottom,0px)))]">
+    <main className="mx-auto w-full max-w-7xl space-y-2 px-3 pt-4 pb-[max(1.25rem,calc(0.5rem+env(safe-area-inset-bottom,0px)))] sm:space-y-3 sm:px-6 sm:pt-6 sm:pb-[max(1.75rem,calc(1rem+env(safe-area-inset-bottom,0px)))]">
       <div className="space-y-6">
         <header className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div className="flex shrink-0 items-center gap-4">
@@ -261,17 +265,7 @@ export default async function Home({ searchParams }: Props) {
           />
         </header>
 
-        <HomeHeroMarqueeStrip
-          lang={lang}
-          slides={heroSlides}
-          title={fallbackHeroTitle}
-          subtitle={fallbackHeroSubtitle}
-          showHeroAuthLinks={showHeroAuthLinks}
-          primaryButtonHref={lang === "en" ? "/login?lang=en" : "/login"}
-          secondaryButtonHref={lang === "en" ? "/members?lang=en" : "/members"}
-          primaryButtonLabel={heroPrimaryLabel}
-          secondaryButtonLabel={t.home.secondaryButton}
-        />
+        <HomeHeroMarqueeStrip lang={lang} slides={heroSlides} title={fallbackHeroTitle} subtitle={fallbackHeroSubtitle} />
       </div>
 
       <section className="grid max-lg:gap-5 gap-4 lg:grid-cols-[280px_1fr] lg:items-stretch">
@@ -319,7 +313,20 @@ export default async function Home({ searchParams }: Props) {
 
         {/* İlan ver şeridi + liste: yükseklik liste için; kartlar responsive sütun (2/3/4). */}
         <div className="order-1 flex h-full min-h-0 min-w-0 flex-col gap-3 sm:gap-4 lg:order-2">
-          <HomePostListingStrip lang={lang} newAdHref={homePostListingAdHref} />
+          <HomePostListingStrip
+            lang={lang}
+            newAdHref={homePostListingAdHref}
+            guestAuth={
+              showHeroAuthLinks
+                ? {
+                    loginHref: lang === "en" ? "/login?lang=en" : "/login",
+                    registerHref: lang === "en" ? "/members?lang=en" : "/members",
+                    loginLabel: heroPrimaryLabel,
+                    registerLabel: t.home.secondaryButton,
+                  }
+                : null
+            }
+          />
           <div className="home-sidebar-panel flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl p-3 sm:p-4 h-[min(70vh,calc(100dvh-6rem))] max-h-[min(85vh,calc(100dvh-5rem))] md:h-[min(92vh,calc(100dvh-4rem))] md:max-h-[min(92vh,calc(100dvh-4rem))] lg:h-[min(1284px,calc(100dvh-8rem))] lg:max-h-[min(1284px,calc(100dvh-8rem))]">
             <AuctionsTabs
               initialTab={tab}
@@ -332,6 +339,7 @@ export default async function Home({ searchParams }: Props) {
                 lang,
               }}
               lang={lang}
+              hydrationNowMs={hydrationNowMs}
             />
           </div>
         </div>

@@ -38,6 +38,19 @@ Opsiyonel:
 - `S3_KEY_PREFIX=uploads`
 - `ALLOWED_UPLOAD_HOSTS=cdn.example.com,files.example.com`
 
+### Kayit formu dosya yuklemesi (`/members`)
+
+Kayit sirasinda oturum olmadigi icin `POST /api/uploads` kullanilmaz; uygulama `POST /api/register/uploads` ile yukler.
+
+- Admin ayarlarindaki **e-posta / telefon OTP** ile ayni kanit cerezleri zorunludur (`signup_email_proof`, `signup_phone_proof`).
+- Her iki dogrulama kapaliysa (yalnizca demo): endpoint yine calisir; kotayi `signupUpload` rate limit sinirlar.
+- Bu e-posta adresi DB'de **zaten kayitliyse** `409` + `email_taken` (oturum acip panelden yukleyin).
+- Depolama env eksikse `503` + `code: storage_config`.
+
+### Next.js Image (`next/image`)
+
+`next.config.ts` icinde `S3_PUBLIC_BASE_URL` ve `S3_ENDPOINT` hostlari otomatik eklenir. Saf AWS sanal barindirma (`https://bucket.s3.<region>.amazonaws.com/...`) icin ya `S3_PUBLIC_BASE_URL` tam taban URL olarak verilmeli ya da `NEXT_IMAGE_REMOTE_HOSTS` ile bucket hostname eklenmeli.
+
 ## 2.1) Admin il bazli yetki (opsiyonel feature flag)
 
 - `ADMIN_PROVINCE_SCOPING_ENABLED=1` => il bazli admin kapsam aktif
@@ -66,6 +79,9 @@ Not: flag kapaliysa mevcut davranis korunur (tum adminler tum il kayitlarini gor
 - Admin panelde bir alt kategori resmi yukleyin.
 - Yuklenen resim URL'sinin `/uploads/...` degil `https://...` oldugunu dogrulayin.
 - Ilan olusturma akisinda gorsel URL'leri kabul ediliyor mu kontrol edin.
+- **Uye kayit:** Oturum acik degilken `/members` ile OTP tamamla ve kayit gonder; belgeler kayit sonrasi giris ile ayni sayfadan yuklenir.
+- **Uye paneli:** Giris yap, belge ve profil fotografi yukle; `403`/`503` yerine basari ve kalici `https://...` URL.
+- Storage kasitli bozuksa: `POST /api/uploads` veya `POST /api/register/uploads` yanitinda `503` ve `code: storage_config` beklenir.
 
 ## 6) Operasyon notlari
 

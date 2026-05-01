@@ -57,11 +57,16 @@ async function uploadImage(file: File) {
   const res = await fetch(clientApiUrl("/api/uploads"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ filename, dataBase64: base64 }),
   });
-  const data = await res.json();
+  const data = (await res.json()) as { url?: string; error?: string; code?: string };
   if (!res.ok || !data?.url) {
-    throw new Error(data?.error || "Dosya yüklenemedi.");
+    const msg =
+      data?.code === "storage_config"
+        ? "Dosya sunucusu yapılandırılmamış. Yöneticiye iletin (S3/storage)."
+        : (data?.error || "Dosya yüklenemedi.");
+    throw new Error(msg);
   }
   return String(data.url);
 }
@@ -102,16 +107,6 @@ function MembersPageContent() {
     };
   } | null>(null);
   const [professions, setProfessions] = useState<{ id: string; name: string }[]>([]);
-  const [previews, setPreviews] = useState({
-    diploma: "",
-    engineering: "",
-    tax: "",
-  });
-  const [newDocFileNames, setNewDocFileNames] = useState({
-    diploma: "",
-    engineering: "",
-    tax: "",
-  });
   const [docUploading, setDocUploading] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [passwordChanging, setPasswordChanging] = useState(false);
@@ -655,39 +650,6 @@ function MembersPageContent() {
     }
 
     setIsUploading(true);
-    const diplomaFile = form.get("diplomaFile");
-    const engineeringFile = form.get("engineeringServiceCertificateFile");
-    const taxFile = form.get("taxCertificateFile");
-
-    async function uploadIfImage(f: FormDataEntryValue | null): Promise<string | undefined> {
-      if (!(f instanceof File) || f.size === 0) return undefined;
-      if (!f.type.startsWith("image/")) {
-        throw new Error("Belgeler yalnızca resim formatında olmalıdır.");
-      }
-      return uploadImage(f);
-    }
-
-    let diplomaUrl: string | undefined;
-    let engineeringUrl: string | undefined;
-    let taxUrl: string | undefined;
-    try {
-      diplomaUrl = await uploadIfImage(diplomaFile);
-      engineeringUrl = await uploadIfImage(engineeringFile);
-      taxUrl = await uploadIfImage(taxFile);
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Dosya yükleme hatası.");
-      setIsUploading(false);
-      return;
-    }
-
-    const documents: {
-      diploma?: string;
-      engineeringServiceCertificate?: string;
-      taxCertificate?: string;
-    } = {};
-    if (diplomaUrl) documents.diploma = diplomaUrl;
-    if (engineeringUrl) documents.engineeringServiceCertificate = engineeringUrl;
-    if (taxUrl) documents.taxCertificate = taxUrl;
 
     const payload = {
       email: String(form.get("email") || "")
@@ -709,7 +671,7 @@ function MembersPageContent() {
       billingVkn: String(form.get("billingVkn") || "").trim(),
       billingAddressLine: addrLine,
       billingPostalCode: String(form.get("billingPostalCode") || "").trim(),
-      documents,
+      documents: {},
       newAdEmailOptIn: form.get("newAdEmailOptIn") != null,
     };
 
@@ -1490,83 +1452,28 @@ function MembersPageContent() {
           </NewAdEmailOptInGradientBox>
         )}
         {!isReadonly && (
-          <>
-            <p className="rounded-lg border border-orange-100 bg-slate-50/80 px-3 py-2 text-xs text-slate-600 leading-relaxed">
-              {d.memberPage.privacyDocuments}
-            </p>
-            <label className="block text-sm font-medium">{d.memberPage.signupDocDiploma}</label>
-            <FileInputTr
-              name="diplomaFile"
-              disabled={blockUntilFullyVerified}
-              chosenFileName={newDocFileNames.diploma || null}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) {
-                  setNewDocFileNames((n) => ({ ...n, diploma: "" }));
-                  return;
-                }
-                setNewDocFileNames((n) => ({ ...n, diploma: file.name }));
-                setPreviews((p) => ({ ...p, diploma: URL.createObjectURL(file) }));
-              }}
-            />
-            {previews.diploma && (
-              <Image src={previews.diploma} alt="Diploma önizleme" width={220} height={140} className="rounded-lg border object-cover" unoptimized />
-            )}
-          </>
-        )}
-
-        {!isReadonly && (
-          <>
-            <label className="block text-sm font-medium">{d.memberPage.signupDocEngineering}</label>
-            <FileInputTr
-              name="engineeringServiceCertificateFile"
-              disabled={blockUntilFullyVerified}
-              chosenFileName={newDocFileNames.engineering || null}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) {
-                  setNewDocFileNames((n) => ({ ...n, engineering: "" }));
-                  return;
-                }
-                setNewDocFileNames((n) => ({ ...n, engineering: file.name }));
-                setPreviews((p) => ({ ...p, engineering: URL.createObjectURL(file) }));
-              }}
-            />
-            {previews.engineering && (
-              <Image src={previews.engineering} alt="Mühendislik belgesi önizleme" width={220} height={140} className="rounded-lg border object-cover" unoptimized />
-            )}
-          </>
-        )}
-
-        {!isReadonly && (
-          <>
-            <label className="block text-sm font-medium">{d.memberPage.signupDocTax}</label>
-            <FileInputTr
-              name="taxCertificateFile"
-              disabled={blockUntilFullyVerified}
-              chosenFileName={newDocFileNames.tax || null}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) {
-                  setNewDocFileNames((n) => ({ ...n, tax: "" }));
-                  return;
-                }
-                setNewDocFileNames((n) => ({ ...n, tax: file.name }));
-                setPreviews((p) => ({ ...p, tax: URL.createObjectURL(file) }));
-              }}
-            />
-            {previews.tax && (
-              <Image src={previews.tax} alt="Vergi levhası önizleme" width={220} height={140} className="rounded-lg border object-cover" unoptimized />
-            )}
-          </>
+          <div
+            role="note"
+            className="rounded-xl border-2 border-orange-300 bg-orange-50 px-4 py-3 text-sm font-medium leading-relaxed text-orange-950 shadow-sm"
+          >
+            {d.memberPage.signupDocumentsLaterNotice}
+          </div>
         )}
         {!isReadonly && (
           <button className="btn-primary" type="submit" disabled={isUploading || blockUntilFullyVerified}>
-            {isUploading ? "Yükleniyor…" : d.common.submit}
+            {isUploading ? d.memberPage.registerSending : d.common.submit}
           </button>
         )}
         {isReadonly && (
           <section className="rounded-xl border border-orange-200 bg-orange-50 p-3 space-y-3">
+            <div className="rounded-xl border-2 border-orange-400 bg-gradient-to-br from-amber-50 via-orange-50 to-white px-4 py-3 shadow-sm">
+              <h2 className="text-base font-bold text-orange-950">{d.memberPage.panelStarBannerTitle}</h2>
+              <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm font-normal leading-relaxed text-slate-800">
+                {d.memberPage.panelStarBannerLines.map((line, idx) => (
+                  <li key={idx}>{line}</li>
+                ))}
+              </ul>
+            </div>
             <p className="text-xs text-orange-700">
               Kilitli alanlar değiştirilemez. Belge, profil fotoğrafı ve şifre güncellemesi aşağıdan yapılabilir.
             </p>
@@ -1593,21 +1500,29 @@ function MembersPageContent() {
                 {photoUploading ? "Yükleniyor…" : "Profil fotoğrafı yükle"}
               </button>
             </div>
-            <p className="text-sm font-medium">Belge yükleme alanı (bilgiler sabit)</p>
+            <p className="text-sm font-semibold text-slate-800">{d.memberPage.panelDocumentsHeading}</p>
             <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-2 rounded-lg border border-orange-200 bg-white p-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium">Diploma</p>
-                  <span className="chip">Mevcut</span>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium">{d.memberPage.docSlotDiploma}</p>
+                  <span className="chip shrink-0">
+                    {savedDocuments.diploma ? d.memberPage.docChipUploaded : d.memberPage.docChipMissing}
+                  </span>
                 </div>
-                <Image
-                  src={savedDocuments.diploma}
-                  alt="Diploma"
-                  width={220}
-                  height={140}
-                  className="h-28 w-full rounded-lg border object-cover"
-                  unoptimized
-                />
+                {savedDocuments.diploma ? (
+                  <Image
+                    src={savedDocuments.diploma}
+                    alt={d.memberPage.docSlotDiploma}
+                    width={220}
+                    height={140}
+                    className="h-28 w-full rounded-lg border object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-2 py-6 text-center text-xs text-slate-600">
+                    {d.memberPage.docNotUploadedYet}
+                  </p>
+                )}
                 <FileInputTr
                   name="diplomaFile"
                   chosenFileName={readonlyDocFiles.diploma?.name ?? null}
@@ -1615,18 +1530,26 @@ function MembersPageContent() {
                 />
               </div>
               <div className="space-y-2 rounded-lg border border-orange-200 bg-white p-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium">Mühendislik hizmet belgesi</p>
-                  <span className="chip">Mevcut</span>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium">{d.memberPage.docSlotEngineering}</p>
+                  <span className="chip shrink-0">
+                    {savedDocuments.engineering ? d.memberPage.docChipUploaded : d.memberPage.docChipMissing}
+                  </span>
                 </div>
-                <Image
-                  src={savedDocuments.engineering}
-                  alt="Mühendislik hizmet belgesi"
-                  width={220}
-                  height={140}
-                  className="h-28 w-full rounded-lg border object-cover"
-                  unoptimized
-                />
+                {savedDocuments.engineering ? (
+                  <Image
+                    src={savedDocuments.engineering}
+                    alt={d.memberPage.docSlotEngineering}
+                    width={220}
+                    height={140}
+                    className="h-28 w-full rounded-lg border object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-2 py-6 text-center text-xs text-slate-600">
+                    {d.memberPage.docNotUploadedYet}
+                  </p>
+                )}
                 <FileInputTr
                   name="engineeringServiceCertificateFile"
                   chosenFileName={readonlyDocFiles.engineering?.name ?? null}
@@ -1634,18 +1557,26 @@ function MembersPageContent() {
                 />
               </div>
               <div className="space-y-2 rounded-lg border border-orange-200 bg-white p-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium">Vergi levhası</p>
-                  <span className="chip">Mevcut</span>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium">{d.memberPage.docSlotTax}</p>
+                  <span className="chip shrink-0">
+                    {savedDocuments.tax ? d.memberPage.docChipUploaded : d.memberPage.docChipMissing}
+                  </span>
                 </div>
-                <Image
-                  src={savedDocuments.tax}
-                  alt="Vergi levhası"
-                  width={220}
-                  height={140}
-                  className="h-28 w-full rounded-lg border object-cover"
-                  unoptimized
-                />
+                {savedDocuments.tax ? (
+                  <Image
+                    src={savedDocuments.tax}
+                    alt={d.memberPage.docSlotTax}
+                    width={220}
+                    height={140}
+                    className="h-28 w-full rounded-lg border object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-2 py-6 text-center text-xs text-slate-600">
+                    {d.memberPage.docNotUploadedYet}
+                  </p>
+                )}
                 <FileInputTr
                   name="taxCertificateFile"
                   chosenFileName={readonlyDocFiles.tax?.name ?? null}

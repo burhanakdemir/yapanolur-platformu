@@ -133,3 +133,14 @@ export async function saveUploadedFile(
   if (provider === "s3") return saveToS3(safeName, buffer);
   return saveToLocal(safeName, buffer);
 }
+
+/** Prod S3 eksik env veya yerel yazim kapali — istemciye 503 + kod ile donulebilir. */
+export function isUploadStorageMisconfiguredError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const m = err.message;
+  return (
+    m.includes("S3 ayarlari eksik") ||
+    m.includes("S3_BUCKET zorunlu") ||
+    m.includes("STORAGE_PROVIDER=local production modda devre disi")
+  );
+}

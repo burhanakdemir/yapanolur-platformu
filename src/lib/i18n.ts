@@ -34,13 +34,25 @@ type Dictionary = {
     step1: string;
     step2: string;
     step3: string;
-    privacyDocuments: string;
+    /** Kayitta belge yuklenmez; kullaniciya panelden yukleme hatirlatmasi */
+    signupDocumentsLaterNotice: string;
+    /** Kayit POST sirasinda */
+    registerSending: string;
+    /** Oturumlu panel: yildiz aciklamasi */
+    panelStarBannerTitle: string;
+    panelStarBannerLines: string[];
+    /** Ana üye paneli / uyarı kutusu — belge linkine yönlendirme */
+    panelStarBannerDocsCta: string;
+    panelDocumentsHeading: string;
+    docSlotDiploma: string;
+    docSlotEngineering: string;
+    docSlotTax: string;
+    docNotUploadedYet: string;
+    docChipUploaded: string;
+    docChipMissing: string;
     /** Telefon OTP sonrasi bilgi */
     afterPhoneVerified: string;
     registrationSuccess: string;
-    signupDocDiploma: string;
-    signupDocEngineering: string;
-    signupDocTax: string;
     professionLabel: string;
     professionHelp: string;
     newAdEmailOptInLabel: string;
@@ -99,14 +111,28 @@ export const dictionary: Record<Lang, Dictionary> = {
       registrationProgressLabel: "Üyelik kaydı adımları",
       step1: "İletişim ve doğrulama",
       step2: "Adres ve meslek",
-      step3: "Belgeler (isteğe bağlı) ve gönderim",
-      privacyDocuments:
-        "Belgeler isteğe bağlıdır; yüklediğiniz her belge profil yıldızınıza katkı verir (en fazla 3). Görseller yalnızca doğrulama ve yasal gereklilikler içindir; üçüncü taraflarla paylaşılmaz.",
+      step3: "Kaydı tamamlama",
+      signupDocumentsLaterNotice:
+        "Doğrulama belgelerini kayıt sırasında yüklemenize gerek yok. Kaydı tamamlayıp giriş yaptıktan sonra bu sayfadan diploma, mühendislik hizmet belgesi ve vergi levhasını PDF veya resim olarak yükleyebilirsiniz. Dosyalar yalnızca doğrulama ve yasal gereklilikler içindir; üçüncü kişilerle paylaşılmaz.",
+      registerSending: "Gönderiliyor…",
+      panelStarBannerTitle: "Profil yıldızı nasıl hesaplanır?",
+      panelStarBannerLines: [
+        "Profilinizde görünen yıldız puanı 0 ile 5 arasındadır.",
+        "Belgeler: Diploma, mühendislik hizmet belgesi ve vergi levhasının her biri en fazla 1 yıldız ekler — üçünü yüklediğinizde belgelerden en fazla 3 yıldız.",
+        "Beğeniler: Her 10 beğeni +1 yıldız (arayüzde yaklaşık her 2 beğeni +0,2 olarak gösterilir); bu katkı en fazla +2 olabilir.",
+        "Beğenmemeler: Aynı oranda eksi puan verir (en fazla −2). Belgelerden gelen puan ile birlikte hesaplanır.",
+      ],
+      panelStarBannerDocsCta:
+        "Belgelerinizi eklemek veya güncellemek için aşağıdaki «Profil ve belgeler» kartından Üye belgeleri sayfasına gidin.",
+      panelDocumentsHeading: "Doğrulama belgeleri",
+      docSlotDiploma: "Diploma",
+      docSlotEngineering: "Mühendislik hizmet belgesi",
+      docSlotTax: "Vergi levhası",
+      docNotUploadedYet: "Henüz yüklenmedi.",
+      docChipUploaded: "Yüklü",
+      docChipMissing: "Eksik",
       afterPhoneVerified: "Telefon doğrulandı. Kalan bilgileri doldurup kaydı tamamlayabilirsiniz.",
       registrationSuccess: "Üye kaydınız alındı.",
-      signupDocDiploma: "Diploma (resim, isteğe bağlı)",
-      signupDocEngineering: "Mühendislik hizmet belgesi (resim, isteğe bağlı)",
-      signupDocTax: "Vergi levhası (resim, isteğe bağlı)",
       professionLabel: "Meslek",
       professionHelp:
         "Baş harfler yazarak arayın veya listeden seçin. Listeyi yönetici panelinden (Meslek ayarları) düzenleyebilirsiniz.",
@@ -163,14 +189,28 @@ export const dictionary: Record<Lang, Dictionary> = {
       registrationProgressLabel: "Registration steps",
       step1: "Contact and verification",
       step2: "Address and profession",
-      step3: "Documents (optional) and submit",
-      privacyDocuments:
-        "Documents are optional; each upload adds to your profile star score (up to three). Images are for verification and legal use only; not shared with third parties.",
+      step3: "Complete registration",
+      signupDocumentsLaterNotice:
+        "You do not upload verification documents during sign-up. After you register and sign in, upload your diploma, engineering service certificate and tax certificate here as PDF or image. Files are for verification and legal use only and are not shared with third parties.",
+      registerSending: "Sending…",
+      panelStarBannerTitle: "How your profile star score works",
+      panelStarBannerLines: [
+        "Your star rating is shown on a scale from 0 to 5.",
+        "Documents: Each of the three slots (diploma, engineering service certificate, tax certificate) adds up to 1 star — up to 3 stars from documents when all are uploaded.",
+        "Likes: Every 10 likes add about +1 star (the UI shows roughly +0.2 per 2 likes); this bonus is capped at +2.",
+        "Dislikes: Apply the same rule in the negative direction (capped at −2). Document stars and votes are combined.",
+      ],
+      panelStarBannerDocsCta:
+        "To upload or update certificates, open Member documents via the «Profile & documents» card below.",
+      panelDocumentsHeading: "Verification documents",
+      docSlotDiploma: "Diploma",
+      docSlotEngineering: "Engineering service certificate",
+      docSlotTax: "Tax certificate",
+      docNotUploadedYet: "Not uploaded yet.",
+      docChipUploaded: "Uploaded",
+      docChipMissing: "Missing",
       afterPhoneVerified: "Phone verified. Fill in the remaining fields to complete registration.",
       registrationSuccess: "Your registration was received.",
-      signupDocDiploma: "Diploma (image, optional)",
-      signupDocEngineering: "Engineering service certificate (image, optional)",
-      signupDocTax: "Tax certificate (image, optional)",
       professionLabel: "Profession",
       professionHelp:
         "Type to search or pick from the list. Professions are managed in the admin panel (Profession settings).",

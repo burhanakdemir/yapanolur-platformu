@@ -2,11 +2,23 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getPrismaClient } from "@/lib/prisma";
+import { mergeSponsorHeroPricingFromDb, type SponsorHeroPricingTry } from "@/lib/sponsorHeroPricing";
+import { sumUserCreditTry } from "@/lib/userCredit";
+import UserSponsorshipClient from "./user-sponsorship-client";
 
 type Props = {
   searchParams: Promise<{ lang?: string }>;
 };
+
+const emptyPricing = (): SponsorHeroPricingTry =>
+  ({
+    "4": 0,
+    "7": 0,
+    "10": 0,
+    "15": 0,
+    "30": 0,
+  }) satisfies SponsorHeroPricingTry;
 
 export default async function UserSponsorshipPage({ searchParams }: Props) {
   const params = await searchParams;
@@ -19,6 +31,7 @@ export default async function UserSponsorshipPage({ searchParams }: Props) {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
+  const prisma = getPrismaClient();
   const dbUser = await prisma.user.findUnique({
     where: { id: session.userId },
     select: {
@@ -39,14 +52,19 @@ export default async function UserSponsorshipPage({ searchParams }: Props) {
     redirect(lang === "en" ? "/panel/user?lang=en" : "/panel/user");
   }
 
-  let fee = 0;
-  let days = 30;
+  let balanceTry = 0;
+  try {
+    balanceTry = await sumUserCreditTry(session.userId);
+  } catch {
+    balanceTry = 0;
+  }
+
+  let pricing: SponsorHeroPricingTry = emptyPricing();
   try {
     const settings = await prisma.adminSettings.findUnique({ where: { id: "singleton" } });
-    fee = settings?.sponsorHeroFeeAmountTry ?? 0;
-    days = settings?.sponsorHeroPeriodDays ?? 30;
+    if (settings) pricing = mergeSponsorHeroPricingFromDb(settings);
   } catch {
-    /* Eski şema: sponsor sütunları yoksa varsayılanlar */
+    /* Eski şema */
   }
 
   const user = dbUser;
@@ -64,29 +82,56 @@ export default async function UserSponsorshipPage({ searchParams }: Props) {
           title: "Ana sayfa sponsorluğu",
           back: "Üye paneli",
           intro:
-            "Ana sayfadaki kayan sponsor şeridinde markanızın görünmesi için süper yönetici tarafından hesabınız eklenir. Ücret ve süre platform ayarlarından belirlenir.",
-          feeLabel: "Liste ücreti (dönem başına)",
-          periodLabel: "Varsayılan yayın süresi",
-          days: "gün",
-          freeHint: fee <= 0 ? "Şu an liste ücreti 0 TL olarak ayarlanmış; yönetim politikanıza göre güncellenebilir." : null,
+            "Ödeme veya ücretsiz başvuru yöneticiler tarafından onaylandıktan sonra ana sayfa sponsor şeridinde yer alırsınız. Aşağıda paket ücretlerini görebilirsiniz; bakiyeniz yeterliyse «Öde» ile tahsilat yapılır, yetersizse kredi yükleyebilirsiniz.",
+          contact: "İletişim için ana sayfa alt bilgisindeki kanalları kullanabilirsiniz.",
+          choosePeriod: "Tercih ettiğiniz yayın süresi",
+          feeForPeriod: "Seçilen süre için listelenen ücret",
+          daysSuffix: "gün",
+          hintSelected:
+            "Ödeme onay bekleyen başvuruya düşer; yönetici onayından sonra yayın başlar. Reddedilirse ücret bakiyenize iade edilir.",
+          balanceLabel: "Mevcut bakiye",
+          payCta: "Öde",
+          paying: "İşleniyor…",
+          topupCta: "Kredi yükle",
+          insufficientHint:
+            "Bu paket için bakiyeniz yetersiz. Kredi yükleyerek devam edebilirsiniz.",
+          successPendingApproval:
+            "Ücret bakiyeden düşüldü. Başvurunuz yönetici onayına iletildi; onayda yayın başlar, redde ücret iade edilir.",
+          successPendingApprovalFree:
+            "Başvurunuz yönetici onayına iletildi (ücret alınmadı). Onayda yayın başlar.",
+          freePackageHint:
+            "Bu süre için liste ücreti 0 TL; yine yönetici onayı gerekir.",
+          submitFreeCta: "Ücretsiz başvuruda bulun",
+          duplicatePending:
+            "Zaten onay bekleyen bir başvurunuz var. Sonuçlanmasını bekleyin.",
           memberHint:
             "Başvuru sırasında üye numaranızı iletin; sistem sponsor satırında adınızı ve profilinizdeki meslek / il bilgisini kullanır.",
-          topup: "Kredi yükle",
-          contact: "İletişim için ana sayfa alt bilgisindeki kanalları kullanabilirsiniz.",
         }
       : {
           title: "Homepage sponsorship",
           back: "Member dashboard",
           intro:
-            "A super administrator adds your account to appear in the homepage sponsor ticker. Fee and duration are set in platform settings.",
-          feeLabel: "Listed fee (per period)",
-          periodLabel: "Default visibility period",
-          days: "days",
-          freeHint: fee <= 0 ? "The listed fee is currently 0 TRY; your organization may update pricing anytime." : null,
+            "After you pay (or submit a free tier), administrators review your request. Once approved, your sponsor line goes live on the homepage; if declined, any charge is refunded to your balance.",
+          contact: "Use the contact channels shown in the site footer if needed.",
+          choosePeriod: "Preferred visibility period",
+          feeForPeriod: "Listed fee for the selected period",
+          daysSuffix: "days",
+          hintSelected:
+            "Payment becomes a pending request; admins approve or decline (declines refund paid amounts).",
+          balanceLabel: "Current balance",
+          payCta: "Pay",
+          paying: "Processing…",
+          topupCta: "Add credit",
+          insufficientHint: "Your balance is too low for this package. Add credit to continue.",
+          successPendingApproval:
+            "The fee was deducted. Your request is pending admin approval; if declined, you will be refunded.",
+          successPendingApprovalFree:
+            "Your application was sent for admin approval (no charge). It goes live once approved.",
+          freePackageHint: "This duration is listed at 0 TRY; admin approval still applies.",
+          submitFreeCta: "Submit free application",
+          duplicatePending: "You already have a pending application. Please wait for it to be resolved.",
           memberHint:
             "Share your member number when requesting placement; the sponsor line uses your name and profession / province from your profile.",
-          topup: "Add credit",
-          contact: "Use the contact channels shown in the site footer if needed.",
         };
 
   const topupHref = lang === "en" ? "/panel/user/topup?lang=en" : "/panel/user/topup";
@@ -108,31 +153,32 @@ export default async function UserSponsorshipPage({ searchParams }: Props) {
           <p className="mt-1 text-xs text-slate-600">{memberLine}</p>
           <p className="mt-2 text-xs text-slate-600">{session.email}</p>
         </div>
-
-        <dl className="grid gap-3 text-sm">
-          <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-orange-100 pb-2">
-            <dt className="font-medium text-slate-600">{t.feeLabel}</dt>
-            <dd className="tabular-nums font-semibold text-orange-950">{fee.toLocaleString(lang === "tr" ? "tr-TR" : "en-GB")} ₺</dd>
-          </div>
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <dt className="font-medium text-slate-600">{t.periodLabel}</dt>
-            <dd className="font-semibold text-orange-950">
-              {days} {t.days}
-            </dd>
-          </div>
-        </dl>
-
-        {t.freeHint ? <p className="text-xs text-slate-600">{t.freeHint}</p> : null}
         <p className="text-xs leading-relaxed text-slate-600">{t.memberHint}</p>
         <p className="text-xs text-slate-500">{t.contact}</p>
-
-        <Link
-          href={topupHref}
-          className="btn-primary inline-flex min-h-[44px] items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold shadow-md"
-        >
-          {t.topup}
-        </Link>
       </section>
+
+      <UserSponsorshipClient
+        lang={lang}
+        pricing={pricing}
+        balanceTry={balanceTry}
+        topupHref={topupHref}
+        labels={{
+          choosePeriod: t.choosePeriod,
+          feeForPeriod: t.feeForPeriod,
+          daysSuffix: t.daysSuffix,
+          hintSelected: t.hintSelected,
+          balanceLabel: t.balanceLabel,
+          payCta: t.payCta,
+          paying: t.paying,
+          topupCta: t.topupCta,
+          insufficientHint: t.insufficientHint,
+          successPendingApproval: t.successPendingApproval,
+          freePackageHint: t.freePackageHint,
+          submitFreeCta: t.submitFreeCta,
+          duplicatePending: t.duplicatePending,
+          successPendingApprovalFree: t.successPendingApprovalFree,
+        }}
+      />
     </main>
   );
 }

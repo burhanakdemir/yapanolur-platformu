@@ -14,7 +14,7 @@ import AdminPasswordForm from "./admin-password-form";
 import SuperAdminLoginForm from "./super-admin-login-form";
 import { displayAdTitle } from "@/lib/adTitleDisplay";
 import { isLikelyDatabaseConnectionError } from "@/lib/dbErrors";
-import { prisma } from "@/lib/prisma";
+import { getPrismaClient, prisma } from "@/lib/prisma";
 import { countPendingCreditInvoiceRequests } from "@/lib/prismaCreditInvoice";
 import AdminDashboardNav from "./admin-dashboard-nav";
 import AdminStaffScopeBanner from "./admin-staff-scope-banner";
@@ -51,12 +51,47 @@ async function getPendingSnapshot() {
     }),
   ]);
 
+  let sponsorPendingCount = 0;
+  let recentSponsorPurchases: Array<{
+    id: string;
+    periodDays: number;
+    amountTryPaid: number;
+    user: { email: string; name: string | null; memberNumber: number };
+  }> = [];
+  try {
+    const pdb = getPrismaClient();
+    const sp = await Promise.all([
+      pdb.sponsorHeroPurchaseRequest.count({ where: { status: "PENDING" } }),
+      pdb.sponsorHeroPurchaseRequest.findMany({
+        where: { status: "PENDING" },
+        orderBy: { createdAt: "asc" },
+        take: 6,
+        select: {
+          id: true,
+          periodDays: true,
+          amountTryPaid: true,
+          user: { select: { email: true, name: true, memberNumber: true } },
+        },
+      }),
+    ]);
+    sponsorPendingCount = sp[0];
+    recentSponsorPurchases = sp[1];
+  } catch (e) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[admin] Sponsor bekleyen özeti okunamadı (migration / DB / prisma):", e);
+    }
+    sponsorPendingCount = 0;
+    recentSponsorPurchases = [];
+  }
+
   return {
     pendingAdsCount,
     pendingMembersCount,
     pendingCreditInvoicesCount,
+    sponsorPendingCount,
     recentAds,
     recentMembers,
+    recentSponsorPurchases,
   };
 }
 
@@ -72,8 +107,10 @@ async function getPendingSnapshotSafe(): Promise<
         pendingAdsCount: 0,
         pendingMembersCount: 0,
         pendingCreditInvoicesCount: 0,
+        sponsorPendingCount: 0,
         recentAds: [],
         recentMembers: [],
+        recentSponsorPurchases: [],
         dbError: true,
       };
     }
@@ -181,8 +218,10 @@ export default async function AdminPage() {
     pendingAdsCount,
     pendingMembersCount,
     pendingCreditInvoicesCount,
+    sponsorPendingCount,
     recentAds,
     recentMembers,
+    recentSponsorPurchases,
     dbError,
   } = await getPendingSnapshotSafe();
 
@@ -246,8 +285,8 @@ export default async function AdminPage() {
         <div className="min-w-0 space-y-3 lg:space-y-4">
           <AdminDashboardNav mode={navMode} />
 
-          {recentAds.length > 0 || recentMembers.length > 0 ? (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
+          {recentAds.length > 0 || recentMembers.length > 0 || recentSponsorPurchases.length > 0 ? (
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
               {recentAds.length > 0 ? (
                 <div className="glass-card rounded-xl p-3 shadow-md md:p-3">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-orange-900/80">
@@ -281,6 +320,23 @@ export default async function AdminPage() {
                   </ul>
                 </div>
               ) : null}
+              {recentSponsorPurchases.length > 0 ? (
+                <div className="glass-card rounded-xl p-3 shadow-md md:p-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-orange-900/80">
+                    Sponsorluk (onay bekliyor)
+                  </h3>
+                  <ul className="mt-2 max-h-48 space-y-1.5 overflow-y-auto text-xs">
+                    {recentSponsorPurchases.map((row) => (
+                      <li key={row.id} className="truncate border-b border-orange-100/90 pb-2 last:border-0 last:pb-0">
+                        <Link href="/admin/sponsor-purchases" className="text-orange-900 hover:underline">
+                          №{row.user.memberNumber} · {row.periodDays} gün · {row.amountTryPaid.toLocaleString("tr-TR")} ₺
+                        </Link>
+                        <span className="block truncate text-[10px] text-slate-500">{row.user.name || row.user.email}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -308,6 +364,15 @@ export default async function AdminPage() {
                 <span>Yeni üye talebi</span>
                 <span className="rounded-full bg-gradient-to-r from-amber-600 to-orange-500 px-2 py-0.5 text-xs font-bold text-white tabular-nums shadow-sm">
                   {pendingMembersCount}
+                </span>
+              </Link>
+              <Link
+                href="/admin/sponsor-purchases"
+                className="admin-stat-tile flex items-center justify-between rounded-lg px-2 py-2 text-[13px] font-medium leading-snug text-orange-950 transition hover:ring-2 hover:ring-orange-300/60"
+              >
+                <span>Sponsorluk onayı</span>
+                <span className="rounded-full bg-gradient-to-r from-violet-600 to-indigo-500 px-2 py-0.5 text-xs font-bold text-white tabular-nums shadow-sm">
+                  {sponsorPendingCount}
                 </span>
               </Link>
               <Link

@@ -39,7 +39,7 @@ export function isLikelyDatabaseConnectionError(error: unknown): boolean {
   }
   const text = collectErrorChainText(error);
   if (
-    /Can't reach database server|Server has closed the connection|connection refused|connect ECONNREFUSED|timeout expired|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|Connection terminated|getaddrinfo|password authentication failed for user/i.test(
+    /Can't reach database server|Authentication failed against the database server|provided database credentials.*not valid|Server has closed the connection|connection refused|connect ECONNREFUSED|timeout expired|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|Connection terminated|getaddrinfo|password authentication failed for user/i.test(
       text,
     )
   ) {
@@ -71,6 +71,13 @@ export function isLikelyPrismaSchemaColumnMissing(error: unknown): boolean {
     return true;
   }
   if (/does not exist.*column|column.*does not exist/i.test(text)) {
+    return true;
+  }
+  /** PostgreSQL: tablo / ilişki yok (migration eksik) */
+  if (/relation\s+".*"\s+does\s+not\s+exist/i.test(text)) {
+    return true;
+  }
+  if (/undefined_table|42P01/i.test(text)) {
     return true;
   }
   return false;

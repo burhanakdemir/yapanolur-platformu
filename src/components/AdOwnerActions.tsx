@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SHOWCASE_DAY_OPTIONS } from "@/lib/showcaseDurations";
 
 const EXTEND_DAY_OPTIONS = [1, 3, 5, 7, 14, 21, 30];
@@ -28,10 +28,17 @@ export default function AdOwnerActions({
   const [extendDays, setExtendDays] = useState(7);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmComplete, setConfirmComplete] = useState(false);
+  const [clockMs, setClockMs] = useState<number | null>(null);
+
+  useEffect(() => {
+    setClockMs(Date.now());
+    const id = window.setInterval(() => setClockMs(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const tr = lang === "tr";
-  const nowMs = Date.now();
-  const showcaseActive = showcaseUntilIso ? new Date(showcaseUntilIso).getTime() > nowMs : false;
+  const showcaseActive =
+    showcaseUntilIso && clockMs !== null ? new Date(showcaseUntilIso).getTime() > clockMs : false;
 
   async function postManage(body: { action: string; days?: number }) {
     setBusy(true);

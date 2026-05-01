@@ -38,9 +38,13 @@ function envHost(value: string | undefined): string | null {
 
 const uploadHostFromBaseUrl = envHost(process.env.S3_PUBLIC_BASE_URL);
 const uploadHostFromEndpoint = envHost(process.env.S3_ENDPOINT);
-const extraImageHosts = [uploadHostFromBaseUrl, uploadHostFromEndpoint].filter(
-  (v): v is string => Boolean(v),
-);
+const imageHostsFromEnv = (process.env.NEXT_IMAGE_REMOTE_HOSTS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const extraImageHosts = [
+  ...new Set([...imageHostsFromEnv, uploadHostFromBaseUrl, uploadHostFromEndpoint].filter(Boolean)),
+] as string[];
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: [...defaultAllowedDevOrigins, ...extraAllowedDevOrigins],

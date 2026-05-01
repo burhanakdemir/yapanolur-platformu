@@ -9,6 +9,11 @@ const HOME_MAIN_CATEGORY_TILE_CORE =
 export const HOME_MAIN_CATEGORY_TILE_SIDEBAR = `${HOME_MAIN_CATEGORY_TILE_CORE} flex min-h-[32px] items-center justify-center px-1.5 py-1 text-center text-xs font-semibold sm:min-h-[36px] sm:px-2 sm:py-1.5 sm:text-sm`;
 
 /**
+ * Alt satır `<Link>` — üstteki kategori `<li>` ile aynı padding / punto / min-height (grid hücresinde `w-full`).
+ */
+export const HOME_SIDEBAR_CTA_TILE = `${HOME_MAIN_CATEGORY_TILE_SIDEBAR} max-sm:!min-h-[44px] max-sm:!py-2 touch-manipulation no-underline`;
+
+/**
  * İlan kartı — ince şerit; globals .btn-primary padding/font için ! ile sıkıştırma.
  * Sola yaslı, en fazla iki satır; yatay iç boşluk ve punto bir üst kademede (kart için).
  */

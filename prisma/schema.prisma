@@ -39,6 +39,8 @@ enum CreditTransactionType {
   MEMBER_COMMENT_FEE
   /** Profil sahibinin gelen yoruma cevabi (kredi) */
   MEMBER_COMMENT_REPLY_FEE
+  /** Ana sayfa sponsorluğu süre paketi (üye panelinden bakiye ile) */
+  SPONSOR_HERO_FEE
 }
 
 enum AdStatus {
@@ -141,6 +143,8 @@ model User {
   creditInvoiceApprovals      CreditInvoiceRequest[] @relation("CreditInvoiceApprover")
   /** Ana sayfa hero sponsor slaytı (ücretli görünürlük) */
   homeHeroSponsorSlides       HomeHeroSlide[]        @relation("SponsorHeroSlides")
+  sponsorHeroPurchases        SponsorHeroPurchaseRequest[] @relation("SponsorPurchaseBuyer")
+  resolvedSponsorPurchases    SponsorHeroPurchaseRequest[] @relation("SponsorPurchaseResolver")
 }
 
 /** Uye profiline ucretli (kredi) yorum */
@@ -463,15 +467,45 @@ model AdminSettings {
   signupPhoneVerificationRequired Boolean @default(true)
   /** Ana sayfa sponsor şeridi — dönem başına ücret (TL, kredi ile tahsil önerilir) */
   sponsorHeroFeeAmountTry       Int      @default(0)
-  /** Yayın süresi gün (slayt bitiş tarihi için varsayılan) */
+  /** Yayın süresi gün (slayt bitiş tarihi için varsayılan; geriye dönük) */
   sponsorHeroPeriodDays         Int      @default(30)
+  /** JSON: "4"|"7"|"10"|"15"|"30" anahtarları → TL (tamsayı). Boş/güncellenmemiş günler `sponsorHeroFeeAmountTry` ile dolar. */
+  sponsorHeroPricingTryJson     String   @default("{}")
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+}
+
+enum SponsorHeroPurchaseStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum HomeHeroSlideLang {
   tr
   en
+}
+
+/** Üyenin bakiyeden ödediği ana sayfa sponsor paketi — yönetici onayından sonra yayın başlar; redde iade. */
+model SponsorHeroPurchaseRequest {
+  id                  String                    @id @default(cuid())
+  userId              String
+  user                User                      @relation("SponsorPurchaseBuyer", fields: [userId], references: [id], onDelete: Cascade)
+  periodDays          Int
+  /** Tahsil edilen TL (0 = ücretsiz paket başvurusu) */
+  amountTryPaid       Int
+  status              SponsorHeroPurchaseStatus @default(PENDING)
+  paymentCreditTxId   String?
+  refundCreditTxId    String?
+  homeHeroSlideId     String?
+  resolvedAt          DateTime?
+  resolvedByUserId    String?
+  resolvedBy          User?                     @relation("SponsorPurchaseResolver", fields: [resolvedByUserId], references: [id], onDelete: SetNull)
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([userId, status])
 }
 
 /** Ana sayfa üst hero carousel — platform mesajı veya sponsor slaytı */

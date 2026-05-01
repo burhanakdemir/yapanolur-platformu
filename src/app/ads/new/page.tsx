@@ -161,6 +161,7 @@ function NewAdPageInner() {
     const res = await fetch(clientApiUrl("/api/uploads"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({
         filename: safeName,
         dataBase64: base64,

@@ -4,6 +4,7 @@
  */
 import "dotenv/config";
 import { Client } from "pg";
+import { assertReasonableDatabaseUrl } from "../src/lib/databaseUrlSanity";
 import { resolveDatabaseUrl } from "../src/lib/resolveDatabaseUrl";
 
 const raw = process.env.DATABASE_URL?.trim();
@@ -15,6 +16,13 @@ if (raw.startsWith("file:")) {
   console.error(
     "DATABASE_URL artık SQLite (file:...) değil; PostgreSQL kullanın. Örnek: postgresql://ilan:ilan@127.0.0.1:5432/ilan_dev — docker compose up -d. Bkz. .env.example",
   );
+  process.exit(1);
+}
+
+try {
+  assertReasonableDatabaseUrl(raw);
+} catch (e) {
+  console.error(e instanceof Error ? e.message : e);
   process.exit(1);
 }
 

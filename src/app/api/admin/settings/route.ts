@@ -6,6 +6,7 @@ import { verifySessionToken } from "@/lib/auth";
 import { isSuperAdminRole } from "@/lib/adminRoles";
 import { collectErrorChainText, isLikelyPrismaSchemaColumnMissing } from "@/lib/dbErrors";
 import { prisma } from "@/lib/prisma";
+import { mergeSponsorHeroPricingFromDb, pricingTryToJson } from "@/lib/sponsorHeroPricing";
 
 function hasEnvSmtp() {
   return Boolean(
@@ -26,8 +27,11 @@ function toPublicAdminSettings(s: AdminSettings) {
     Boolean(s.smtpHost?.trim()) &&
     Boolean(s.smtpUser?.trim()) &&
     (Boolean(s.smtpPass?.trim()) || hasEnvSmtpPassOnly());
+  const { sponsorHeroPricingTryJson, ...rest } = s;
+  void sponsorHeroPricingTryJson;
   return {
-    ...s,
+    ...rest,
+    sponsorHeroPricingTry: mergeSponsorHeroPricingFromDb(s),
     smtpPass: "",
     smtpPassConfigured: panelSmtp,
     smtpReady: panelSmtp || hasEnvSmtp(),
@@ -127,6 +131,15 @@ const bodySchema = z.object({
   ),
   sponsorHeroFeeAmountTry: z.number().int().min(0).optional(),
   sponsorHeroPeriodDays: z.number().int().min(1).max(3650).optional(),
+  sponsorHeroPricingTry: z
+    .object({
+      "4": z.number().int().min(0),
+      "7": z.number().int().min(0),
+      "10": z.number().int().min(0),
+      "15": z.number().int().min(0),
+      "30": z.number().int().min(0),
+    })
+    .optional(),
 });
 
 type Body = z.infer<typeof bodySchema>;
@@ -134,7 +147,7 @@ type Body = z.infer<typeof bodySchema>;
 /** `Record` yerine Prisma'nın beklediği tipler. */
 function buildAdminSettingsUpdateInput(
   data: Body,
-  extra: { showcaseDailyPricingJson?: string; setSmtpPass?: string },
+  extra: { showcaseDailyPricingJson?: string; setSmtpPass?: string; sponsorHeroPricingTryJson?: string },
 ): Prisma.AdminSettingsUpdateInput {
   const p: Prisma.AdminSettingsUpdateInput = {};
   if (data.bidFeeEnabled !== undefined) p.bidFeeEnabled = data.bidFeeEnabled;
@@ -193,6 +206,9 @@ function buildAdminSettingsUpdateInput(
   if (data.sponsorHeroPeriodDays !== undefined) {
     p.sponsorHeroPeriodDays = toInt(data.sponsorHeroPeriodDays) ?? data.sponsorHeroPeriodDays;
   }
+  if (extra.sponsorHeroPricingTryJson !== undefined) {
+    p.sponsorHeroPricingTryJson = extra.sponsorHeroPricingTryJson;
+  }
   if (extra.setSmtpPass !== undefined) p.smtpPass = extra.setSmtpPass;
   return p;
 }
@@ -226,7 +242,9 @@ export async function POST(req: Request) {
     if (
       typeof json === "object" &&
       json !== null &&
-      ("sponsorHeroFeeAmountTry" in json || "sponsorHeroPeriodDays" in json)
+      ("sponsorHeroFeeAmountTry" in json ||
+        "sponsorHeroPeriodDays" in json ||
+        "sponsorHeroPricingTry" in json)
     ) {
       if (!isSuperAdminRole(session?.role)) {
         return NextResponse.json(
@@ -238,6 +256,8 @@ export async function POST(req: Request) {
     const data = bodySchema.parse(json);
     const showcaseDailyPricingJson =
       data.showcaseDailyPricing !== undefined ? JSON.stringify(data.showcaseDailyPricing) : undefined;
+    const sponsorHeroPricingTryJson =
+      data.sponsorHeroPricingTry !== undefined ? pricingTryToJson(data.sponsorHeroPricingTry) : undefined;
     const smtpPassToSet =
       data.smtpPass != null && typeof data.smtpPass === "string" && data.smtpPass.trim().length > 0
         ? data.smtpPass.trim()
@@ -245,6 +265,7 @@ export async function POST(req: Request) {
 
     const updateData = buildAdminSettingsUpdateInput(data, {
       showcaseDailyPricingJson,
+      sponsorHeroPricingTryJson,
       setSmtpPass: smtpPassToSet,
     });
 

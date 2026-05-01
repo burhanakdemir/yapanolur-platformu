@@ -63,8 +63,10 @@ export default function CookieConsentBar() {
       initSentryClientFromConsent();
       return;
     }
-    setVisible(true);
-    showBannerPadding();
+    queueMicrotask(() => {
+      setVisible(true);
+      showBannerPadding();
+    });
     return () => {
       hideBannerPadding();
     };

@@ -200,7 +200,7 @@ export default async function UserPanelPage({ searchParams }: Props) {
           sponsorHero: "Ana sayfa sponsorluğu",
           sponsorHeroDesc: "Üst şerit görünürlüğü ve ücret bilgisi.",
           sponsorStripDesc:
-            "Ana sayfadaki kayan sponsor şeridinde görünmek için ücret ve süre platform ayarlarındadır; süper yönetici üye numaranızla yayını ekler.",
+            "Ana sayfadaki kayan sponsor şeridinde görünmek için 4–30 gün arası paket ücretleri platform ayarlarındadır; süper yönetici üye numaranızla yayını ekler.",
           sponsorStripCta: "Bilgi ve ücretler",
           rangeLabel: "Özet dönemi",
           rangeStart: "Başlangıç",
@@ -274,7 +274,7 @@ export default async function UserPanelPage({ searchParams }: Props) {
           sponsorHero: "Homepage sponsorship",
           sponsorHeroDesc: "Ticker placement and pricing info.",
           sponsorStripDesc:
-            "Pricing and duration follow platform settings; a super admin activates your row using your member number.",
+            "4–30 day package fees follow platform settings; a super administrator activates your row using your member number.",
           sponsorStripCta: "Pricing & details",
           rangeLabel: "Summary period",
           rangeStart: "Start",
@@ -627,6 +627,25 @@ export default async function UserPanelPage({ searchParams }: Props) {
             </div>
           </div>
         </header>
+
+        {isMemberAccount ? (
+          <section
+            aria-labelledby="panel-star-system-title"
+            className="rounded-2xl border-2 border-orange-400 bg-gradient-to-br from-amber-50 via-orange-50 to-white p-4 shadow-md sm:p-5"
+          >
+            <h2 id="panel-star-system-title" className="text-lg font-bold text-orange-950 sm:text-xl">
+              {dictionary[lang].memberPage.panelStarBannerTitle}
+            </h2>
+            <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-slate-800 sm:text-[0.95rem]">
+              {dictionary[lang].memberPage.panelStarBannerLines.map((line, idx) => (
+                <li key={idx}>{line}</li>
+              ))}
+            </ul>
+            <p className="mt-3 rounded-lg border border-orange-200/80 bg-orange-50/90 px-3 py-2 text-sm font-semibold text-orange-950">
+              {dictionary[lang].memberPage.panelStarBannerDocsCta}
+            </p>
+          </section>
+        ) : null}
 
         {isMemberAccount ? (
           <section

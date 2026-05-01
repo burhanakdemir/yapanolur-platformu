@@ -85,16 +85,16 @@ function CategoryImageThumb({ src }: { src: string }) {
   );
 }
 
-function ShowcaseRibbon({ showcaseUntil, lang }: { showcaseUntil: string | null; lang: "tr" | "en" }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!showcaseUntil) return;
-    const end = new Date(showcaseUntil).getTime();
-    if (Number.isNaN(end) || end <= Date.now()) return;
-    const id = window.setInterval(() => setNow(Date.now()), 30_000);
-    return () => window.clearInterval(id);
-  }, [showcaseUntil]);
-  const isShowcase = Boolean(showcaseUntil && new Date(showcaseUntil).getTime() > now);
+function ShowcaseRibbon({
+  showcaseUntil,
+  lang,
+  nowMs,
+}: {
+  showcaseUntil: string | null;
+  lang: "tr" | "en";
+  nowMs: number;
+}) {
+  const isShowcase = Boolean(showcaseUntil && new Date(showcaseUntil).getTime() > nowMs);
 
   return (
     <div className="mb-1 flex h-[14px] shrink-0 items-center" aria-hidden={!isShowcase}>
@@ -109,22 +109,34 @@ function ShowcaseRibbon({ showcaseUntil, lang }: { showcaseUntil: string | null;
   );
 }
 
-function cardStatusLabel(ad: HomeAuctionItem, lang: "tr" | "en"): string {
+function cardStatusLabel(ad: HomeAuctionItem, lang: "tr" | "en", nowMs: number): string {
   const ends = ad.auctionEndsAt ? new Date(ad.auctionEndsAt).getTime() : null;
-  const now = Date.now();
-  if (ends !== null && !Number.isNaN(ends) && ends <= now) {
+  if (ends !== null && !Number.isNaN(ends) && ends <= nowMs) {
     return lang === "tr" ? "Süresi doldu" : "Ended";
   }
   return lang === "tr" ? "Açık ihale" : "Open";
 }
 
+function useHydrationAlignedClock(initialMs: number): number {
+  const [nowMs, setNowMs] = useState(initialMs);
+  useEffect(() => {
+    queueMicrotask(() => setNowMs(Date.now()));
+    const id = window.setInterval(() => setNowMs(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, [initialMs]);
+  return nowMs;
+}
+
 const AuctionGridCard = memo(function AuctionGridCard({
   ad,
   lang,
+  hydrationNowMs,
 }: {
   ad: HomeAuctionItem;
   lang: "tr" | "en";
+  hydrationNowMs: number;
 }) {
+  const nowMs = useHydrationAlignedClock(hydrationNowMs);
   const categoryImageUrl = ad.categoryCard?.imageUrl?.trim() || null;
   const href = lang === "en" ? `/ads/${ad.id}?lang=en` : `/ads/${ad.id}`;
 
@@ -139,7 +151,7 @@ const AuctionGridCard = memo(function AuctionGridCard({
       }
       className="glass-card group flex h-full min-h-[158px] w-full min-w-0 cursor-pointer touch-manipulation flex-col gap-0 rounded-lg border border-transparent p-1 sm:min-h-[176px] sm:p-1.5 text-left shadow-sm transition-[border-color,box-shadow,background-color,color] duration-150 hover:!border-orange-400/80 hover:!bg-orange-200/85 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400 active:scale-[0.98]"
     >
-      <ShowcaseRibbon showcaseUntil={ad.showcaseUntil} lang={lang} />
+      <ShowcaseRibbon showcaseUntil={ad.showcaseUntil} lang={lang} nowMs={nowMs} />
       <div className="flex min-h-0 flex-col gap-0 leading-none">
         <div className={HOME_MAIN_CATEGORY_TILE_CARD} title={mainCategoryLine(ad, lang)}>
           {mainCategoryLine(ad, lang)}
@@ -164,7 +176,7 @@ const AuctionGridCard = memo(function AuctionGridCard({
           <span className="mx-1 text-slate-300" aria-hidden>
             ·
           </span>
-          <span className="text-orange-800/90">{cardStatusLabel(ad, lang)}</span>
+          <span className="text-orange-800/90">{cardStatusLabel(ad, lang, nowMs)}</span>
         </p>
       </div>
       <div className="mt-1 -mx-1 shrink-0 overflow-hidden rounded border border-slate-200/80 sm:-mx-1.5">
@@ -201,9 +213,12 @@ const AuctionGridCard = memo(function AuctionGridCard({
 export default function HomeAuctionsVirtualGrid({
   initialAuctions,
   lang,
+  hydrationNowMs,
 }: {
   initialAuctions: HomeAuctionItem[];
   lang: "tr" | "en";
+  /** SSR ile ilk client render'da aynı zaman ekseni (hidrasyon uyumu). */
+  hydrationNowMs: number;
 }) {
   const scrollParentRef = useRef<HTMLDivElement>(null);
   const gridCols = useResponsiveGridCols();
@@ -257,7 +272,7 @@ export default function HomeAuctionsVirtualGrid({
                   className={`grid h-full items-stretch gap-1.5 sm:gap-2 ${gridColsClass(gridCols)}`}
                 >
                   {row.map((ad) => (
-                    <AuctionGridCard key={ad.id} ad={ad} lang={lang} />
+                    <AuctionGridCard key={ad.id} ad={ad} lang={lang} hydrationNowMs={hydrationNowMs} />
                   ))}
                 </div>
               </div>
