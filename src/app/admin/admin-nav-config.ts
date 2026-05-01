@@ -27,6 +27,7 @@ export type AdminQuickLink = {
 /** Üst hızlı menü + sol sidebar (kısa ve sık kullanılanlar) */
 export const ADMIN_QUICK_LINKS: readonly AdminQuickLink[] = [
   { href: "/admin", label: "Özet" },
+  { href: "/executive", label: "İş özeti", superOnly: true },
   { href: "/admin/site-settings", label: "Site" },
   { href: "/admin/odeme", label: "Ödeme", superOnly: true },
   { href: "/admin/signup-sms-provider", label: "Kayıt SMS", superOnly: true },
@@ -45,6 +46,20 @@ export const ADMIN_QUICK_LINKS: readonly AdminQuickLink[] = [
 
 /** Ana panelde gruplu kartlar + arama */
 export const ADMIN_SECTION_GROUPS: AdminNavGroup[] = [
+  {
+    id: "ust-yonetim",
+    label: "Üst yönetim",
+    sections: [
+      {
+        id: "executive",
+        title: "İş özeti (CEO)",
+        description:
+          "Kredi, ödeme, ilan ve teklif özetleri; günlük operasyon ayarları bu ekranda yoktur.",
+        href: "/executive",
+        superOnly: true,
+      },
+    ],
+  },
   {
     id: "site",
     label: "Site & görünüm",
