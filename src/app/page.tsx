@@ -19,6 +19,8 @@ import SearchFilters from "@/components/SearchFilters";
 import EngineerSearch from "@/components/EngineerSearch";
 import HomeHeaderActions from "@/components/HomeHeaderActions";
 import HomePostListingStrip from "@/components/HomePostListingStrip";
+import HomeHeroCarousel from "@/components/HomeHeroCarousel";
+import { fetchActiveHomeHeroSlides, toHomeHeroSlidePayload } from "@/lib/homeHeroSlidesQuery";
 import { findManyAuctionsShowcaseFirst, HOME_AUCTIONS_LIMIT } from "@/lib/auctionListing";
 import { serializeAuctionForHomeList } from "@/lib/serializeHomeAuction";
 
@@ -208,6 +210,17 @@ export default async function Home({ searchParams }: Props) {
     const serializedInitialAuctions = initialAuctions.map((a) => serializeAuctionForHomeList(a));
     const flatCategories = flattenCategories(categoryTree as CategoryTreeNode[]);
 
+    const heroSlidesRaw = await fetchActiveHomeHeroSlides(lang);
+    const heroSlides = toHomeHeroSlidePayload(heroSlidesRaw);
+    const fallbackHeroTitle =
+      lang === "tr"
+        ? adminSettings.homeHeroTitleTr || t.home.heroTitle
+        : adminSettings.homeHeroTitleEn || t.home.heroTitle;
+    const fallbackHeroSubtitle =
+      lang === "tr"
+        ? adminSettings.homeHeroSubtitleTr || t.home.heroSubtitle
+        : adminSettings.homeHeroSubtitleEn || t.home.heroSubtitle;
+
     const token = (await cookies()).get("session_token")?.value;
     const session = await verifySessionToken(token);
     const showHeroAuthLinks = !session;
@@ -244,34 +257,17 @@ export default async function Home({ searchParams }: Props) {
           />
         </div>
 
-        <section className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-white md:px-5 md:py-3.5">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
-            <div className="flex min-w-0 min-h-0 flex-1 flex-col gap-1.5">
-              <h2 className="w-full min-w-0 text-lg font-bold leading-tight sm:text-xl md:text-2xl">
-                {lang === "tr" ? adminSettings.homeHeroTitleTr : t.home.heroTitle}
-              </h2>
-              <p className="w-full min-w-0 text-xs font-semibold leading-snug text-orange-100 sm:text-sm md:text-[0.9375rem] md:whitespace-nowrap md:overflow-hidden md:text-ellipsis">
-                {lang === "tr" ? adminSettings.homeHeroSubtitleTr : t.home.heroSubtitle}
-              </p>
-            </div>
-            {showHeroAuthLinks ? (
-              <div className="flex shrink-0 flex-row flex-wrap items-center gap-2 md:justify-end">
-                <Link
-                  className="chip inline-flex min-h-[44px] touch-manipulation items-center whitespace-nowrap border border-white/70 bg-white/10 !text-[#722f37] px-4 py-2 text-xs font-semibold hover:bg-white/20 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-sm"
-                  href={lang === "en" ? "/login?lang=en" : "/login"}
-                >
-                  {t.home.primaryButton}
-                </Link>
-                <Link
-                  className="chip inline-flex min-h-[44px] touch-manipulation items-center whitespace-nowrap border border-white/70 bg-white/10 !text-[#722f37] px-4 py-2 text-xs font-semibold hover:bg-white/20 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-sm"
-                  href={lang === "en" ? "/members?lang=en" : "/members"}
-                >
-                  {t.home.secondaryButton}
-                </Link>
-              </div>
-            ) : null}
-          </div>
-        </section>
+        <HomeHeroCarousel
+          lang={lang}
+          slides={heroSlides}
+          fallbackTitle={fallbackHeroTitle}
+          fallbackSubtitle={fallbackHeroSubtitle}
+          showHeroAuthLinks={showHeroAuthLinks}
+          primaryButtonHref={lang === "en" ? "/login?lang=en" : "/login"}
+          secondaryButtonHref={lang === "en" ? "/members?lang=en" : "/members"}
+          primaryButtonLabel={t.home.primaryButton}
+          secondaryButtonLabel={t.home.secondaryButton}
+        />
       </header>
 
       <section className="grid max-lg:gap-5 gap-4 lg:grid-cols-[280px_1fr] lg:items-stretch">

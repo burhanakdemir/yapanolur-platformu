@@ -47,6 +47,12 @@ export default function SiteSettingsPage() {
         ← Yönetici ana panel
       </Link>
       <h1 className="text-3xl font-bold tracking-tight text-orange-950">Site ayarları</h1>
+      <p className="text-sm text-slate-600">
+        Ana sayfa üst şerit için carousel slaytları:{" "}
+        <Link className="font-semibold text-orange-800 underline-offset-2 hover:underline" href="/admin/home-hero-slides">
+          Hero slaytları yönetimi
+        </Link>
+      </p>
       <form className="glass-card rounded-2xl p-5 space-y-3" onSubmit={onSave}>
         <input
           className="w-full border rounded-lg p-2 bg-white"

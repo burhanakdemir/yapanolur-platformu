@@ -463,6 +463,31 @@ model AdminSettings {
   updatedAt          DateTime @updatedAt
 }
 
+enum HomeHeroSlideLang {
+  tr
+  en
+}
+
+/** Ana sayfa üst hero carousel — platform mesajı veya sponsor slaytı */
+model HomeHeroSlide {
+  id        String            @id @default(cuid())
+  lang      HomeHeroSlideLang
+  sortOrder Int               @default(0)
+  active    Boolean           @default(true)
+  title     String
+  subtitle  String?
+  imageUrl  String?
+  ctaUrl    String?
+  ctaLabel  String?
+  isSponsor Boolean           @default(false)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([lang, active, sortOrder])
+}
+
 model Category {
   id          String     @id @default(cuid())
   name        String

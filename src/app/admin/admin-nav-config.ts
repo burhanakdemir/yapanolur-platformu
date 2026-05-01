@@ -29,6 +29,7 @@ export const ADMIN_QUICK_LINKS: readonly AdminQuickLink[] = [
   { href: "/admin", label: "Özet" },
   { href: "/executive", label: "İş özeti", superOnly: true },
   { href: "/admin/site-settings", label: "Site" },
+  { href: "/admin/home-hero-slides", label: "Hero slayt" },
   { href: "/admin/odeme", label: "Ödeme", superOnly: true },
   { href: "/admin/signup-sms-provider", label: "Kayıt SMS", superOnly: true },
   { href: "/admin/signup-verification", label: "Kayıt OTP", superOnly: true },
@@ -69,6 +70,12 @@ export const ADMIN_SECTION_GROUPS: AdminNavGroup[] = [
         title: "Site ayarları",
         description: "Ana sayfa metinleri, butonlar, iletişim satırı ve genel site davranışı.",
         href: "/admin/site-settings",
+      },
+      {
+        id: "home-hero-slides",
+        title: "Ana sayfa hero slaytları",
+        description: "Üst carousel: duyuru ve sponsor slaytları, sıralama ve zaman aralığı.",
+        href: "/admin/home-hero-slides",
       },
       {
         id: "support",
