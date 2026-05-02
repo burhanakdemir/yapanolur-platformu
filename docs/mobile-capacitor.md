@@ -33,6 +33,10 @@ export default config;
 
 `mobile/www` içinde Capacitor’un beklediği minimal statik içerik için resmi kılavuza uyun; tamamen uzak URL kullanıyorsanız sürüm notlarına bakın.
 
+## PWA (tarayıcıdan kurulum)
+
+Web için PNG ikonlar `npm run icons:pwa` ile `src/app/icon.svg` kaynaklı üretilir (`public/icons/`). Manifest `src/app/manifest.ts` içindedir.
+
 ## Riskler
 
 - Ödeme sayfaları ve `window.open` / özel şema bazen WebView’da farklı davranır.
