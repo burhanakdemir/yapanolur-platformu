@@ -7,8 +7,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import pngToIco from "png-to-ico";
 import sharp from "sharp";
-import toIco from "to-ico";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
@@ -87,23 +87,30 @@ function sharpFromSource(srcPath) {
   return sharp(srcPath);
 }
 
+const RESIZE_OPTS = {
+  fit: "contain",
+  kernel: sharp.kernel.lanczos3,
+};
+
 async function writeSquarePng(srcPath, size, outPath, bg) {
   await sharpFromSource(srcPath)
     .flatten({ background: bg })
-    .resize(size, size, { fit: "contain", background: bg })
+    .resize(size, size, { ...RESIZE_OPTS, background: bg })
     .png()
     .toFile(outPath);
 }
 
-/** .ico — çoğu tarayıcı /favicon.ico ister; tek 32px PNG katmanı (to-ico çok katmanda bozulma riski) */
+/** `public/favicon.ico` — png-to-ico (to-ico bazı tarayıcılarda boş görünebiliyordu); 16/32/48 PNG katmanları */
 async function writeFaviconIco(srcPath, outPath, bg) {
-  const b32 = await sharpFromSource(srcPath)
-    .flatten({ background: bg })
-    .resize(32, 32, { fit: "contain", background: bg })
-    .png()
-    .toBuffer();
-  const ico = await toIco([b32]);
-  fs.writeFileSync(outPath, ico);
+  const layer = async (px) =>
+    sharpFromSource(srcPath)
+      .flatten({ background: bg })
+      .resize(px, px, { ...RESIZE_OPTS, background: bg })
+      .png({ compressionLevel: 6 })
+      .toBuffer();
+  const [b16, b32, b48] = await Promise.all([layer(16), layer(32), layer(48)]);
+  const ico = await pngToIco([b16, b32, b48]);
+  fs.writeFileSync(outPath, Buffer.from(ico));
 }
 
 async function main() {
@@ -133,7 +140,7 @@ async function main() {
   );
 
   await writeFaviconIco(srcPath, publicFaviconIco, bg);
-  console.log("wrote", path.relative(root, publicFaviconIco), `(32px layer, from ${label})`);
+  console.log("wrote", path.relative(root, publicFaviconIco), `(16/32/48 ico, from ${label})`);
 }
 
 main().catch((e) => {
