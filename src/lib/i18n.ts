@@ -33,6 +33,8 @@ type Dictionary = {
       androidBody: string;
       close: string;
       devHint: string;
+      /** Sekme listesi (iOS/Android) — ekran okuyucu */
+      devicePickerAriaLabel: string;
     };
   };
   categoriesTitle: string;
@@ -122,13 +124,15 @@ export const dictionary: Record<Lang, Dictionary> = {
         modalTitle: "Uygulamayı indir",
         iosTitle: "iPhone / iPad — Ana Ekrana Ekle",
         iosStep1: "Safari veya Chrome’da bu sayfayı açın.",
-        iosStep2: "Alt kısımdaki Paylaş (kare ve ok) düğmesine dokunun.",
+        iosStep2:
+          "Paylaş düğmesine dokunun (Safari’de genelde adres çubuğu yanında veya altta kare + ok simgesi).",
         iosStep3: "«Ana Ekrana Ekle» → «Ekle» ile onaylayın.",
         androidTitle: "Android",
         androidBody:
           "Chrome’da menü (⋮) üzerinden «Uygulamayı yükle» veya «Ana ekrana ekle» seçeneğini kullanın. Bazı cihazlarda adres çubuğundaki kurulum simgesi de görünür.",
         close: "Kapat",
         devHint: "Yerelde tam kurulum canlı (HTTPS) sitede geçerlidir.",
+        devicePickerAriaLabel: "Kurulum talimatı için işletim sistemi seçin",
       },
     },
     categoriesTitle: "Üst Kategoriler",
@@ -222,13 +226,15 @@ export const dictionary: Record<Lang, Dictionary> = {
         modalTitle: "Install app",
         iosTitle: "iPhone / iPad — Add to Home Screen",
         iosStep1: "Open this site in Safari or Chrome.",
-        iosStep2: "Tap Share (square with arrow) at the bottom.",
+        iosStep2:
+          "Tap the Share button (often a square with an arrow near the address bar or toolbar).",
         iosStep3: "Tap «Add to Home Screen», then «Add».",
         androidTitle: "Android",
         androidBody:
           "In Chrome, use the menu (⋮) → «Install app» or «Add to Home screen». Some devices also show an install icon in the address bar.",
         close: "Close",
         devHint: "Full install behaviour applies on the live HTTPS site.",
+        devicePickerAriaLabel: "Choose operating system for install instructions",
       },
     },
     categoriesTitle: "Top Categories",
