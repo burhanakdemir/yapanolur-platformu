@@ -44,6 +44,19 @@ export default function AdminMembersPage() {
   const [pendingCredit, setPendingCredit] = useState<{ userId: string; label: string } | null>(null);
   const [creditAmount, setCreditAmount] = useState("");
   const [creditLoading, setCreditLoading] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    void fetch("/api/auth/me", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data: unknown) => {
+        if (data && typeof data === "object" && "user" in data) {
+          const u = (data as { user?: { role?: string } }).user;
+          setIsSuperAdmin(u?.role === "SUPER_ADMIN");
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const t = window.setTimeout(() => setSearchQ(searchInput.trim()), 300);
@@ -399,23 +412,27 @@ export default function AdminMembersPage() {
                             >
                               {m.isMemberApproved ? "Bekle" : "Onayla"}
                             </button>
-                            <button
-                              className="chip flex min-h-[1.75rem] w-full items-center justify-center !px-0.5 !py-1 text-[9px] leading-tight"
-                              type="button"
-                              title="Kredi bakiyesine TL yukle"
-                              onClick={() => openCreditDialog(m.id, m.name?.trim() || m.email)}
-                            >
-                              Bakiye
-                            </button>
-                            <button
-                              className="flex min-h-[1.75rem] w-full items-center justify-center rounded border border-red-200 bg-red-50 px-0.5 py-1 text-[9px] leading-tight text-red-900 hover:bg-red-100 disabled:opacity-50"
-                              type="button"
-                              disabled={deletingId === m.id}
-                              title="Uye hesabini kalici sil"
-                              onClick={() => openDeleteDialog(m.id, m.name?.trim() || m.email)}
-                            >
-                              {deletingId === m.id ? "…" : "Sil"}
-                            </button>
+                            {isSuperAdmin ? (
+                              <>
+                                <button
+                                  className="chip flex min-h-[1.75rem] w-full items-center justify-center !px-0.5 !py-1 text-[9px] leading-tight"
+                                  type="button"
+                                  title="Kredi bakiyesine TL yukle"
+                                  onClick={() => openCreditDialog(m.id, m.name?.trim() || m.email)}
+                                >
+                                  Bakiye
+                                </button>
+                                <button
+                                  className="flex min-h-[1.75rem] w-full items-center justify-center rounded border border-red-200 bg-red-50 px-0.5 py-1 text-[9px] leading-tight text-red-900 hover:bg-red-100 disabled:opacity-50"
+                                  type="button"
+                                  disabled={deletingId === m.id}
+                                  title="Uye hesabini kalici sil"
+                                  onClick={() => openDeleteDialog(m.id, m.name?.trim() || m.email)}
+                                >
+                                  {deletingId === m.id ? "…" : "Sil"}
+                                </button>
+                              </>
+                            ) : null}
                           </div>
                         </div>
                       </td>

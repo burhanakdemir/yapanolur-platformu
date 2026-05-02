@@ -105,6 +105,7 @@ export async function POST(req: Request) {
       userId: user.id,
       email: user.email,
       role: user.role as AppUserRole,
+      lastActivity: Date.now(),
     });
 
     const res = NextResponse.json({

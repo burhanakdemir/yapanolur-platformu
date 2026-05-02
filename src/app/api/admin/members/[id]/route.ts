@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail } from "@/lib/mailer";
 import { hashPassword } from "@/lib/passwordHash";
 import { verifySessionToken } from "@/lib/auth";
-import { isStaffAdminRole } from "@/lib/adminRoles";
+import { isStaffAdminRole, isSuperAdminRole } from "@/lib/adminRoles";
 
 const bodySchema = z.object({
   action: z.enum(["approve", "pending", "resetPassword"]),
@@ -45,8 +45,11 @@ export async function DELETE(_req: Request, { params }: Params) {
   try {
     const token = (await cookies()).get("session_token")?.value;
     const session = await verifySessionToken(token);
-    if (!session || !isStaffAdminRole(session.role)) {
-      return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+    if (!session || !isSuperAdminRole(session.role)) {
+      return NextResponse.json(
+        { error: "Üye silme yalnızca süper yönetici tarafından yapılabilir." },
+        { status: 403 },
+      );
     }
     const { id } = await params;
     const user = await prisma.user.findUnique({

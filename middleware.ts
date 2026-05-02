@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import type { SessionPayload } from "@/lib/auth";
 import { getSessionFromRequest } from "@/lib/auth";
+import { applyMemberActivityRefresh, isMemberIdleExpired } from "@/lib/memberSessionIdle";
+import { shouldUseSecureCookie } from "@/lib/cookieSecure";
 import { ADMIN_GATE_COOKIE, verifyAdminGateToken } from "@/lib/adminGate";
 import { isStaffAdminRole, isSuperAdminRole } from "@/lib/adminRoles";
 import { ADMIN_MFA_PENDING_COOKIE, verifyAdminMfaPendingToken } from "@/lib/adminMfaPending";
@@ -90,10 +93,47 @@ function finalize(req: NextRequest, requestId: string, pathname: string, interna
   return nextWithRequestId(req, requestId);
 }
 
+function clearSessionCookie(req: NextRequest, res: NextResponse): NextResponse {
+  res.cookies.set("session_token", "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: shouldUseSecureCookie(req),
+    path: "/",
+    maxAge: 0,
+  });
+  return res;
+}
+
+async function endWithFinalize(
+  req: NextRequest,
+  requestId: string,
+  pathname: string,
+  internalPath: string,
+  session: SessionPayload | null,
+) {
+  let res = finalize(req, requestId, pathname, internalPath);
+  res = await applyMemberActivityRefresh(req, session, res);
+  return res;
+}
+
 export async function middleware(req: NextRequest) {
   const requestId = getOrCreateRequestId(req);
   const { pathname } = req.nextUrl;
   const session = await getSessionFromRequest(req);
+
+  /** MEMBER hareketsizlik — ADMIN/SUPER_ADMIN etkilenmez */
+  if (session?.role === "MEMBER" && isMemberIdleExpired(session.lastActivity)) {
+    const memberProtectedPage =
+      pathname.startsWith("/panel/user") || pathname.startsWith("/ads/new");
+
+    if (memberProtectedPage) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("next", pathname + req.nextUrl.search);
+      return clearSessionCookie(req, redirectWithRequestId(loginUrl, requestId));
+    }
+
+    return clearSessionCookie(req, nextWithRequestId(req, requestId));
+  }
 
   const internalPath = adminBrowserPathToInternal(pathname);
 
@@ -117,7 +157,7 @@ export async function middleware(req: NextRequest) {
       isAdminRootInternal(internalPath) ||
       pathname.startsWith("/api/auth/admin-totp");
     if (allow) {
-      return finalize(req, requestId, pathname, internalPath);
+      return endWithFinalize(req, requestId, pathname, internalPath, session);
     }
     if (pathname.startsWith("/api/admin")) {
       return jsonWithRequestId({ error: "Yönetici doğrulama (TOTP) gerekli." }, 403, requestId);
@@ -136,7 +176,7 @@ export async function middleware(req: NextRequest) {
   const isAdminGateApi = pathname === "/api/admin/gate" || pathname.startsWith("/api/admin/gate/");
   if (isAdminPath && !isAdminGateApi) {
     if (isAdminRootInternal(internalPath)) {
-      return finalize(req, requestId, pathname, internalPath);
+      return endWithFinalize(req, requestId, pathname, internalPath, session);
     }
     if (isSuperAdminOnlyPathInternal(internalPath)) {
       if (!isSuperAdminRole(session?.role) || session?.adminTotp !== true) {
@@ -145,7 +185,7 @@ export async function middleware(req: NextRequest) {
         }
         return redirectWithRequestId(new URL(adminUrl(), req.url), requestId);
       }
-      return finalize(req, requestId, pathname, internalPath);
+      return endWithFinalize(req, requestId, pathname, internalPath, session);
     }
     const ok = await hasAdminAccess(req);
     if (!ok) {
@@ -168,7 +208,7 @@ export async function middleware(req: NextRequest) {
     return redirectWithRequestId(new URL(adminUrl(), req.url), requestId);
   }
 
-  return finalize(req, requestId, pathname, internalPath);
+  return endWithFinalize(req, requestId, pathname, internalPath, session);
 }
 
 export const config = {

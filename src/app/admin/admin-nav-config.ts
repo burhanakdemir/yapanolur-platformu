@@ -29,19 +29,19 @@ export type AdminQuickLink = {
 export const ADMIN_QUICK_LINKS: readonly AdminQuickLink[] = [
   { href: adminUrl(), label: "Özet" },
   { href: "/executive", label: "İş özeti", superOnly: true },
-  { href: adminUrl("/site-settings"), label: "Site" },
+  { href: adminUrl("/site-settings"), label: "Site", superOnly: true },
   { href: adminUrl("/home-hero-slides"), label: "Hero slayt" },
   { href: adminUrl("/sponsor-hero"), label: "Sponsor hero", superOnly: true },
   { href: adminUrl("/odeme"), label: "Ödeme", superOnly: true },
   { href: adminUrl("/signup-sms-provider"), label: "Kayıt SMS", superOnly: true },
   { href: adminUrl("/signup-verification"), label: "Kayıt OTP", superOnly: true },
   { href: adminUrl("/ileti-merkezi-json"), label: "İleti SMS", superOnly: true },
-  { href: adminUrl("/payments"), label: "Vitrin" },
+  { href: adminUrl("/payments"), label: "Vitrin", superOnly: true },
   { href: adminUrl("/categories"), label: "Kategoriler" },
   { href: adminUrl("/members"), label: "Üyeler" },
   { href: adminUrl("/listings"), label: "İlanlar" },
   { href: adminUrl("/sponsor-purchases"), label: "Sponsor onayı" },
-  { href: adminUrl("/ilan-eposta"), label: "İlan e-posta" },
+  { href: adminUrl("/ilan-eposta"), label: "İlan e-posta", superOnly: true },
   { href: adminUrl("/bid-settings"), label: "Teklif fiyatı" },
   { href: adminUrl("/bids"), label: "Teklifler" },
   { href: adminUrl("/credit-invoices"), label: "Faturalar" },
@@ -73,6 +73,7 @@ export const ADMIN_SECTION_GROUPS: AdminNavGroup[] = [
         title: "Site ayarları",
         description: "Ana sayfa metinleri, butonlar, iletişim satırı ve genel site davranışı.",
         href: adminUrl("/site-settings"),
+        superOnly: true,
       },
       {
         id: "home-hero-slides",
@@ -164,6 +165,7 @@ export const ADMIN_SECTION_GROUPS: AdminNavGroup[] = [
         title: "Vitrin ayarları",
         description: "Vitrin paket fiyatları ve temel vitrin ücreti.",
         href: adminUrl("/payments"),
+        superOnly: true,
       },
       {
         id: "credit-invoices",
@@ -207,6 +209,7 @@ export const ADMIN_SECTION_GROUPS: AdminNavGroup[] = [
         description:
           "Onay sonrası il+meslek eşleşen üyelere e-posta; gizli anahtarlı webhook URL’leri ve gönderen adresi.",
         href: adminUrl("/ilan-eposta"),
+        superOnly: true,
       },
       {
         id: "bid-settings",

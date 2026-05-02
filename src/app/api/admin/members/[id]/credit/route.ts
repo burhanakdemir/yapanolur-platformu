@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { verifySessionToken } from "@/lib/auth";
-import { isStaffAdminRole } from "@/lib/adminRoles";
+import { isSuperAdminRole } from "@/lib/adminRoles";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -19,8 +19,11 @@ export async function POST(req: Request, { params }: Params) {
   try {
     const token = (await cookies()).get("session_token")?.value;
     const session = await verifySessionToken(token);
-    if (!session || !isStaffAdminRole(session.role)) {
-      return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+    if (!session || !isSuperAdminRole(session.role)) {
+      return NextResponse.json(
+        { error: "Bu işlem yalnızca süper yönetici tarafından yapılabilir." },
+        { status: 403 },
+      );
     }
 
     const { id: userId } = await params;

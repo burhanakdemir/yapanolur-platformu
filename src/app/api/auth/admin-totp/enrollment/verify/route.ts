@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Geçersiz kod." }, { status: 400 });
   }
 
-  if (!verifyTotpCode(enroll.secretBase32, parsed.data.code)) {
+  if (!(await verifyTotpCode(enroll.secretBase32, parsed.data.code))) {
     return NextResponse.json({ error: "Geçersiz doğrulama kodu." }, { status: 401 });
   }
 

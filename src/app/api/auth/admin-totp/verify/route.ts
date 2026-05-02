@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "TOTP yapılandırması okunamadı." }, { status: 500 });
   }
 
-  if (!verifyTotpCode(secretPlain, parsed.data.code)) {
+  if (!(await verifyTotpCode(secretPlain, parsed.data.code))) {
     return NextResponse.json({ error: "Geçersiz doğrulama kodu." }, { status: 401 });
   }
 

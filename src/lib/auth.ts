@@ -9,6 +9,8 @@ export type SessionPayload = {
   role: AppUserRole;
   /** ADMIN/SUPER_ADMIN: yönetici TOTP doğrulandıktan sonra true */
   adminTotp?: boolean;
+  /** MEMBER: son sunucu isteği (unix ms); hareketsizlik süresi middleware ile uygulanır */
+  lastActivity?: number;
 };
 
 export async function createSessionToken(payload: SessionPayload) {

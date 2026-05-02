@@ -52,14 +52,17 @@ export default function AdminMfaPanel({
   useEffect(() => {
     if (!needsEnrollment) return;
     let cancelled = false;
+    const ac = new AbortController();
     (async () => {
       setLoading(true);
       try {
         const res = await fetch("/api/auth/admin-totp/enrollment/start", {
           method: "POST",
           credentials: "include",
+          signal: ac.signal,
         });
         const data = (await res.json().catch(() => ({}))) as MfaJson;
+        if (ac.signal.aborted || cancelled) return;
         if (!res.ok) {
           if (data.sessionExpired) {
             await reloadAfterSessionExpired();
@@ -68,15 +71,19 @@ export default function AdminMfaPanel({
           setMessage(apiErrorMessage(data.error, "Kurulum başlatılamadı."));
           return;
         }
-        if (cancelled) return;
         if (data.qrDataUrl) setQrDataUrl(data.qrDataUrl);
         setEnrollReady(true);
+      } catch {
+        if (!ac.signal.aborted && !cancelled) {
+          setMessage("Kurulum isteği iptal edildi veya ağ hatası. Sayfayı yenileyin.");
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!ac.signal.aborted && !cancelled) setLoading(false);
       }
     })();
     return () => {
       cancelled = true;
+      ac.abort();
     };
   }, [needsEnrollment]);
 
@@ -191,49 +198,60 @@ export default function AdminMfaPanel({
         </button>
       </form>
 
-      {!needsEnrollment ? (
-        <div className="mt-5 rounded-xl border border-amber-200/80 bg-amber-50/50 p-4">
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => {
-              setLostAuthOpen((o) => !o);
-              setLostMessage("");
-            }}
-            className="text-left text-sm font-medium text-amber-950 underline-offset-2 hover:underline disabled:opacity-50"
-          >
-            Authenticator kaydını sildim veya telefonu kaybettim
-          </button>
-          {lostAuthOpen ? (
-            <form className="mt-3 space-y-2" onSubmit={(e) => void onLostDeviceReset(e)}>
-              <p className="text-xs leading-relaxed text-slate-600">
-                Bu hesabın veritabanındaki <strong className="text-slate-800">giriş şifresini</strong> tekrar girin;
-                TOTP sıfırlanır ve yeni QR kodu gösterilir.
-              </p>
-              <label className="block text-sm font-medium text-slate-700">
-                Hesap şifresi
-                <input
-                  type="password"
-                  autoComplete="current-password"
-                  value={lostPassword}
-                  onChange={(e) => setLostPassword(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-orange-200 bg-white px-3 py-2 text-slate-900 outline-none ring-orange-200 focus:ring-2"
-                  disabled={loading}
-                  required
-                />
-              </label>
-              {lostMessage ? <p className="text-sm text-red-600">{lostMessage}</p> : null}
-              <button
-                type="submit"
+      <div className="mt-5 rounded-xl border border-amber-200/80 bg-amber-50/50 p-4">
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => {
+            setLostAuthOpen((o) => !o);
+            setLostMessage("");
+          }}
+          className="text-left text-sm font-medium text-amber-950 underline-offset-2 hover:underline disabled:opacity-50"
+        >
+          {needsEnrollment
+            ? "Authenticator kurulumunu sıfırla (yanlış QR / kod tutmuyor)"
+            : "Authenticator kaydını sildim veya telefonu kaybettim"}
+        </button>
+        {lostAuthOpen ? (
+          <form className="mt-3 space-y-2" onSubmit={(e) => void onLostDeviceReset(e)}>
+            <p className="text-xs leading-relaxed text-slate-600">
+              Bu hesabın veritabanındaki <strong className="text-slate-800">giriş şifresini</strong> girin.
+              {needsEnrollment ? (
+                <>
+                  {" "}
+                  Kurulum çerezi temizlenir; sayfa yenilenince <strong className="text-slate-800">yeni QR</strong>{" "}
+                  üretilir.
+                </>
+              ) : (
+                <>
+                  {" "}
+                  Kayıtlı TOTP sıfırlanır; yeniden QR ile kurulum yapılır.
+                </>
+              )}
+            </p>
+            <label className="block text-sm font-medium text-slate-700">
+              Hesap şifresi
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={lostPassword}
+                onChange={(e) => setLostPassword(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-orange-200 bg-white px-3 py-2 text-slate-900 outline-none ring-orange-200 focus:ring-2"
                 disabled={loading}
-                className="w-full rounded-lg border border-amber-700/40 bg-white px-3 py-2 text-sm font-semibold text-amber-950 shadow-sm hover:bg-amber-100/80 disabled:opacity-60"
-              >
-                {loading ? "…" : "TOTP sıfırla ve yeni QR göster"}
-              </button>
-            </form>
-          ) : null}
-        </div>
-      ) : null}
+                required
+              />
+            </label>
+            {lostMessage ? <p className="text-sm text-red-600">{lostMessage}</p> : null}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg border border-amber-700/40 bg-white px-3 py-2 text-sm font-semibold text-amber-950 shadow-sm hover:bg-amber-100/80 disabled:opacity-60"
+            >
+              {loading ? "…" : needsEnrollment ? "Sıfırla ve sayfayı yenile" : "TOTP sıfırla ve yeni QR göster"}
+            </button>
+          </form>
+        ) : null}
+      </div>
 
       <p className="mt-4 border-t border-orange-100 pt-4 text-center">
         <button
