@@ -4,6 +4,7 @@ import { z } from "zod";
 import { verifySessionToken } from "@/lib/auth";
 import { isStaffAdminRole } from "@/lib/adminRoles";
 import { prisma } from "@/lib/prisma";
+import { formatSmtpSendError } from "@/lib/mailer";
 import { getResolvedSmtpForSend } from "@/lib/resolveSmtpConfig";
 import { smtpExplicitEnvelopeEnabled } from "@/lib/smtpConfig";
 
@@ -63,8 +64,14 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ ok: true, to, from: resolved.from, source: resolved.source });
   } catch (e) {
+    console.error("[POST /api/admin/ilan-eposta/test-smtp]", e);
+    const friendly = formatSmtpSendError(e);
+    const isDev = process.env.NODE_ENV === "development";
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Gönderim hatasi" },
+      {
+        error: friendly,
+        ...(isDev && e instanceof Error ? { detail: e.message } : {}),
+      },
       { status: 502 },
     );
   }

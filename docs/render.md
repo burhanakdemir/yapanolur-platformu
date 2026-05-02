@@ -9,7 +9,7 @@ Bu rehber, projeyi Render uzerinde production'a alirken minimum riskli akis icin
 - `DATABASE_URL=postgresql://...`
 - `AUTH_SECRET=<guclu-rastgele>`
 - `OTP_PEPPER=<guclu-rastgele>`
-- `SIGNUP_OTP_TTL_MINUTES` (istege bagli, varsayilan `15`) — kayit e-posta/SMS OTP gecerlilik suresi (dakika). Posta gecikmesi olan saglayicilarda `10` veya `15` kullanin; eski sabit 1 dk kaldirildi.
+- `SIGNUP_OTP_TTL_MINUTES` (istege bagli, varsayilan `2`) — kayit e-posta/SMS OTP gecerlilik suresi (dakika). Posta gecikmesi cok olan saglayicilarda `10` veya `15` verin.
 
 ### SMTP ve kayit e-posta OTP (Render)
 

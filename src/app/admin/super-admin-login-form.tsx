@@ -9,11 +9,14 @@ type SuperAdminLoginFormProps = {
   /** Yerel geliştirme: formu önceden doldurmak için (opsiyonel) */
   defaultEmail?: string;
   defaultPassword?: string;
+  /** Şifre doğru + MFA bekleniyorsa tam sayfa yerine üst bileşen modal açar */
+  onAdminMfa?: (info: { email: string; needsEnrollment: boolean }) => void;
 };
 
 export default function SuperAdminLoginForm({
   defaultEmail = "",
   defaultPassword = "",
+  onAdminMfa,
 }: SuperAdminLoginFormProps) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,6 +39,8 @@ export default function SuperAdminLoginForm({
       const data = (await res.json().catch(() => ({}))) as {
         error?: unknown;
         step?: string;
+        email?: string;
+        needsEnrollment?: boolean;
         user?: { role?: string };
       };
       if (!res.ok) {
@@ -43,6 +48,14 @@ export default function SuperAdminLoginForm({
         return;
       }
       if (data.step === "admin_mfa") {
+        const email = typeof data.email === "string" ? data.email : "";
+        if (onAdminMfa) {
+          onAdminMfa({
+            email,
+            needsEnrollment: Boolean(data.needsEnrollment),
+          });
+          return;
+        }
         window.location.assign(adminUrl());
         return;
       }

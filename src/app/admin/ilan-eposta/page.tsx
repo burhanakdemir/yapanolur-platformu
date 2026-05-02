@@ -134,8 +134,20 @@ export default function IlanEpostaAyarPage() {
         testTo.trim() ? { to: testTo.trim() } : {},
       ),
     });
-    const data = await res.json();
-    setTestSmtpLog(JSON.stringify(data, null, 2));
+    const rawText = await res.text();
+    let payload: Record<string, unknown> = { httpStatus: res.status };
+    try {
+      const parsed = JSON.parse(rawText) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        payload = { ...payload, ...(parsed as Record<string, unknown>) };
+      } else {
+        payload.body = parsed;
+      }
+    } catch {
+      payload.parseError = true;
+      payload.raw = rawText.slice(0, 800);
+    }
+    setTestSmtpLog(JSON.stringify(payload, null, 2));
   }
 
   return (
@@ -207,7 +219,7 @@ export default function IlanEpostaAyarPage() {
               checked={smtpSecure}
               onChange={(e) => setSmtpSecure(e.target.checked)}
             />
-            SSL/TLS (genelde 465; Gmail’de 587 + STARTTLS yeter, kapalı bırakın)
+            SSL/TLS (465 implicit TLS için kutuya gerek yok — sistem 465’te zaten şifreli bağlantı kullanır)
           </label>
         </div>
         <div>
@@ -257,6 +269,12 @@ export default function IlanEpostaAyarPage() {
         <p className="text-xs leading-relaxed text-slate-500">
           Gmail: 2 adımlı doğrulama açıkken Google Hesabı → Güvenlik → Uygulama şifreleri. Port 587, SSL kutusu
           genelde kapalı.
+        </p>
+        <p className="text-xs leading-relaxed text-slate-500">
+          <strong>Resend:</strong> Kullanıcı adı tam olarak <code className="rounded bg-slate-100 px-1">resend</code>,
+          şifre API anahtarıdır. Port 465 veya 587; gönderen adresin alanı (
+          <code className="rounded bg-slate-100 px-1">yapanolur.com</code>) Resend panelinde doğrulanmış olmalıdır.
+          Test başarısızsa alttaki günlükte sunucu iletisini okuyun (kimlik doğrulama / gönderici reddi vb.).
         </p>
 
         <hr className="border-slate-200" />

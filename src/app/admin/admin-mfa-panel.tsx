@@ -10,21 +10,36 @@ type MfaJson = {
   sessionExpired?: boolean;
 };
 
-async function returnToLoginPanel(): Promise<void> {
-  try {
-    await fetch("/api/auth/admin-mfa/abort", { method: "POST", credentials: "include" });
-  } finally {
-    window.location.assign(adminUrl());
-  }
-}
-
 export default function AdminMfaPanel({
   email,
   needsEnrollment,
+  onNavigateBack,
 }: {
   email: string;
   needsEnrollment: boolean;
+  /** Modal modunda: tam sayfa yenileme yerine şifre ekranına dönüş (abort çağrısı dahil). */
+  onNavigateBack?: () => void;
 }) {
+  async function returnToLoginPanel(): Promise<void> {
+    try {
+      await fetch("/api/auth/admin-mfa/abort", { method: "POST", credentials: "include" });
+    } finally {
+      if (onNavigateBack) {
+        onNavigateBack();
+      } else {
+        window.location.assign(adminUrl());
+      }
+    }
+  }
+
+  async function reloadAfterSessionExpired(): Promise<void> {
+    try {
+      await fetch("/api/auth/admin-mfa/abort", { method: "POST", credentials: "include" });
+    } catch {
+      /* ignore */
+    }
+    window.location.assign(adminUrl());
+  }
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -47,7 +62,7 @@ export default function AdminMfaPanel({
         const data = (await res.json().catch(() => ({}))) as MfaJson;
         if (!res.ok) {
           if (data.sessionExpired) {
-            await returnToLoginPanel();
+            await reloadAfterSessionExpired();
             return;
           }
           setMessage(apiErrorMessage(data.error, "Kurulum başlatılamadı."));
@@ -87,7 +102,7 @@ export default function AdminMfaPanel({
       const data = (await res.json().catch(() => ({}))) as MfaJson;
       if (!res.ok) {
         if (data.sessionExpired) {
-          await returnToLoginPanel();
+          await reloadAfterSessionExpired();
           return;
         }
         setMessage(apiErrorMessage(data.error, "Doğrulama başarısız."));
@@ -113,7 +128,7 @@ export default function AdminMfaPanel({
       const data = (await res.json().catch(() => ({}))) as MfaJson;
       if (!res.ok) {
         if (data.sessionExpired) {
-          await returnToLoginPanel();
+          await reloadAfterSessionExpired();
           return;
         }
         setLostMessage(apiErrorMessage(data.error, "İşlem başarısız."));
@@ -126,7 +141,7 @@ export default function AdminMfaPanel({
   }
 
   return (
-    <div className="glass-card rounded-2xl p-6 shadow-lg">
+    <div className="max-w-full">
       <p className="text-[10px] font-bold uppercase tracking-widest text-orange-900/70">İki aşamalı doğrulama</p>
       <h1 className="mt-2 text-xl font-bold text-orange-950">Authenticator kodu</h1>
       <p className="mt-2 text-sm text-slate-600">
@@ -161,8 +176,7 @@ export default function AdminMfaPanel({
             autoComplete="one-time-code"
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-orange-200 bg-white px-3 py-2 text-lg tracking-widest text-slate-900 outline-none ring-orange-200 focus:ring-2"
-            placeholder="000000"
+            className="mt-1 w-full rounded-lg border border-orange-200 bg-white px-3 py-2.5 text-center font-mono text-lg tabular-nums tracking-[0.35em] text-slate-900 outline-none ring-orange-200 focus:ring-2 sm:tracking-[0.45em]"
             disabled={loading || (needsEnrollment && !enrollReady)}
             maxLength={8}
           />

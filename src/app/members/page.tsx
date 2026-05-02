@@ -78,7 +78,7 @@ export default function MembersPage() {
 function MembersPageContent() {
   const [lang, setLang] = useState<Lang>("tr");
   /** Sunucu SIGNUP_OTP_TTL_MINUTES ile uyumlu; API yanıtındaki otpTtlMinutes ile güncellenir. */
-  const [signupOtpTtlMinutes, setSignupOtpTtlMinutes] = useState(15);
+  const [signupOtpTtlMinutes, setSignupOtpTtlMinutes] = useState(2);
   /** null: henüz /api/register/options yüklenmedi — güvenli varsayılan OTP zorunlu. */
   const [signupEmailRequired, setSignupEmailRequired] = useState<boolean | null>(null);
   const [signupPhoneRequired, setSignupPhoneRequired] = useState<boolean | null>(null);

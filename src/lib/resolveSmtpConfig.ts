@@ -19,6 +19,14 @@ function createSmtpTransport(
   auth: { user: string; pass: string },
 ): nodemailer.Transporter {
   const rejectUnauthorized = process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== "false";
+  const requireTlsEnv =
+    process.env.SMTP_REQUIRE_TLS === "1" || process.env.SMTP_REQUIRE_TLS === "true";
+  /**
+   * STARTTLS (ör. 587) için anlamlıdır. SMTPS / 465 (`secure: true`) ile birlikte bazı ortamlarda
+   * `SMTP_REQUIRE_TLS=true` yanlışlıkla açık kalırsa bağlantı kurulmayabilir — bu yüzden yalnızca `!secure` iken uygulanır.
+   */
+  const requireTLS = !secure && requireTlsEnv;
+
   return nodemailer.createTransport({
     host,
     port,
@@ -27,13 +35,12 @@ function createSmtpTransport(
     connectionTimeout: 25_000,
     socketTimeout: 25_000,
     greetingTimeout: 15_000,
-    tls: { rejectUnauthorized },
-    /**
-     * Varsayilan: false (nodemailer uyumu). Bazi aglarda zorunlu STARTTLS baglantiyi kesebilir.
-     * Kurumsal sunucuda gerekirse: SMTP_REQUIRE_TLS=1 veya true
-     */
-    requireTLS:
-      process.env.SMTP_REQUIRE_TLS === "1" || process.env.SMTP_REQUIRE_TLS === "true",
+    tls: {
+      rejectUnauthorized,
+      /** SNI —özellikle bulut SMTP (Resend vb.) için sunucu adı eşlemesi */
+      servername: host,
+    },
+    requireTLS,
   });
 }
 
