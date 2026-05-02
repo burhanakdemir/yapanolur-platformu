@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HomePwaInstallCta from "@/components/HomePwaInstallCta";
 import { HOME_MAIN_CATEGORY_TILE_SIDEBAR, HOME_SIDEBAR_CTA_TILE } from "@/lib/homeMainCategoryTileClass";
 import { dictionary, type Lang } from "@/lib/i18n";
 
@@ -72,10 +73,15 @@ export default function HomePostListingStrip({
           <>
             <Link
               href={guestAuth.loginHref}
-              className={`${HOME_SIDEBAR_CTA_TILE} ${CTA_GLOW} shrink-0 ${CTA_WIDTH_3_MAX_SM} ${CTA_WIDTH_TILE_SM}`}
+              className={`${HOME_SIDEBAR_CTA_TILE} ${CTA_GLOW} shrink-0 hidden md:flex ${CTA_WIDTH_3_MAX_SM} ${CTA_WIDTH_TILE_SM}`}
             >
               {guestAuth.loginLabel}
             </Link>
+            <div
+              className={`shrink-0 md:hidden ${CTA_WIDTH_3_MAX_SM} ${CTA_WIDTH_TILE_SM} flex min-w-0 justify-center`}
+            >
+              <HomePwaInstallCta lang={lang} />
+            </div>
             <Link
               href={guestAuth.registerHref}
               className={`${HOME_SIDEBAR_CTA_TILE} ${CTA_GLOW} shrink-0 ${CTA_WIDTH_3_MAX_SM} ${CTA_WIDTH_TILE_SM}`}

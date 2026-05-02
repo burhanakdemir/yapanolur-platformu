@@ -13,6 +13,27 @@ type Dictionary = {
     postListingTitle: string;
     postListingSubtitle: string;
     postListingCta: string;
+    /** PWA — sidebar “Uygulamayı indir” (yalnızca dar ekran) */
+    pwaInstall: {
+      cta: string;
+      ctaSub: string;
+      wrongDevice: string;
+      pickIos: string;
+      pickAndroid: string;
+      alreadyInstalled: string;
+      install: string;
+      installing: string;
+      androidFallback: string;
+      modalTitle: string;
+      iosTitle: string;
+      iosStep1: string;
+      iosStep2: string;
+      iosStep3: string;
+      androidTitle: string;
+      androidBody: string;
+      close: string;
+      devHint: string;
+    };
   };
   categoriesTitle: string;
   categories: Record<string, string>;
@@ -87,6 +108,28 @@ export const dictionary: Record<Lang, Dictionary> = {
       postListingSubtitle:
         "Platformun dört ana başlığında proje ilanı oluşturun; teklifler ve ihale süreçleri tek yerde.",
       postListingCta: "İlan ver",
+      pwaInstall: {
+        cta: "Uygulamayı İndir",
+        ctaSub: "Ana ekrana kısayol; tam ekran açılır.",
+        wrongDevice: "Farklı cihaz mı?",
+        pickIos: "iPhone / iPad",
+        pickAndroid: "Android",
+        alreadyInstalled: "Kısayol hazır",
+        install: "Kur",
+        installing: "Kuruluyor…",
+        androidFallback:
+          "Chrome’da menü (⋮) → «Uygulamayı yükle» veya «Ana ekrana ekle» seçin.",
+        modalTitle: "Uygulamayı indir",
+        iosTitle: "iPhone / iPad — Ana Ekrana Ekle",
+        iosStep1: "Safari veya Chrome’da bu sayfayı açın.",
+        iosStep2: "Alt kısımdaki Paylaş (kare ve ok) düğmesine dokunun.",
+        iosStep3: "«Ana Ekrana Ekle» → «Ekle» ile onaylayın.",
+        androidTitle: "Android",
+        androidBody:
+          "Chrome’da menü (⋮) üzerinden «Uygulamayı yükle» veya «Ana ekrana ekle» seçeneğini kullanın. Bazı cihazlarda adres çubuğundaki kurulum simgesi de görünür.",
+        close: "Kapat",
+        devHint: "Yerelde tam kurulum canlı (HTTPS) sitede geçerlidir.",
+      },
     },
     categoriesTitle: "Üst Kategoriler",
     categories: {
@@ -165,6 +208,28 @@ export const dictionary: Record<Lang, Dictionary> = {
       postListingSubtitle:
         "Create project listings under the platform’s four main segments—bids and tenders in one place.",
       postListingCta: "Post listing",
+      pwaInstall: {
+        cta: "Install app",
+        ctaSub: "Add to Home Screen for a full-screen shortcut.",
+        wrongDevice: "Different device?",
+        pickIos: "iPhone / iPad",
+        pickAndroid: "Android",
+        alreadyInstalled: "Shortcut ready",
+        install: "Install",
+        installing: "Installing…",
+        androidFallback:
+          "In Chrome, open the menu (⋮) → «Install app» or «Add to Home screen».",
+        modalTitle: "Install app",
+        iosTitle: "iPhone / iPad — Add to Home Screen",
+        iosStep1: "Open this site in Safari or Chrome.",
+        iosStep2: "Tap Share (square with arrow) at the bottom.",
+        iosStep3: "Tap «Add to Home Screen», then «Add».",
+        androidTitle: "Android",
+        androidBody:
+          "In Chrome, use the menu (⋮) → «Install app» or «Add to Home screen». Some devices also show an install icon in the address bar.",
+        close: "Close",
+        devHint: "Full install behaviour applies on the live HTTPS site.",
+      },
     },
     categoriesTitle: "Top Categories",
     categories: {
