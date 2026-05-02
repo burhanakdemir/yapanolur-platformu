@@ -141,8 +141,10 @@ function MembersPageContent() {
   /** Başarılı «kod gönder» sonrası kalan saniye (0 = sayaç kapalı). */
   const [emailOtpSecondsLeft, setEmailOtpSecondsLeft] = useState(0);
   const [phoneOtpSecondsLeft, setPhoneOtpSecondsLeft] = useState(0);
-  /** Telefon adımı; genel `message` formun en altında kaldığı için aynı metin burada da gösterilir. */
+  /** Telefon adımı; genel `message` uzun formda aşağıda kalmasın diye aynı metin burada da gösterilir. */
   const [phoneOtpFeedback, setPhoneOtpFeedback] = useState("");
+  /** E-posta OTP — üretimde HTML hata sayfası / proxy gövdesi `res.json()` patlatmasın; kullanıcıya satır içi geri bildirim. */
+  const [emailOtpFeedback, setEmailOtpFeedback] = useState("");
   const [postAuthNext, setPostAuthNext] = useState("/panel/user");
   const [registrationJustCompleted, setRegistrationJustCompleted] = useState(false);
 
@@ -302,55 +304,86 @@ function MembersPageContent() {
     if (!email) {
       setRegEmailError("");
       setMessage("Önce e-posta adresinizi girin.");
+      setEmailOtpFeedback("Önce e-posta adresinizi girin.");
       return;
     }
     const emailOk = signupEmailFieldSchema.safeParse(email);
     if (!emailOk.success) {
       setRegEmailError("Geçerli bir e-posta adresi girin.");
       setMessage("Geçerli bir e-posta adresi girin.");
+      setEmailOtpFeedback("Geçerli bir e-posta adresi girin.");
       return;
     }
     setRegEmailError("");
     setOtpEmailSending(true);
     setMessage("");
+    setEmailOtpFeedback("");
+    const ac = new AbortController();
+    const abortTimer = window.setTimeout(() => ac.abort(), 60_000);
     try {
       const res = await fetch(clientApiUrl("/api/register/request-email-otp"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email: emailOk.data }),
+        signal: ac.signal,
       });
-      const data = (await res.json()) as {
+      const raw = await res.text();
+      let data: {
         ok?: boolean;
         hint?: string;
         error?: unknown;
         retryAfterSec?: number;
         otpTtlMinutes?: number;
-      };
+      } = {};
+      if (raw.trim()) {
+        try {
+          data = JSON.parse(raw) as typeof data;
+        } catch {
+          const errLine = `Sunucu yanıtı JSON değil (HTTP ${res.status}). CDN/proxy HTML döndüyse günlükleri kontrol edin.`;
+          setMessage(errLine);
+          setEmailOtpFeedback(errLine);
+          return;
+        }
+      }
       if (!res.ok) {
         const base = apiErrorMessage(data.error, "E-posta kodu gönderilemedi.");
         const retry =
           typeof data.retryAfterSec === "number" && data.retryAfterSec > 0
             ? ` Çok fazla istek: yaklaşık ${data.retryAfterSec} sn sonra tekrar deneyin.`
             : "";
-        setMessage(base + retry);
+        const full = base + retry;
+        setMessage(full);
+        setEmailOtpFeedback(full);
         return;
       }
       const ttlMin =
         typeof data.otpTtlMinutes === "number" && data.otpTtlMinutes > 0
           ? Math.min(60, Math.floor(data.otpTtlMinutes))
-          : 15;
+          : signupOtpTtlMinutes;
       setSignupOtpTtlMinutes(ttlMin);
       setEmailVerified(false);
       setEmailOtpCode("");
       setEmailOtpSecondsLeft(ttlMin * 60);
-      setMessage(
+      const okText =
         typeof data.hint === "string" && data.hint.trim()
           ? data.hint.trim()
-          : SIGNUP_EMAIL_OTP_REQUEST_PUBLIC_HINT_TR,
-      );
-    } catch {
-      setMessage("E-posta kodu isteği başarısız.");
+          : SIGNUP_EMAIL_OTP_REQUEST_PUBLIC_HINT_TR;
+      setMessage(okText);
+      setEmailOtpFeedback("");
+    } catch (e) {
+      const aborted =
+        typeof e === "object" &&
+        e !== null &&
+        "name" in e &&
+        (e as { name: string }).name === "AbortError";
+      const fail = aborted
+        ? "İstek zaman aşımına uğradı (60 sn). Sunucu veya ağ gecikmesi olabilir; tekrar deneyin."
+        : "Ağ hatası veya sunucuya ulaşılamadı. Sayfa adresinin doğru site olduğundan ve engelleme olmadığından emin olun.";
+      setMessage(fail);
+      setEmailOtpFeedback(fail);
     } finally {
+      window.clearTimeout(abortTimer);
       setOtpEmailSending(false);
     }
   }
@@ -376,6 +409,7 @@ function MembersPageContent() {
     }
     setOtpVerifyLoading(true);
     setMessage("");
+    setEmailOtpFeedback("");
     try {
       const res = await fetch(clientApiUrl("/api/register/verify-email-otp"), {
         method: "POST",
@@ -383,14 +417,27 @@ function MembersPageContent() {
         credentials: "include",
         body: JSON.stringify({ email, code }),
       });
-      const data = await res.json();
+      const raw = await res.text();
+      let data: { error?: unknown } = {};
+      if (raw.trim()) {
+        try {
+          data = JSON.parse(raw) as { error?: unknown };
+        } catch {
+          const errLine = `Sunucu yanıtı okunamadı (HTTP ${res.status}).`;
+          setEmailVerified(false);
+          setMessage(errLine);
+          setEmailOtpFeedback(errLine);
+          return;
+        }
+      }
       if (!res.ok) {
         setEmailVerified(false);
-        setMessage(
+        const errText =
           typeof data.error === "string"
             ? data.error
-            : "Doğrulama başarısız. Kod hatalı veya süresi dolmuş olabilir — yeni kod isteyin.",
-        );
+            : "Doğrulama başarısız. Kod hatalı veya süresi dolmuş olabilir — yeni kod isteyin.";
+        setMessage(errText);
+        setEmailOtpFeedback(errText);
         return;
       }
       setEmailVerified(true);
@@ -399,12 +446,15 @@ function MembersPageContent() {
       setPhoneOtpCode("");
       setPhoneOtpSecondsLeft(0);
       setPhoneOtpFeedback("");
+      setEmailOtpFeedback("");
       setMessage(
         "E-posta doğrulandı. Telefon numaranızı girip SMS kodu alın ve «Telefonu doğrula» ile onaylayın; ardından kayıt alanlarını doldurabilirsiniz.",
       );
     } catch {
       setEmailVerified(false);
-      setMessage("E-posta doğrulama isteği başarısız.");
+      const fail = "E-posta doğrulama isteği başarısız (ağ veya sunucu).";
+      setMessage(fail);
+      setEmailOtpFeedback(fail);
     } finally {
       setOtpVerifyLoading(false);
     }
@@ -875,6 +925,11 @@ function MembersPageContent() {
             </ol>
           </nav>
         )}
+        {message ? (
+          <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800" role="status">
+            {message}
+          </p>
+        ) : null}
         {isReadonly && <p className="text-sm font-semibold">Kayıtlı üye bilgileri (düzenleme kapalı)</p>}
         {displayMemberNumber !== null && (
           <div className="space-y-1">
@@ -924,6 +979,7 @@ function MembersPageContent() {
               setEmailVerified(false);
               setEmailOtpCode("");
               setEmailOtpSecondsLeft(0);
+              setEmailOtpFeedback("");
               setPhoneVerified(false);
               setPhoneOtpCode("");
               setPhoneOtpSecondsLeft(0);
@@ -971,6 +1027,15 @@ function MembersPageContent() {
               <strong className="font-medium text-slate-800">{formatSignupOtpTtlTr(signupOtpTtlMinutes)}</strong>{" "}
               geçerlidir; süre dolunca yeni kod isteyin.
             </p>
+            {emailOtpFeedback ? (
+              <p
+                className="rounded-md border border-orange-200 bg-white px-3 py-2 text-sm text-slate-800"
+                role="status"
+                aria-live="polite"
+              >
+                {emailOtpFeedback}
+              </p>
+            ) : null}
             <div className="space-y-2 rounded-lg border border-orange-100 bg-orange-50/50 p-2">
               {emailOtpSecondsLeft > 0 && (
                 <p
@@ -1616,7 +1681,6 @@ function MembersPageContent() {
             </div>
           </section>
         )}
-        {message && <p className="text-sm">{message}</p>}
         {registrationJustCompleted && (
           <div className="rounded-xl border border-orange-200 bg-orange-50/80 p-4 text-sm text-slate-800">
             <p className="font-medium">{d.memberPage.afterRegisterLoginHint}</p>
