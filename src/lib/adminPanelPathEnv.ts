@@ -13,7 +13,8 @@ export function normalizeAdminPanelPathPrefix(raw: string): string {
 /** `.env` / süreç ortamından ham değer (normalize öncesi). */
 export function rawAdminPanelPathFromEnv(): string {
   if (!Object.prototype.hasOwnProperty.call(process.env, "NEXT_PUBLIC_ADMIN_PANEL_PATH")) {
-    return process.env.NODE_ENV !== "production" ? "/a/yonetici" : "";
+    /** Anahtar yok: üretim dahil varsayılan gizli taban. Klasik `/admin` için ortamda `NEXT_PUBLIC_ADMIN_PANEL_PATH=` (boş) tanımlayın. */
+    return "/a/yonetici";
   }
   return (process.env.NEXT_PUBLIC_ADMIN_PANEL_PATH ?? "").trim();
 }
@@ -30,10 +31,7 @@ const DEV_DEFAULT_ADMIN_BROWSER_PREFIX = "/a/yonetici";
  */
 export function embedAdminLegacyHiddenFlagFromEnv(): string {
   if (getAdminPanelPathPrefixFromEnv()) return "1";
-  if (Object.prototype.hasOwnProperty.call(process.env, "NEXT_PUBLIC_ADMIN_PANEL_PATH")) {
-    return "";
-  }
-  return process.env.NODE_ENV !== "production" ? "1" : "";
+  return "";
 }
 
 /**
@@ -54,9 +52,5 @@ export function effectiveAdminBrowserPrefixForPathname(pathname: string): string
     return "";
   }
 
-  if (process.env.NODE_ENV !== "production") {
-    return DEV_DEFAULT_ADMIN_BROWSER_PREFIX;
-  }
-
-  return "";
+  return DEV_DEFAULT_ADMIN_BROWSER_PREFIX;
 }

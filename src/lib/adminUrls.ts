@@ -4,8 +4,8 @@ import {
 } from "@/lib/adminPanelPathEnv";
 
 /**
- * Dış yönetici tabanı: NEXT_PUBLIC_ADMIN_PANEL_PATH (ör. /a/yonetici).
- * `next.config` `env` ile middleware bundle'a işlenir; ayrıntı: adminPanelPathEnv.
+ * Dış yönetici tabanı: NEXT_PUBLIC_ADMIN_PANEL_PATH. Tanımsızsa varsayılan `/a/yonetici`; klasik `/admin` için env'de boş string.
+ * `next.config` `env` ile bundle'a işlenir; ayrıntı: adminPanelPathEnv.
  */
 export function getAdminPanelPathPrefix(): string {
   return getAdminPanelPathPrefixFromEnv();
