@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { Lang } from "@/lib/i18n";
 import { dictionary } from "@/lib/i18n";
@@ -29,10 +29,13 @@ export type HomePwaInstallEligibility = "sidebar-guest" | "sidebar-member";
 export default function HomePwaInstallCta({
   lang,
   eligibility = "sidebar-guest",
+  wrapClassName,
 }: {
   lang: Lang;
   /** `sidebar-member`: yalnızca dar ekran + dokunmatik benzeri ortam (dar masaüstü penceresinde yanlış tetiklemeyi azaltır). */
   eligibility?: HomePwaInstallEligibility;
+  /** Dış layout hücresi — `standalone` iken hiç render edilmez (boş sütun kalmaz). */
+  wrapClassName?: string;
 }) {
   const t = dictionary[lang].home.pwaInstall;
   const titleId = useId();
@@ -51,7 +54,6 @@ export default function HomePwaInstallCta({
   const [tab, setTab] = useState<"ios" | "android">("android");
   const [installing, setInstalling] = useState(false);
   const [installReady, setInstallReady] = useState(false);
-  const [pwaJustInstalled, setPwaJustInstalled] = useState(false);
   const deferredRef = useRef<BeforeInstallPromptEventPlus | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -108,7 +110,6 @@ export default function HomePwaInstallCta({
   useEffect(() => {
     const onInstalled = () => {
       trackPwaInstall("pwa_appinstalled");
-      setPwaJustInstalled(true);
       setStandalone(true);
     };
     window.addEventListener("appinstalled", onInstalled);
@@ -198,14 +199,20 @@ export default function HomePwaInstallCta({
     openModal();
   }, [openModal]);
 
+  const wrap = useCallback(
+    (node: ReactNode) =>
+      wrapClassName ? <div className={wrapClassName}>{node}</div> : node,
+    [wrapClassName],
+  );
+
   if (!mounted || (eligibility === "sidebar-member" && memberGate === "pending")) {
-    return (
+    return wrap(
       <div
         className={`${HOME_SIDEBAR_CTA_TILE} ${CTA_GLOW} flex min-h-[44px] w-full animate-pulse items-center justify-center rounded-md bg-orange-200/50 text-transparent sm:min-h-[36px]`}
         aria-hidden
       >
         …
-      </div>
+      </div>,
     );
   }
 
@@ -213,15 +220,9 @@ export default function HomePwaInstallCta({
     return null;
   }
 
-  if (standalone || pwaJustInstalled) {
-    return (
-      <div
-        className={`${HOME_SIDEBAR_CTA_TILE} border border-emerald-400/50 bg-emerald-50/90 text-emerald-900`}
-        role="status"
-      >
-        <span className="text-xs font-semibold leading-tight">{t.alreadyInstalled}</span>
-      </div>
-    );
+  /** Tam ekran / ana ekran kısayolu: buton tamamen gösterilmez */
+  if (standalone) {
+    return null;
   }
 
   const isDev = process.env.NODE_ENV !== "production";
@@ -354,23 +355,18 @@ export default function HomePwaInstallCta({
       document.body,
     );
 
-  return (
+  return wrap(
     <div className="flex w-full min-w-0 flex-col items-stretch gap-1">
       <button
         type="button"
         onClick={onCtaClick}
-        className={`${HOME_SIDEBAR_CTA_TILE} ${CTA_GLOW} flex min-h-[44px] w-full flex-col justify-center gap-0.5 py-1.5 sm:min-h-[36px]`}
+        className={`${HOME_SIDEBAR_CTA_TILE} ${CTA_GLOW} flex min-h-[44px] w-full items-center justify-center px-2 py-2 sm:min-h-[36px]`}
         aria-haspopup="dialog"
         aria-expanded={modalOpen}
       >
-        <span className="block text-center text-xs font-semibold leading-tight sm:text-sm">
-          {t.cta}
-        </span>
-        <span className="block text-center text-[10px] font-normal leading-tight text-white/90 sm:text-[11px]">
-          {t.ctaSub}
-        </span>
+        <span className="text-center text-xs font-semibold leading-tight sm:text-sm">{t.cta}</span>
       </button>
       {modal}
-    </div>
+    </div>,
   );
 }

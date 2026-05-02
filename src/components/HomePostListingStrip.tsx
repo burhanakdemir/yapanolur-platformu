@@ -77,11 +77,11 @@ export default function HomePostListingStrip({
             >
               {guestAuth.loginLabel}
             </Link>
-            <div
-              className={`shrink-0 md:hidden ${CTA_WIDTH_3_MAX_SM} ${CTA_WIDTH_TILE_SM} flex min-w-0 justify-center`}
-            >
-              <HomePwaInstallCta lang={lang} eligibility="sidebar-guest" />
-            </div>
+            <HomePwaInstallCta
+              lang={lang}
+              eligibility="sidebar-guest"
+              wrapClassName={`shrink-0 md:hidden ${CTA_WIDTH_3_MAX_SM} ${CTA_WIDTH_TILE_SM} flex min-w-0 justify-center`}
+            />
             <Link
               href={guestAuth.registerHref}
               className={`${HOME_SIDEBAR_CTA_TILE} ${CTA_GLOW} shrink-0 ${CTA_WIDTH_3_MAX_SM} ${CTA_WIDTH_TILE_SM}`}
@@ -94,9 +94,11 @@ export default function HomePostListingStrip({
 
       {/* Oturumlu üye: mobilde «Uygulamayı indir» (misafir şeridindeki orta sütunla aynı CTA) */}
       {!guestAuth ? (
-        <div className="mt-2 w-full md:hidden">
-          <HomePwaInstallCta lang={lang} eligibility="sidebar-member" />
-        </div>
+        <HomePwaInstallCta
+          lang={lang}
+          eligibility="sidebar-member"
+          wrapClassName="mt-2 w-full md:hidden"
+        />
       ) : null}
     </div>
   );

@@ -16,11 +16,9 @@ type Dictionary = {
     /** PWA — sidebar “Uygulamayı indir” (yalnızca dar ekran) */
     pwaInstall: {
       cta: string;
-      ctaSub: string;
       wrongDevice: string;
       pickIos: string;
       pickAndroid: string;
-      alreadyInstalled: string;
       install: string;
       installing: string;
       androidFallback: string;
@@ -112,11 +110,9 @@ export const dictionary: Record<Lang, Dictionary> = {
       postListingCta: "İlan ver",
       pwaInstall: {
         cta: "Uygulamayı İndir",
-        ctaSub: "Ana ekrana kısayol; tam ekran açılır.",
         wrongDevice: "Farklı cihaz mı?",
         pickIos: "iPhone / iPad",
         pickAndroid: "Android",
-        alreadyInstalled: "Kısayol hazır",
         install: "Kur",
         installing: "Kuruluyor…",
         androidFallback:
@@ -214,11 +210,9 @@ export const dictionary: Record<Lang, Dictionary> = {
       postListingCta: "Post listing",
       pwaInstall: {
         cta: "Install app",
-        ctaSub: "Add to Home Screen for a full-screen shortcut.",
         wrongDevice: "Different device?",
         pickIos: "iPhone / iPad",
         pickAndroid: "Android",
-        alreadyInstalled: "Shortcut ready",
         install: "Install",
         installing: "Installing…",
         androidFallback:
