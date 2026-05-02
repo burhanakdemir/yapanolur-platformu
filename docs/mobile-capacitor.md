@@ -35,7 +35,7 @@ export default config;
 
 ## PWA (tarayıcıdan kurulum)
 
-Web için PNG ikonlar ve tarayıcı sekmesi `favicon.ico` (`npm run icons:pwa`) ile üretilir; logo dosya adı `src/config/brand.json` → `public/<logoFilename>`. Çıktılar: `public/icons/`, `src/app/icon.png`, `src/app/favicon.ico`. Manifest `src/app/manifest.ts` içindedir.
+Web için PNG ikonlar ve tarayıcı sekmesi `favicon.ico` (`npm run icons:pwa`) ile üretilir; kaynak `src/config/brand.json` → önce `public/<iconSourceFilename>`, yoksa `<logoFilename>`. Kare olmayan ikonda dolgu rengi `iconCanvasBackground` (varsayılan `#ffffff`); geniş logo yedeğinde beyaz. Çıktılar: `public/icons/`, `src/app/icon.png`, `src/app/favicon.ico`. Manifest `src/app/manifest.ts` içindedir.
 
 ## Riskler
 

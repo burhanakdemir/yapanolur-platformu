@@ -1,3 +1,5 @@
 {
-  "logoFilename": "yapanolur-logo.png"
+  "logoFilename": "yapanolur-logo.png",
+  "iconSourceFilename": "yapanolur-icon.png",
+  "iconCanvasBackground": "#ffffff"
 }

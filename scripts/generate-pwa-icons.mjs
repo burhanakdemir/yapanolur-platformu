@@ -1,7 +1,6 @@
 /**
  * PWA / mağaza ikonları → public/icons/*.png, src/app/icon.png, src/app/favicon.ico
- * Logo dosyası: `src/config/brand.json` → `logoFilename` (`public/` altında)
- * Yedek kaynak: Android `ic_launcher_foreground` (logo yoksa)
+ * Kaynak: `brand.json` → `iconSourceFilename` (kısa ikon, `public/`), yoksa `logoFilename`, yoksa Android foreground
  * npm run icons:pwa
  */
 import fs from "node:fs";
@@ -13,15 +12,19 @@ import toIco from "to-ico";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 const brandConfigPath = path.join(root, "src", "config", "brand.json");
-function readLogoPngPath() {
+
+function readBrandPaths() {
   const raw = fs.readFileSync(brandConfigPath, "utf8");
-  const { logoFilename } = JSON.parse(raw);
-  if (typeof logoFilename !== "string" || !logoFilename.trim()) {
+  const cfg = JSON.parse(raw);
+  if (typeof cfg.logoFilename !== "string" || !cfg.logoFilename.trim()) {
     throw new Error(`Invalid brand.json: set "logoFilename" in ${path.relative(root, brandConfigPath)}`);
   }
-  return path.join(root, "public", logoFilename);
+  const logoPath = path.join(root, "public", cfg.logoFilename.trim());
+  const iconName =
+    typeof cfg.iconSourceFilename === "string" ? cfg.iconSourceFilename.trim() : "";
+  const iconPath = iconName ? path.join(root, "public", iconName) : null;
+  return { logoPath, iconPath };
 }
-const logoPng = readLogoPngPath();
 const androidForeground = path.join(
   root,
   "mobile",
@@ -40,14 +43,42 @@ const appFaviconIco = path.join(root, "src", "app", "favicon.ico");
 /** `app/icon.png` — sekme favicon; 32×32 retina’da bulanık kalır, 192 net görünür */
 const APP_ICON_SIZE = 192;
 
-/** PWA / favicon kare alanı: logo dışındaki padding (beyaz) */
-const BG = { r: 255, g: 255, b: 255, alpha: 1 };
+const WHITE_BG = { r: 255, g: 255, b: 255, alpha: 1 };
+
+function readBrandConfig() {
+  const raw = fs.readFileSync(brandConfigPath, "utf8");
+  return JSON.parse(raw);
+}
+
+/** #RRGGBB → sharp rgba; geçersizse beyaz */
+function parseHexBg(hex) {
+  if (typeof hex !== "string") return WHITE_BG;
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return WHITE_BG;
+  const n = parseInt(m[1], 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255, alpha: 1 };
+}
+
+/** Kısa ikon (iconSource): varsayılan beyaz tuval; `iconCanvasBackground` ile geçersiz kılınır */
+function resolveCanvasBg(cfg, kind) {
+  if (kind === "icon") {
+    const hex =
+      typeof cfg.iconCanvasBackground === "string" && cfg.iconCanvasBackground.trim()
+        ? cfg.iconCanvasBackground.trim()
+        : "#ffffff";
+    return parseHexBg(hex);
+  }
+  return WHITE_BG;
+}
 
 function pickSource() {
-  if (fs.existsSync(logoPng)) return { path: logoPng };
-  if (fs.existsSync(androidForeground)) return { path: androidForeground };
+  const { logoPath, iconPath } = readBrandPaths();
+  if (iconPath && fs.existsSync(iconPath)) return { path: iconPath, kind: "icon" };
+  if (fs.existsSync(logoPath)) return { path: logoPath, kind: "logo" };
+  if (fs.existsSync(androidForeground))
+    return { path: androidForeground, kind: "android" };
   throw new Error(
-    `No logo PNG: place file named in src/config/brand.json under public/, or ensure ${path.relative(root, androidForeground)} exists`,
+    `No icon/logo PNG: add files under public/ per src/config/brand.json (iconSourceFilename / logoFilename), or ensure ${path.relative(root, androidForeground)}`,
   );
 }
 
@@ -55,20 +86,20 @@ function sharpFromSource(srcPath) {
   return sharp(srcPath);
 }
 
-async function writeSquarePng(src, size, outPath) {
-  await sharpFromSource(src)
-    .flatten({ background: BG })
-    .resize(size, size, { fit: "contain", background: BG })
+async function writeSquarePng(srcPath, size, outPath, bg) {
+  await sharpFromSource(srcPath)
+    .flatten({ background: bg })
+    .resize(size, size, { fit: "contain", background: bg })
     .png()
     .toFile(outPath);
 }
 
 /** Çok boyutlu .ico — sekme / yer imi isteği aynı logoyu alır */
-async function writeFaviconIco(srcPath, outPath) {
+async function writeFaviconIco(srcPath, outPath, bg) {
   const pngBuffer = (size) =>
     sharpFromSource(srcPath)
-      .flatten({ background: BG })
-      .resize(size, size, { fit: "contain", background: BG })
+      .flatten({ background: bg })
+      .resize(size, size, { fit: "contain", background: bg })
       .png()
       .toBuffer();
   const [b16, b32, b48] = await Promise.all([
@@ -81,7 +112,9 @@ async function writeFaviconIco(srcPath, outPath) {
 }
 
 async function main() {
-  const { path: srcPath } = pickSource();
+  const cfg = readBrandConfig();
+  const { path: srcPath, kind } = pickSource();
+  const bg = resolveCanvasBg(cfg, kind);
   const label = path.relative(root, srcPath);
   fs.mkdirSync(outDir, { recursive: true });
 
@@ -93,18 +126,18 @@ async function main() {
 
   for (const [size, name] of sizes) {
     const out = path.join(outDir, name);
-    await writeSquarePng(srcPath, size, out);
+    await writeSquarePng(srcPath, size, out, bg);
     console.log("wrote", path.join("public/icons", name), `(from ${label})`);
   }
 
-  await writeSquarePng(srcPath, APP_ICON_SIZE, appIconPng);
+  await writeSquarePng(srcPath, APP_ICON_SIZE, appIconPng, bg);
   console.log(
     "wrote",
     path.relative(root, appIconPng),
     `(${APP_ICON_SIZE}×${APP_ICON_SIZE}, from ${label})`,
   );
 
-  await writeFaviconIco(srcPath, appFaviconIco);
+  await writeFaviconIco(srcPath, appFaviconIco, bg);
   console.log("wrote", path.relative(root, appFaviconIco), `(16/32/48, from ${label})`);
 }
 
