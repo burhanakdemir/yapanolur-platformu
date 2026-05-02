@@ -1,5 +1,6 @@
 /**
- * PWA / mağaza ikonları → public/icons/*.png, src/app/icon.png, src/app/favicon.ico
+ * PWA / mağaza ikonları → public/icons/*.png, public/favicon.ico, src/app/icon.png
+ * (favicon kökte public/ — src/app/favicon.ico Next’in özel rotasına girer; canlıda bozuk .ico riski)
  * Kaynak: `brand.json` → `iconSourceFilename` (kısa ikon, `public/`), yoksa `logoFilename`, yoksa Android foreground
  * npm run icons:pwa
  */
@@ -38,7 +39,7 @@ const androidForeground = path.join(
 );
 const outDir = path.join(root, "public", "icons");
 const appIconPng = path.join(root, "src", "app", "icon.png");
-const appFaviconIco = path.join(root, "src", "app", "favicon.ico");
+const publicFaviconIco = path.join(root, "public", "favicon.ico");
 
 /** `app/icon.png` — sekme favicon; 32×32 retina’da bulanık kalır, 192 net görünür */
 const APP_ICON_SIZE = 192;
@@ -94,20 +95,14 @@ async function writeSquarePng(srcPath, size, outPath, bg) {
     .toFile(outPath);
 }
 
-/** Çok boyutlu .ico — sekme / yer imi isteği aynı logoyu alır */
+/** .ico — çoğu tarayıcı /favicon.ico ister; tek 32px PNG katmanı (to-ico çok katmanda bozulma riski) */
 async function writeFaviconIco(srcPath, outPath, bg) {
-  const pngBuffer = (size) =>
-    sharpFromSource(srcPath)
-      .flatten({ background: bg })
-      .resize(size, size, { fit: "contain", background: bg })
-      .png()
-      .toBuffer();
-  const [b16, b32, b48] = await Promise.all([
-    pngBuffer(16),
-    pngBuffer(32),
-    pngBuffer(48),
-  ]);
-  const ico = await toIco([b16, b32, b48]);
+  const b32 = await sharpFromSource(srcPath)
+    .flatten({ background: bg })
+    .resize(32, 32, { fit: "contain", background: bg })
+    .png()
+    .toBuffer();
+  const ico = await toIco([b32]);
   fs.writeFileSync(outPath, ico);
 }
 
@@ -137,8 +132,8 @@ async function main() {
     `(${APP_ICON_SIZE}×${APP_ICON_SIZE}, from ${label})`,
   );
 
-  await writeFaviconIco(srcPath, appFaviconIco, bg);
-  console.log("wrote", path.relative(root, appFaviconIco), `(16/32/48, from ${label})`);
+  await writeFaviconIco(srcPath, publicFaviconIco, bg);
+  console.log("wrote", path.relative(root, publicFaviconIco), `(32px layer, from ${label})`);
 }
 
 main().catch((e) => {

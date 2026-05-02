@@ -21,7 +21,7 @@ Docker kuramıyorsanız ücretsiz Postgres için: **`docs/baglanti-sorun-giderme
 **Hosting / üretim:** barındırıcıya taşırken `DATABASE_URL` yerel `127.0.0.1` olmamalı; ortam değişkenleri ve Neon `DIRECT_DATABASE_URL` için **`docs/hosting.md`**.
 
 - **Lint / tip / test:** `npm run lint`, `npm run typecheck`, `npm run test`
-- **PWA / logo:** `src/config/brand.json` — sayfa logosu `logoFilename`, favicon/PWA kaynağı `iconSourceFilename` (yoksa `logoFilename`); kare olmayan ikon için dolgu `iconCanvasBackground` (varsayılan `#ffffff`). Sonra `npm run icons:pwa` (`public/icons/`, `src/app/icon.png`, `favicon.ico`). `src/app/manifest.ts`. Üretimde `public/sw.js` (`PwaRegister`). Test ve mağaza: **`docs/mobile-app-roadmap-prompt.md`**
+- **PWA / logo:** `src/config/brand.json` — sayfa logosu `logoFilename`, favicon/PWA kaynağı `iconSourceFilename` (yoksa `logoFilename`); kare olmayan ikon için dolgu `iconCanvasBackground` (varsayılan `#ffffff`). Sonra `npm run icons:pwa` (`public/icons/`, `public/favicon.ico`, `src/app/icon.png`). `src/app/manifest.ts`. Üretimde `public/sw.js` (`PwaRegister`). Test ve mağaza: **`docs/mobile-app-roadmap-prompt.md`**
 - **Knip:** `npm run knip` — kullanılmayan bağımlılık / eksik binary (üretim odaklı); tam rapor için `npm run knip:all` (çok sayıda “kullanılmayan export” uyarısı normal olabilir)
 - **E2E:** `npm run build` sonrası `npm run test:e2e` (Playwright sunucuyu başlatır)
 - **CI:** GitHub Actions — `.github/workflows/ci.yml` (push/PR)

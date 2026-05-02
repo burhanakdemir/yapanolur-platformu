@@ -11,7 +11,7 @@ Hedef: Mobil yol haritasının 1. fazını uygula, mevcut özellikleri kırma.
 
 1) PWA (öncelik)
 - `src/app/manifest.ts`: MetadataRoute.Manifest — name, short_name, description, start_url `/`, scope `/`, display `standalone`, theme_color / background_color viewport ile uyumlu (`#fff7ed`), orientation `portrait-primary`, ikonlar: `public/icons/*.png` (any + maskable).
-- `npm run icons:pwa`: `src/config/brand.json` → `public/<iconSourceFilename>` (yoksa `<logoFilename>`) → PWA + `src/app/icon.png` + `favicon.ico`.
+- `npm run icons:pwa`: `src/config/brand.json` → `public/<iconSourceFilename>` (yoksa `<logoFilename>`) → PWA + `public/favicon.ico` + `src/app/icon.png`.
 - `src/app/layout.tsx` metadata: `appleWebApp` + gerekirse `applicationName`.
 - Üretimde: `public/sw.js` passthrough; `PwaRegister` yalnızca production’da SW kaydı. Root layout’ta `<PwaRegister />`.
 
