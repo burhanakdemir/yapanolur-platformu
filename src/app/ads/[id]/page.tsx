@@ -4,6 +4,7 @@ import AdDetailSeoLead from "./AdDetailSeoLead";
 import { prisma } from "@/lib/prisma";
 import { buildAdListingJsonLd, listingPageUrls } from "@/lib/adDetailJsonLd";
 import { absoluteAssetUrl, adDetailMetaStrings, siteName } from "@/lib/metadataHelpers";
+import { BRAND_LOGO_PATH } from "@/lib/brand";
 import { getAppUrl } from "@/lib/appUrl";
 import { getLang, type Lang } from "@/lib/i18n";
 
@@ -74,7 +75,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
   const title = `${pageTitle} | ${site}`;
   const ogImage = absoluteAssetUrl(ad.photos[0]?.url);
-  const logoOg = `${base}/yapanolur-logo.png`;
+  const logoOg = `${base}${BRAND_LOGO_PATH}`;
   const ogImages = ogImage
     ? [{ url: ogImage, alt: pageTitle }]
     : [{ url: logoOg, width: 440, height: 113, alt: site }];

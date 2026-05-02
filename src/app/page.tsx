@@ -12,6 +12,7 @@ import {
 import { ensureDefaultTopCategories, getCategoryTreeCached, getDescendantIds } from "@/lib/categories";
 import DbConnectionRequired from "@/components/DbConnectionRequired";
 import AuctionsTabs from "@/components/AuctionsTabs";
+import { BRAND_LOGO_PATH } from "@/lib/brand";
 import { getAppUrl } from "@/lib/appUrl";
 import { dictionary, getLang } from "@/lib/i18n";
 import { homeSearchMetaStrings, siteName } from "@/lib/metadataHelpers";
@@ -244,7 +245,7 @@ export default async function Home({ searchParams }: Props) {
         <header className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div className="flex shrink-0 items-center gap-4">
             <Image
-              src="/yapanolur-logo.png"
+              src={BRAND_LOGO_PATH}
               alt="yapanolur.com"
               width={440}
               height={113}

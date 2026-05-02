@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { BRAND_LOGO_PATH } from "@/lib/brand";
 import type { Lang } from "@/lib/i18n";
 import HomeBackButtonLink from "@/components/HomeBackButtonLink";
 
@@ -17,7 +18,7 @@ export default function StaticSitePage({ lang, title, children }: Props) {
         <div className="flex flex-wrap items-center gap-4">
           <Link href={`/?lang=${lang}`} className="flex items-center gap-3 text-inherit no-underline">
             <Image
-              src="/yapanolur-logo.png"
+              src={BRAND_LOGO_PATH}
               alt="yapanolur.com"
               width={200}
               height={48}

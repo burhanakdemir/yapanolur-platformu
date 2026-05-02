@@ -35,7 +35,7 @@ export default config;
 
 ## PWA (tarayıcıdan kurulum)
 
-Web için PNG ikonlar `npm run icons:pwa` ile `src/app/icon.svg` kaynaklı üretilir (`public/icons/`). Manifest `src/app/manifest.ts` içindedir.
+Web için PNG ikonlar ve tarayıcı sekmesi `favicon.ico` (`npm run icons:pwa`) ile üretilir; logo dosya adı `src/config/brand.json` → `public/<logoFilename>`. Çıktılar: `public/icons/`, `src/app/icon.png`, `src/app/favicon.ico`. Manifest `src/app/manifest.ts` içindedir.
 
 ## Riskler
 
