@@ -9,6 +9,9 @@ type Dictionary = {
     heroSubtitle: string;
     primaryButton: string;
     secondaryButton: string;
+    /** Sağ şerit — misafir: giriş / kayıt (href `/login`, `/members`) */
+    sidebarGuestLogin: string;
+    sidebarGuestRegister: string;
     /** Sağ sütun: ilan ver şeridi başlığı */
     postListingTitle: string;
     postListingSubtitle: string;
@@ -104,6 +107,8 @@ export const dictionary: Record<Lang, Dictionary> = {
         "Kullanıcı olarak teklif verin, ilan yayınlayın ve ilanlarınızı gerçek zamanlı yönetin.",
       primaryButton: "Üye Girişi",
       secondaryButton: "Kayıt Olun",
+      sidebarGuestLogin: "Giriş Yap",
+      sidebarGuestRegister: "Kayıt Ol",
       postListingTitle: "İlan verme alanı",
       postListingSubtitle:
         "Platformun dört ana başlığında proje ilanı oluşturun; teklifler ve ihale süreçleri tek yerde.",
@@ -204,6 +209,8 @@ export const dictionary: Record<Lang, Dictionary> = {
       heroSubtitle: "Place bids as user, publish listings, and manage your listings in real-time.",
       primaryButton: "Sign in",
       secondaryButton: "Register",
+      sidebarGuestLogin: "Sign in",
+      sidebarGuestRegister: "Register",
       postListingTitle: "Post a listing",
       postListingSubtitle:
         "Create project listings under the platform’s four main segments—bids and tenders in one place.",

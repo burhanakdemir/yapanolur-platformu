@@ -14,6 +14,7 @@ import {
 import ExecutiveSparkline from "@/components/executive/ExecutiveSparkline";
 import ExecutiveProvinceBars from "@/components/executive/ExecutiveProvinceBars";
 import ExecutiveCustomRangeForm from "@/components/executive/ExecutiveCustomRangeForm";
+import ExecutiveAnalyticsCards from "@/components/executive/ExecutiveAnalyticsCards";
 
 export const dynamic = "force-dynamic";
 
@@ -172,6 +173,22 @@ export default async function ExecutivePage({ searchParams }: Props) {
             </p>
           )}
         </div>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-bold text-orange-950">Site trafiği ve üyelik</h2>
+        <ExecutiveAnalyticsCards
+          initialLive={data.liveVisitors}
+          initialTotalMembers={data.totalMemberAccounts}
+          activeWindowMs={data.analyticsActiveWindowMs}
+        />
+        <ExecutiveSparkline
+          title="Günlük benzersiz ziyaretçi"
+          subtitle={`${data.periodRange.label} (İstanbul) — yo_vid çerezi; veri bu özellik canlıya alındıktan sonra birikir`}
+          accentClass="text-sky-800"
+          values={data.visitorDailySeries}
+          formatY={(n) => nf.format(n)}
+        />
       </section>
 
       {data.alerts.length > 0 ? (

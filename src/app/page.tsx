@@ -225,11 +225,6 @@ export default async function Home({ searchParams }: Props) {
       lang === "tr"
         ? adminSettings.homeHeroSubtitleTr || t.home.heroSubtitle
         : adminSettings.homeHeroSubtitleEn || t.home.heroSubtitle;
-    const heroPrimaryLabel =
-      lang === "tr"
-        ? adminSettings.homePrimaryButtonTr?.trim() || t.home.primaryButton
-        : adminSettings.homePrimaryButtonEn?.trim() || t.home.primaryButton;
-
     const token = (await cookies()).get("session_token")?.value;
     const session = await verifySessionToken(token);
     const showHeroAuthLinks = !session;
@@ -322,8 +317,8 @@ export default async function Home({ searchParams }: Props) {
                 ? {
                     loginHref: lang === "en" ? "/login?lang=en" : "/login",
                     registerHref: lang === "en" ? "/members?lang=en" : "/members",
-                    loginLabel: heroPrimaryLabel,
-                    registerLabel: t.home.secondaryButton,
+                    loginLabel: t.home.sidebarGuestLogin,
+                    registerLabel: t.home.sidebarGuestRegister,
                   }
                 : null
             }

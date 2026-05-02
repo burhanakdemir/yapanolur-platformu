@@ -15,6 +15,7 @@ import {
   trendRangeDays,
   type IstRange,
 } from "@/lib/executive/istanbulCalendar";
+import { getSiteAnalyticsActiveMs } from "@/lib/siteAnalytics";
 
 function envThreshold(name: string, fallback: number): number {
   const v = process.env[name]?.trim();
@@ -83,6 +84,14 @@ export type ExecutiveDashboardData = {
   creditTopUpSeriesTry: number[];
   topProvincesByAds: { province: string; count: number }[];
   topProvincesByMembers: { province: string; count: number }[];
+  /** Günlük benzersiz site ziyaretçisi (İstanbul günü; yo_vid çerezi — veri özellikten sonra). */
+  visitorDailyKeys: string[];
+  visitorDailySeries: number[];
+  /** role=MEMBER kayıt sayısı (soft delete yok). */
+  totalMemberAccounts: number;
+  /** Son `analyticsActiveWindowMs` içinde ping atan tarayıcı. */
+  liveVisitors: number;
+  analyticsActiveWindowMs: number;
 };
 
 async function loadAlerts(
@@ -209,6 +218,13 @@ export async function getExecutiveDashboardData(searchParams: {
     }
     trendDisplayTitle = `Son ${trendWindow} gün (günlük)`;
   }
+
+  /** Özet kartlarıyla aynı İstanbul dönemi — günlük benzersiz site ziyaretçisi grafiği. */
+  const visitorChartFromYmd = istYmdNow(periodRange.start);
+  const visitorChartToYmd = addCalendarDaysYmd(istYmdNow(periodRange.endExclusive), -1);
+  const visitorDailyKeys = eachDayYmdInRange(visitorChartFromYmd, visitorChartToYmd);
+  const analyticsActiveWindowMs = getSiteAnalyticsActiveMs();
+  const liveVisitorsSince = new Date(Date.now() - analyticsActiveWindowMs);
 
   const rangeWhere = {
     gte: periodRange.start,
@@ -355,6 +371,45 @@ export async function getExecutiveDashboardData(searchParams: {
       ),
   ]);
 
+  /** Site analytics tabloları migration ile yoksa veya sorgu hata verirse tüm özetin düşmemesi için ayrı yükle. */
+  let visitorDailyRows: { dayYmd: string; uniqueVisitors: number }[] = [];
+  let totalMemberAccounts = 0;
+  let liveVisitors = 0;
+  let siteAnalyticsNotice: string | null = null;
+  try {
+    const chunk = await Promise.all([
+      prisma.siteVisitDaily.findMany({
+        where: {
+          dayYmd: { gte: visitorChartFromYmd, lte: visitorChartToYmd },
+        },
+        select: { dayYmd: true, uniqueVisitors: true },
+      }),
+      prisma.user.count({ where: { role: "MEMBER" } }),
+      prisma.siteVisitorPresence.count({
+        where: { lastSeenAt: { gte: liveVisitorsSince } },
+      }),
+    ]);
+    visitorDailyRows = chunk[0];
+    totalMemberAccounts = chunk[1];
+    liveVisitors = chunk[2];
+  } catch {
+    siteAnalyticsNotice =
+      "Site trafiği ölçümleri yüklenemedi. Üretim veritabanında `prisma migrate deploy` ile güncel şema (SiteVisitDaily vb.) uygulandığından emin olun.";
+    try {
+      totalMemberAccounts = await prisma.user.count({ where: { role: "MEMBER" } });
+    } catch {
+      totalMemberAccounts = 0;
+    }
+  }
+
+  const visitorMap = new Map(visitorDailyRows.map((r) => [r.dayYmd, r.uniqueVisitors]));
+  const visitorDailySeries = visitorDailyKeys.map((k) => visitorMap.get(k) ?? 0);
+
+  const combinedNotice =
+    siteAnalyticsNotice && notice
+      ? `${notice} ${siteAnalyticsNotice}`
+      : siteAnalyticsNotice ?? notice;
+
   const creditByType = creditGroups
     .map((g) => ({
       type: g.type,
@@ -381,7 +436,7 @@ export async function getExecutiveDashboardData(searchParams: {
     periodRange,
     customFromYmd,
     customToYmd,
-    notice,
+    notice: combinedNotice,
     trendKind,
     rollingTrendDays,
     trendGranularity,
@@ -410,5 +465,10 @@ export async function getExecutiveDashboardData(searchParams: {
       province: (r.province as string) || "—",
       count: r._count._all ?? 0,
     })),
+    visitorDailyKeys,
+    visitorDailySeries,
+    totalMemberAccounts,
+    liveVisitors,
+    analyticsActiveWindowMs,
   };
 }

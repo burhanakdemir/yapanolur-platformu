@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import AppSiteFooter from "@/components/AppSiteFooter";
 import CookieConsentBar from "@/components/CookieConsentBar";
 import PwaRegister from "@/components/PwaRegister";
+import SitePresenceBeacon from "@/components/SitePresenceBeacon";
 import { getSafeMetadataBase } from "@/lib/appUrl";
 
 const geistSans = Geist({
@@ -63,6 +64,7 @@ export default function RootLayout({
       */}
       <body className="flex min-h-full flex-col pb-[env(safe-area-inset-bottom,0px)] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)] pt-[env(safe-area-inset-top,0px)]">
         <PwaRegister />
+        <SitePresenceBeacon />
         <div className="app-main-shell flex min-h-0 flex-1 flex-col">{children}</div>
         <AppSiteFooter />
         <Suspense fallback={null}>

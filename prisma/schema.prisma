@@ -670,3 +670,27 @@ model CreditInvoiceRequest {
   @@index([status, createdAt])
   @@index([userId, createdAt])
 }
+
+/** İstanbul takvim günü (YYYY-MM-DD) başına — çerez anahtarıyla günlük benzersiz ziyaretçi (özellik deployundan sonra). */
+model SiteVisitDaily {
+  dayYmd         String @id
+  uniqueVisitors Int
+}
+
+/** Aynı ziyaretçi anahtarı aynı günde yalnızca bir kez günlük sayıma eklenir. */
+model SiteVisitorDayDedup {
+  id         String @id @default(cuid())
+  visitorKey String
+  dayYmd     String
+
+  @@unique([visitorKey, dayYmd])
+  @@index([dayYmd])
+}
+
+/** Anlık ziyaretçi: son ping (Europe/Istanbul günü ile ilişkili değil; TTL ile süzülür). */
+model SiteVisitorPresence {
+  visitorKey String   @id
+  lastSeenAt DateTime
+
+  @@index([lastSeenAt])
+}

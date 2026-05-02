@@ -69,15 +69,17 @@ function createPrismaClient(): PrismaClient {
  * garanti etmek için kritik API route’larda `getPrismaClient()` kullanın.
  */
 /** Eski global örnekte eksik delegate var mı (HMR / şema güncellemesi sonrası). */
-function prismaSponsorDelegatesPresent(client: unknown): boolean {
+function prismaCriticalDelegatesPresent(client: unknown): boolean {
   try {
     const p = client as {
       homeHeroSlide?: { findMany?: unknown };
       sponsorHeroPurchaseRequest?: { findFirst?: unknown };
+      siteVisitorPresence?: { upsert?: unknown };
     };
     return (
       typeof p.homeHeroSlide?.findMany === "function" &&
-      typeof p.sponsorHeroPurchaseRequest?.findFirst === "function"
+      typeof p.sponsorHeroPurchaseRequest?.findFirst === "function" &&
+      typeof p.siteVisitorPresence?.upsert === "function"
     );
   } catch {
     return false;
@@ -86,17 +88,18 @@ function prismaSponsorDelegatesPresent(client: unknown): boolean {
 
 function getOrRefreshPrismaSingleton(): PrismaClient {
   const cached = globalForPrisma.prisma;
-  if (cached && prismaSponsorDelegatesPresent(cached)) {
+  if (cached && prismaCriticalDelegatesPresent(cached)) {
     return cached;
   }
 
   const fresh = createPrismaClient();
-  if (!prismaSponsorDelegatesPresent(fresh) && process.env.NODE_ENV === "development") {
+  if (!prismaCriticalDelegatesPresent(fresh) && process.env.NODE_ENV === "development") {
     const q = fresh as unknown as Record<string, unknown>;
     console.warn(
-      "[prisma] Delegate kontrolü beklenen şekilde geçmedi (bundler/istemci sızıntısı veya codegen). homeHeroSlide=%s sponsorHeroPurchaseRequest=%s — gerekirse: npx prisma generate, .next temizliği, sunucuyu yeniden başlatın.",
+      "[prisma] Delegate kontrolü beklenen şekilde geçmedi (bundler/istemci sızıntısı veya codegen). homeHeroSlide=%s sponsorHeroPurchaseRequest=%s siteVisitorPresence=%s — gerekirse: npx prisma generate, .next temizliği, sunucuyu yeniden başlatın.",
       typeof q.homeHeroSlide,
       typeof q.sponsorHeroPurchaseRequest,
+      typeof q.siteVisitorPresence,
     );
   }
   globalForPrisma.prisma = fresh;
