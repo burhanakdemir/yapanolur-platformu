@@ -58,3 +58,14 @@ next-env.d.ts
 /src/generated/prisma
 
 certificates
+
+# Capacitor Android (kaynak commitlenebilir; yerel derleme ve sırlar hariç)
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/*.jks
+mobile/android/*.keystore
+mobile/android/capacitor-cordova-android-plugins/build/
+.idea/
+*.iml

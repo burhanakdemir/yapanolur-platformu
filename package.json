@@ -55,7 +55,10 @@
     "lan:diagnose": "node scripts/diagnose-lan-connection.cjs",
     "env:lan": "node scripts/sync-lan-env.cjs",
     "knip": "knip --dependencies",
-    "knip:all": "knip"
+    "knip:all": "knip",
+    "mobile:sync": "npx cap sync android",
+    "mobile:open:android": "npx cap open android",
+    "mobile:add:android": "npx cap add android"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.918.0",
@@ -84,6 +87,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
     "@playwright/test": "^1.59.1",
     "@types/node": "^20",
     "@types/nodemailer": "^8.0.0",

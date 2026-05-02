@@ -2,6 +2,8 @@
 
 Next.js bu projede SSR kullanır; mağaza kabuğu genelde **aynı kanonik siteyi** WebView’da açar.
 
+**Pratik adımlar ve `.aab`:** kökte `capacitor.config.ts` + `mobile/README.md`.
+
 ## Ortam
 
 - Üretimde **`APP_URL`** ve **`NEXTAUTH_URL`** tek ve HTTPS olmalı; WebView çerez oturumu bu origin’e bağlıdır.

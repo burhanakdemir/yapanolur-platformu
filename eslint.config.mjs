@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     "scripts/**/*.cjs",
     "playwright-report/**",
     "test-results/**",
+    "mobile/android/**",
   ]),
 ]);
 
