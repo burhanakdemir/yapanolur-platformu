@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { adminUrl } from "@/lib/adminUrls";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
 
 type Row = {
@@ -149,11 +150,11 @@ export default function SponsorPurchasesAdminClient({ initialRows = [] }: { init
       </div>
 
       <p className="text-[10px] text-slate-600">
-        <Link href="/admin/members" className="font-semibold text-orange-800 underline-offset-2 hover:underline">
+        <Link href={adminUrl("/members")} className="font-semibold text-orange-800 underline-offset-2 hover:underline">
           Üye listesi
         </Link>{" "}
         ve{" "}
-        <Link href="/admin/listings" className="font-semibold text-orange-800 underline-offset-2 hover:underline">
+        <Link href={adminUrl("/listings")} className="font-semibold text-orange-800 underline-offset-2 hover:underline">
           İlan onayı
         </Link>{" "}
         sayfalarından sonra bekleyen ödemeli başvurular burada işlenir. Reddetmek üyenin bakiyesine ücreti iade eder.

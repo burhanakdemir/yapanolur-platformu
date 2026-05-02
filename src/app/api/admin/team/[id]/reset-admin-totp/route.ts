@@ -1,0 +1,44 @@
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { verifySessionToken } from "@/lib/auth";
+import { isSuperAdminRole } from "@/lib/adminRoles";
+
+export const dynamic = "force-dynamic";
+
+type Params = { params: Promise<{ id: string }> };
+
+/**
+ * Yalnızca SUPER_ADMIN + TOTP tamamlanmış oturum.
+ * Hedef: ADMIN veya SUPER_ADMIN — TOTP alanlarını sıfırlar (yeniden kurulum gerekir).
+ */
+export async function POST(_req: Request, { params }: Params) {
+  const token = (await cookies()).get("session_token")?.value;
+  const session = await verifySessionToken(token);
+  if (!session || !isSuperAdminRole(session.role) || session.adminTotp !== true) {
+    return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
+  }
+
+  const { id } = await params;
+  if (!id?.trim()) {
+    return NextResponse.json({ error: "Geçersiz." }, { status: 400 });
+  }
+
+  const target = await prisma.user.findFirst({
+    where: { id, role: { in: ["SUPER_ADMIN", "ADMIN"] } },
+    select: { id: true, role: true },
+  });
+  if (!target) {
+    return NextResponse.json({ error: "Kullanıcı bulunamadı." }, { status: 404 });
+  }
+
+  await prisma.user.update({
+    where: { id: target.id },
+    data: {
+      adminTotpSecretEnc: null,
+      adminTotpEnabledAt: null,
+    },
+  });
+
+  return NextResponse.json({ ok: true });
+}

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { adminUrl } from "@/lib/adminUrls";
 
 export default function SignupVerificationAdminPage() {
   const [emailRequired, setEmailRequired] = useState(true);
@@ -44,7 +45,7 @@ export default function SignupVerificationAdminPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 p-4 md:p-6">
-      <Link className="admin-back-link" href="/admin">
+      <Link className="admin-back-link" href={adminUrl()}>
         ← Yönetici ana panel
       </Link>
       <h1 className="text-3xl font-bold tracking-tight text-orange-950">Üye kaydı doğrulama</h1>

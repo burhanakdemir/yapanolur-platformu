@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { isStaffAdminRole } from "@/lib/adminRoles";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
+import { adminUrl } from "@/lib/adminUrls";
 
 type SuperAdminLoginFormProps = {
   /** Yerel geliştirme: formu önceden doldurmak için (opsiyonel) */
@@ -32,9 +33,17 @@ export default function SuperAdminLoginForm({
           password: String(form.get("password") || ""),
         }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: unknown;
+        step?: string;
+        user?: { role?: string };
+      };
       if (!res.ok) {
         setMessage(apiErrorMessage(data.error, "Giriş başarısız."));
+        return;
+      }
+      if (data.step === "admin_mfa") {
+        window.location.assign(adminUrl());
         return;
       }
       const role = data.user?.role as string | undefined;
@@ -42,7 +51,7 @@ export default function SuperAdminLoginForm({
         setMessage("Bu hesap yönetici değil. Süper / yardımcı yönetici hesabı kullanın.");
         return;
       }
-      window.location.assign("/admin");
+      window.location.assign(adminUrl());
     } finally {
       setLoading(false);
     }

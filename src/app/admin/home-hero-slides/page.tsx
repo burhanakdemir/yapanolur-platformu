@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
+import { adminUrl } from "@/lib/adminUrls";
 
 type SlideLang = "tr" | "en";
 
@@ -175,10 +176,10 @@ export default function AdminHomeHeroSlidesPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl space-y-5 p-4 md:p-6">
-      <Link className="admin-back-link" href="/admin">
+      <Link className="admin-back-link" href={adminUrl()}>
         ← Yönetici ana panel
       </Link>
-      <Link className="admin-back-link ml-3" href="/admin/site-settings">
+      <Link className="admin-back-link ml-3" href={adminUrl("/site-settings")}>
         Site ayarları
       </Link>
 

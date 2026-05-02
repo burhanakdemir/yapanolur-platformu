@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { adminUrl } from "@/lib/adminUrls";
 
 type ProfessionRow = { id: string; name: string; sortOrder: number };
 
@@ -76,7 +77,7 @@ export default function AdminProfessionsPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl space-y-6 p-4 md:p-6">
-      <Link className="admin-back-link" href="/admin">
+      <Link className="admin-back-link" href={adminUrl()}>
         ← Yonetici Ana Panel
       </Link>
       <h1 className="text-3xl font-bold tracking-tight">Meslek Ayarlari</h1>

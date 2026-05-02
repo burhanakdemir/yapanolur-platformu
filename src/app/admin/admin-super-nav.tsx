@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { verifySessionToken } from "@/lib/auth";
 import { isSuperAdminRole } from "@/lib/adminRoles";
+import { adminUrl } from "@/lib/adminUrls";
 
 /** Tüm /admin sayfalarında üstte: süper yönetici paneline hızlı erişim */
 export default async function AdminSuperNav() {
@@ -26,13 +27,13 @@ export default async function AdminSuperNav() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
-            href="/admin#super-admin-team"
+            href={`${adminUrl()}#super-admin-team`}
             className="shrink-0 rounded-xl border border-amber-200/50 bg-amber-900/30 px-3 py-2 text-sm font-semibold text-amber-50 transition hover:bg-amber-800/50"
           >
             Ana panel: alt yöneticiler
           </Link>
           <Link
-            href="/admin/admins"
+            href={adminUrl("/admins")}
             className="shrink-0 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-amber-950 shadow-md transition hover:bg-amber-50 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             Tam sayfa →

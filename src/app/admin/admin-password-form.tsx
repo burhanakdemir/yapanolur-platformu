@@ -3,10 +3,11 @@
 import { FormEvent, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
+import { adminUrl } from "@/lib/adminUrls";
 
 export default function AdminPasswordForm() {
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next") || "/admin";
+  const nextPath = searchParams.get("next") || adminUrl();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +29,7 @@ export default function AdminPasswordForm() {
         setError(apiErrorMessage(data.error, "Gecersiz sifre."));
         return;
       }
-      const dest = nextPath.startsWith("/") ? nextPath : "/admin";
+      const dest = nextPath.startsWith("/") ? nextPath : adminUrl();
       /** Tam sayfa geçişi: LAN (http://IP) ve App Router’da Set-Cookie sonrası client yönlendirmesinin oturumu kaçırmasını önler. */
       window.location.assign(dest);
     } finally {

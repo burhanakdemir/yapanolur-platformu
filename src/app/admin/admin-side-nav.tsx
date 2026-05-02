@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { AdminPanelMode } from "@/lib/adminRoles";
+import { adminUrl } from "@/lib/adminUrls";
 import {
   ADMIN_SECTION_GROUPS,
   ADMIN_TEAM_SECTION,
@@ -11,7 +12,10 @@ import {
 
 function active(pathname: string | null, href: string): boolean {
   if (!pathname) return false;
-  if (href === "/admin") return pathname === "/admin";
+  const root = adminUrl();
+  if (href === root || href === `${root}/`) {
+    return pathname === root || pathname === `${root}/`;
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

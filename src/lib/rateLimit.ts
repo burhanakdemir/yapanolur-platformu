@@ -27,13 +27,15 @@ export type RateLimitBucket =
   | "upload"
   /** Oturumsuz kayit dosya yuklemesi — oturumlu upload'dan ayri kotayi korur. */
   | "signupUpload"
-  | "adCreate";
+  | "adCreate"
+  | "adminTotp";
 
 const BUCKETS: Record<RateLimitBucket, { max: number; window: Duration; windowMs: number }> = {
   login: { max: 20, window: "15 m", windowMs: 15 * 60 * 1000 },
   register: { max: 8, window: "1 h", windowMs: 60 * 60 * 1000 },
   otp: { max: 40, window: "1 h", windowMs: 60 * 60 * 1000 },
   adminGate: { max: 15, window: "15 m", windowMs: 15 * 60 * 1000 },
+  adminTotp: { max: 30, window: "15 m", windowMs: 15 * 60 * 1000 },
   passwordChange: { max: 25, window: "1 h", windowMs: 60 * 60 * 1000 },
   upload: { max: 60, window: "1 h", windowMs: 60 * 60 * 1000 },
   signupUpload: { max: 40, window: "1 h", windowMs: 60 * 60 * 1000 },

@@ -115,6 +115,11 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  /** AES-GCM ile şifrelenmiş TOTP secret (base64); yalnız ADMIN/SUPER_ADMIN */
+  adminTotpSecretEnc String?
+  /** İlk başarılı doğrulama / kurulum zamanı */
+  adminTotpEnabledAt DateTime?
+
   memberProfile MemberProfile?
   ads           Ad[]
   bids          Bid[]

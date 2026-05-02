@@ -6,10 +6,11 @@ import SiteFooterNav from "@/components/SiteFooterNav";
 import FooterSupportStrip from "@/components/FooterSupportStrip";
 import SupportFloatingWidget from "@/components/SupportFloatingWidget";
 import { getLang } from "@/lib/i18n";
+import { isAdminSectionPathname } from "@/lib/adminUrls";
 
 function shouldHideFooter(pathname: string | null): boolean {
   if (!pathname) return false;
-  if (pathname === "/admin" || pathname.startsWith("/admin/")) return true;
+  if (isAdminSectionPathname(pathname)) return true;
   if (pathname === "/panel/admin" || pathname.startsWith("/panel/admin/")) return true;
   return false;
 }

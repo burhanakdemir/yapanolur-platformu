@@ -1,0 +1,3 @@
+-- Admin panel TOTP (ADMIN / SUPER_ADMIN only)
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "adminTotpSecretEnc" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "adminTotpEnabledAt" TIMESTAMP(3);

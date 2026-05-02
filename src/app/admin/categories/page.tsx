@@ -10,6 +10,7 @@ import {
   type SetStateAction,
 } from "react";
 import Link from "next/link";
+import { adminUrl } from "@/lib/adminUrls";
 
 type CategoryNode = {
   id: string;
@@ -76,7 +77,7 @@ function SubcategoryImageUpload({
       } catch {
         const hint =
           res.status === 401 || res.status === 403
-            ? "Yetkisiz: once /admin uzerinden giris yapin."
+            ? `Yetkisiz: once ${adminUrl()} uzerinden giris yapin.`
             : `Sunucu yaniti okunamadi (HTTP ${res.status}).`;
         setLocalError(hint);
         onNotify?.(hint);
@@ -394,7 +395,7 @@ export default function AdminCategoriesPage() {
     if (!res.ok) {
       setMessage(
         res.status === 401
-          ? "Yetkisiz: once /admin uzerinden yonetici girisi yapin."
+          ? `Yetkisiz: once ${adminUrl()} uzerinden yonetici girisi yapin.`
           : "Kategori listesi yuklenemedi.",
       );
       setCategories([]);
@@ -539,7 +540,7 @@ export default function AdminCategoriesPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl space-y-6 p-4 md:p-6">
-      <Link className="admin-back-link" href="/admin">
+      <Link className="admin-back-link" href={adminUrl()}>
         ← Yonetici Ana Panel
       </Link>
       <h1 className="text-3xl font-bold tracking-tight">Kategori Ayarlari</h1>
@@ -719,7 +720,7 @@ export default function AdminCategoriesPage() {
 
       <div className="border-t border-slate-200 pt-6">
         <p className="text-sm text-slate-600">
-          <Link href="/admin/listings" className="font-medium text-orange-800 underline decoration-orange-300 underline-offset-2 hover:text-orange-950">
+          <Link href={adminUrl("/listings")} className="font-medium text-orange-800 underline decoration-orange-300 underline-offset-2 hover:text-orange-950">
             Ilan ayarlari
           </Link>
           <span className="text-slate-500"> — ilan inceleme ve vitrin</span>

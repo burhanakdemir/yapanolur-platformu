@@ -2,7 +2,9 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { verifySessionToken } from "@/lib/auth";
+import { hasFullAdminAccess } from "@/lib/adminAccessServer";
 import { isStaffAdminRole } from "@/lib/adminRoles";
+import { adminUrl } from "@/lib/adminUrls";
 import { getCreditInvoiceRequestDelegate, warnCreditInvoiceDelegateMissing } from "@/lib/prismaCreditInvoice";
 import CreditInvoiceActions from "./credit-invoice-actions";
 
@@ -14,9 +16,12 @@ const billingTypeLabel: Record<string, string> = {
 };
 
 export default async function AdminCreditInvoiceDetailPage({ params }: PageProps) {
+  if (!(await hasFullAdminAccess())) {
+    redirect(adminUrl());
+  }
   const session = await verifySessionToken((await cookies()).get("session_token")?.value);
   if (!session || !isStaffAdminRole(session.role)) {
-    redirect("/admin");
+    redirect(adminUrl());
   }
 
   const { id } = await params;
@@ -26,7 +31,7 @@ export default async function AdminCreditInvoiceDetailPage({ params }: PageProps
     return (
       <main className="px-4 pb-12 pt-2 md:px-6">
         <Link
-          href="/admin/credit-invoices"
+          href={adminUrl("/credit-invoices")}
           className="mb-3 inline-block text-sm font-medium text-orange-800 underline-offset-2 hover:underline"
         >
           ← Fatura listesi
@@ -82,7 +87,7 @@ export default async function AdminCreditInvoiceDetailPage({ params }: PageProps
   return (
     <main className="px-4 pb-12 pt-2 md:px-6">
       <Link
-        href="/admin/credit-invoices"
+        href={adminUrl("/credit-invoices")}
         className="mb-3 inline-block text-sm font-medium text-orange-800 underline-offset-2 hover:underline"
       >
         ← Fatura listesi
@@ -138,7 +143,7 @@ export default async function AdminCreditInvoiceDetailPage({ params }: PageProps
               <div>
                 <dt className="text-xs text-slate-500">Profil</dt>
                 <dd>
-                  <Link href={`/admin/members`} className="text-orange-800 underline-offset-2 hover:underline">
+                  <Link href={adminUrl("/members")} className="text-orange-800 underline-offset-2 hover:underline">
                     Üye listesinden açın
                   </Link>
                 </dd>

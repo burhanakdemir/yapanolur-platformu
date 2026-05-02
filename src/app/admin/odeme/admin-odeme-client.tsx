@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { adminUrl } from "@/lib/adminUrls";
 
 type GetPayload = {
   degraded?: boolean;
@@ -169,7 +170,7 @@ export default function AdminOdemeClient() {
   if (loadError) {
     return (
       <main className="mx-auto w-full max-w-4xl space-y-4 p-4 md:p-6">
-        <Link className="admin-back-link" href="/admin">
+        <Link className="admin-back-link" href={adminUrl()}>
           ← Yönetici ana panel
         </Link>
         <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">{loadError}</p>
@@ -187,7 +188,7 @@ export default function AdminOdemeClient() {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-8 p-4 md:p-6">
-      <Link className="admin-back-link" href="/admin">
+      <Link className="admin-back-link" href={adminUrl()}>
         ← Yönetici ana panel
       </Link>
       <header className="space-y-1">

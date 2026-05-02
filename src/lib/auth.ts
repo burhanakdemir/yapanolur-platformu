@@ -7,6 +7,8 @@ export type SessionPayload = {
   userId: string;
   email: string;
   role: AppUserRole;
+  /** ADMIN/SUPER_ADMIN: yönetici TOTP doğrulandıktan sonra true */
+  adminTotp?: boolean;
 };
 
 export async function createSessionToken(payload: SessionPayload) {

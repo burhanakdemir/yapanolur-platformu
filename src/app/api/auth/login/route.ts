@@ -3,9 +3,11 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createSessionToken } from "@/lib/auth";
 import type { AppUserRole } from "@/lib/adminRoles";
+import { isStaffAdminRole } from "@/lib/adminRoles";
 import { shouldUseSecureCookie } from "@/lib/cookieSecure";
 import { rateLimitGuard } from "@/lib/rateLimit";
 import { hashPassword, isBcryptHash, verifyPassword } from "@/lib/passwordHash";
+import { createAdminMfaPendingToken, ADMIN_MFA_PENDING_COOKIE } from "@/lib/adminMfaPending";
 
 function isPrismaUserRoleEnumError(e: unknown): boolean {
   const m = e instanceof Error ? e.message : String(e);
@@ -74,6 +76,31 @@ export async function POST(req: Request) {
     }
     /** Onay bekleyen üye de oturum açabilir; panelde bilgi gösterilir. */
 
+    if (isStaffAdminRole(user.role)) {
+      const pendingJwt = await createAdminMfaPendingToken(user.id);
+      const res = NextResponse.json({
+        ok: true,
+        step: "admin_mfa",
+        needsEnrollment: !user.adminTotpSecretEnc,
+        email: user.email,
+      });
+      res.cookies.set("session_token", "", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: shouldUseSecureCookie(req),
+        path: "/",
+        maxAge: 0,
+      });
+      res.cookies.set(ADMIN_MFA_PENDING_COOKIE, pendingJwt, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: shouldUseSecureCookie(req),
+        path: "/",
+        maxAge: 600,
+      });
+      return res;
+    }
+
     const token = await createSessionToken({
       userId: user.id,
       email: user.email,
@@ -82,6 +109,7 @@ export async function POST(req: Request) {
 
     const res = NextResponse.json({
       ok: true,
+      step: "member",
       user: {
         email: user.email,
         role: user.role,

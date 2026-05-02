@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { isStaffAdminRole } from "@/lib/adminRoles";
+import { adminUrl } from "@/lib/adminUrls";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
 
 type LoginClientProps = {
@@ -34,7 +35,7 @@ export default function LoginClient({ nextPath, explicitNext }: LoginClientProps
     const role = data.user?.role as string | undefined;
     let target = nextPath;
     if (!explicitNext) {
-      target = isStaffAdminRole(role) ? "/admin" : "/panel/user";
+      target = isStaffAdminRole(role) ? adminUrl() : "/panel/user";
     }
     /** Tam sayfa yönlendirme: oturum çerezi middleware ile güvenilir şekilde taşınır (App Router). */
     window.location.assign(target.startsWith("/") ? target : `/${target}`);

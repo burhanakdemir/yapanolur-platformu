@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { adminUrl } from "@/lib/adminUrls";
 import { SHOWCASE_DAY_VALUES } from "@/lib/showcaseDurations";
 
 type Settings = {
@@ -51,14 +52,14 @@ export default function AdminPaymentsPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl space-y-4 p-4 md:p-6">
-      <Link className="admin-back-link" href="/admin">
+      <Link className="admin-back-link" href={adminUrl()}>
         ← Yonetici Ana Panel
       </Link>
       <h1 className="text-3xl font-bold tracking-tight">Vitrin Ayarlari</h1>
       <form className="glass-card rounded-2xl p-5 space-y-3" onSubmit={onSave}>
         <p className="text-sm text-slate-600">
           Teklif ucreti ayarlari{" "}
-          <Link href="/admin/bid-settings" className="font-medium text-orange-900 underline">
+          <Link href={adminUrl("/bid-settings")} className="font-medium text-orange-900 underline">
             Teklif Ayarlari
           </Link>{" "}
           sayfasindadir.

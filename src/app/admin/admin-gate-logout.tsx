@@ -1,5 +1,7 @@
 "use client";
 
+import { adminUrl } from "@/lib/adminUrls";
+
 const fetchOpt = { credentials: "include" as const };
 
 export default function AdminGateLogout() {
@@ -15,7 +17,7 @@ export default function AdminGateLogout() {
               fetch("/api/admin/gate", { method: "DELETE", ...fetchOpt }),
             ]);
           } finally {
-            window.location.replace("/admin");
+            window.location.replace(adminUrl());
           }
         }}
       >

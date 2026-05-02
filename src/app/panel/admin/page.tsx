@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { adminUrl } from "@/lib/adminUrls";
 
 type Props = {
   searchParams: Promise<{ lang?: string }>;
@@ -15,7 +16,7 @@ export default async function AdminPanelRedirect({ searchParams }: Props) {
       <p className="text-sm text-orange-800">
         Kategori yonetimi, odeme yonetimi ve ilan onay islemleri buradan yapilir.
       </p>
-      <Link className="btn-primary inline-block" href={`/admin?lang=${lang}`}>
+      <Link className="btn-primary inline-block" href={`${adminUrl()}?lang=${lang}`}>
         Yonetici paneline git
       </Link>
       </section>

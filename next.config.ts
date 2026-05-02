@@ -1,5 +1,9 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
+import {
+  embedAdminLegacyHiddenFlagFromEnv,
+  getAdminPanelPathPrefixFromEnv,
+} from "./src/lib/adminPanelPathEnv";
 
 /**
  * Geliştirme modunda LAN / Tailscale / mDNS kökenlerinin `/_next` isteklerinde 403 yememesi için.
@@ -47,6 +51,13 @@ const extraImageHosts = [
 ] as string[];
 
 const nextConfig: NextConfig = {
+  /**
+   * Middleware / istemci derlemesi Edge+webpack üzerinde NEXT_PUBLIC okumasını düzgün sabitlemek için
+   * (aksi halde `/a/yonetici` rewrite çalışmayabilir).
+   */
+  env: {
+    NEXT_PUBLIC_ADMIN_PANEL_PATH: getAdminPanelPathPrefixFromEnv(),
+  },
   allowedDevOrigins: [...defaultAllowedDevOrigins, ...extraAllowedDevOrigins],
   serverExternalPackages: ["pg", "@prisma/adapter-pg"],
   /**
@@ -54,18 +65,47 @@ const nextConfig: NextConfig = {
    * `/uploads/*` istekleri `app/api/local-upload` üzerinden stream edilir (build ortamında env olmalı).
    */
   async rewrites() {
-    if (!(process.env.LOCAL_UPLOAD_ROOT ?? "").trim()) return [];
-    return [{ source: "/uploads/:path*", destination: "/api/local-upload/:path*" }];
+    const uploadRewrites =
+      (process.env.LOCAL_UPLOAD_ROOT ?? "").trim()
+        ? [{ source: "/uploads/:path*", destination: "/api/local-upload/:path*" }]
+        : [];
+
+    const prefix = getAdminPanelPathPrefixFromEnv();
+    const adminRewrites =
+      prefix === ""
+        ? []
+        : [
+            { source: prefix, destination: "/admin" },
+            { source: `${prefix}/:path*`, destination: "/admin/:path*" },
+          ];
+
+    if (adminRewrites.length === 0 && uploadRewrites.length === 0) return [];
+
+    return {
+      beforeFiles: adminRewrites,
+      afterFiles: uploadRewrites,
+      fallback: [],
+    };
   },
-  /** Eski veya farkli ortamlarda 404 alinmasin; kanonik: /admin/odeme */
+  /** Eski veya farkli ortamlarda 404 alinmasin; kanonik ödeme sayfası (tarayıcı tabanı adminUrl ile uyumlu). */
   async redirects() {
-    return [
-      {
-        source: "/admin/payment-providers",
-        destination: "/admin/odeme",
-        permanent: true,
-      },
-    ];
+    const browserBase = getAdminPanelPathPrefixFromEnv() || "/admin";
+    const out: { source: string; destination: string; permanent: boolean }[] = [];
+
+    if (embedAdminLegacyHiddenFlagFromEnv() === "1") {
+      out.push(
+        { source: "/admin", destination: "/", permanent: false },
+        { source: "/admin/:path*", destination: "/", permanent: false },
+      );
+    }
+
+    out.push({
+      source: `${browserBase}/payment-providers`,
+      destination: `${browserBase}/odeme`,
+      permanent: true,
+    });
+
+    return out;
   },
   /** Güvenlik başlıkları (sıkı CSP uygulamayı kırabileceği için burada yalnızca genel başlıklar). */
   async headers() {

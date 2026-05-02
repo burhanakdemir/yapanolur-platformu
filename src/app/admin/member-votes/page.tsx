@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { adminUrl } from "@/lib/adminUrls";
 
 type VoteRow = {
   id: string;
@@ -67,7 +68,7 @@ export default function AdminMemberVotesPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl space-y-4 p-3 md:p-6">
-      <Link className="admin-back-link admin-back-link--compact" href="/admin">
+      <Link className="admin-back-link admin-back-link--compact" href={adminUrl()}>
         ← Panel
       </Link>
 

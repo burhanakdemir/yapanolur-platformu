@@ -1,18 +1,9 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { verifySessionToken } from "@/lib/auth";
-import { ADMIN_GATE_COOKIE, verifyAdminGateToken } from "@/lib/adminGate";
-import { isStaffAdminRole } from "@/lib/adminRoles";
+import { hasFullAdminAccess } from "@/lib/adminAccessServer";
+import { adminUrl } from "@/lib/adminUrls";
 import { displayAdDescription, displayAdTitle } from "@/lib/adTitleDisplay";
 import { prisma } from "@/lib/prisma";
-
-async function hasAdminAccess(): Promise<boolean> {
-  const c = await cookies();
-  const session = await verifySessionToken(c.get("session_token")?.value);
-  if (isStaffAdminRole(session?.role)) return true;
-  return verifyAdminGateToken(c.get(ADMIN_GATE_COOKIE)?.value);
-}
 
 function fmt(iso: Date | string | null | undefined): string {
   if (!iso) return "—";
@@ -34,8 +25,8 @@ export default async function AdminListingDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  if (!(await hasAdminAccess())) {
-    redirect(`/admin?next=${encodeURIComponent(`/admin/listings/${id}`)}`);
+  if (!(await hasFullAdminAccess())) {
+    redirect(`${adminUrl()}?next=${encodeURIComponent(adminUrl(`/listings/${id}`))}`);
   }
 
   const ad = await prisma.ad.findUnique({
@@ -69,7 +60,7 @@ export default async function AdminListingDetailPage({
 
   return (
     <main className="mx-auto w-full max-w-3xl space-y-4 p-4 md:p-6">
-      <Link className="admin-back-link text-xs" href="/admin/listings">
+      <Link className="admin-back-link text-xs" href={adminUrl("/listings")}>
         ← Ilan listesi
       </Link>
       <h1 className="text-xl font-bold tracking-tight text-slate-900">{displayAdTitle(ad.title)}</h1>

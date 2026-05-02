@@ -1,19 +1,10 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { verifySessionToken } from "@/lib/auth";
-import { ADMIN_GATE_COOKIE, verifyAdminGateToken } from "@/lib/adminGate";
-import { isStaffAdminRole } from "@/lib/adminRoles";
+import { hasFullAdminAccess } from "@/lib/adminAccessServer";
+import { adminUrl } from "@/lib/adminUrls";
 import { prisma } from "@/lib/prisma";
 import { displayAdTitle } from "@/lib/adTitleDisplay";
 import AdminGateLogout from "../admin-gate-logout";
-
-async function hasAdminAccess(): Promise<boolean> {
-  const c = await cookies();
-  const session = await verifySessionToken(c.get("session_token")?.value);
-  if (isStaffAdminRole(session?.role)) return true;
-  return verifyAdminGateToken(c.get(ADMIN_GATE_COOKIE)?.value);
-}
 
 function categoryPath(cat: { name: string; parent: { name: string } | null } | null): string | null {
   if (!cat) return null;
@@ -22,9 +13,9 @@ function categoryPath(cat: { name: string; parent: { name: string } | null } | n
 }
 
 export default async function AdminBidsPage() {
-  const ok = await hasAdminAccess();
+  const ok = await hasFullAdminAccess();
   if (!ok) {
-    redirect("/admin");
+    redirect(adminUrl());
   }
 
   const rawAds = await prisma.ad.findMany({
@@ -74,7 +65,7 @@ export default async function AdminBidsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <Link
           className="chip inline-flex w-fit items-center gap-1 border-orange-300/80 bg-white/90 font-medium text-orange-900 shadow-sm transition hover:border-orange-400 hover:shadow"
-          href="/admin"
+          href={adminUrl()}
         >
           ← Yönetici paneli
         </Link>

@@ -12,6 +12,7 @@ import {
 } from "@/lib/cookieConsent";
 import { getLang } from "@/lib/i18n";
 import { initSentryClientFromConsent } from "../../sentry.client.config";
+import { isAdminSectionPathname } from "@/lib/adminUrls";
 
 function consentCookieAttrs(maxAgeSec: number): string {
   const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
@@ -50,7 +51,7 @@ export default function CookieConsentBar() {
   const [visible, setVisible] = useState(false);
 
   const hideChrome =
-    pathname?.startsWith("/admin") ||
+    isAdminSectionPathname(pathname) ||
     pathname?.startsWith("/panel/admin") ||
     pathname === "/g/yonetici";
 

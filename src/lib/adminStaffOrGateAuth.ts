@@ -10,6 +10,8 @@ import { isStaffAdminRole } from "@/lib/adminRoles";
 export async function canStaffAdminOrGateAdmin(): Promise<boolean> {
   const c = await cookies();
   const session = await verifySessionToken(c.get("session_token")?.value);
-  if (session && isStaffAdminRole(session.role)) return true;
+  if (session && isStaffAdminRole(session.role)) {
+    return session.adminTotp === true;
+  }
   return verifyAdminGateToken(c.get(ADMIN_GATE_COOKIE)?.value);
 }

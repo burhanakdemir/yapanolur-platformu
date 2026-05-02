@@ -8,6 +8,7 @@ import {
   type SponsorHeroPricingTry,
   type SponsorHeroDurationDays,
 } from "@/lib/sponsorHeroPricing";
+import { adminUrl } from "@/lib/adminUrls";
 
 /** Boş gövde / HTML hata sayfası → `res.json()` SyntaxError vermesin */
 async function readApiJson(res: Response): Promise<Record<string, unknown>> {
@@ -123,7 +124,7 @@ export default function SponsorHeroClient() {
 
   return (
     <main className="mx-auto w-full max-w-2xl space-y-6 p-4 md:p-6">
-      <Link className="admin-back-link" href="/admin">
+      <Link className="admin-back-link" href={adminUrl()}>
         ← Yönetici ana panel
       </Link>
       <div>
@@ -209,7 +210,7 @@ export default function SponsorHeroClient() {
 
       <p className="text-xs text-slate-500">
         Görsel ve özel metin için{" "}
-        <Link href="/admin/home-hero-slides" className="font-semibold text-orange-800 underline-offset-2 hover:underline">
+        <Link href={adminUrl("/home-hero-slides")} className="font-semibold text-orange-800 underline-offset-2 hover:underline">
           Hero slayt
         </Link>{" "}
         sayfasını kullanabilirsiniz.

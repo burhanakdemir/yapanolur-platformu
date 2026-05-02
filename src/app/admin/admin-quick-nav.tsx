@@ -3,11 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { AdminPanelMode } from "@/lib/adminRoles";
+import { adminUrl } from "@/lib/adminUrls";
 import { ADMIN_QUICK_LINKS } from "./admin-nav-config";
 
 function isActive(pathname: string | null, href: string): boolean {
   if (!pathname) return false;
-  if (href === "/admin") return pathname === "/admin";
+  const root = adminUrl();
+  if (href === root || href === `${root}/`) {
+    return pathname === root || pathname === `${root}/`;
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -29,13 +33,13 @@ export default function AdminQuickNav({ mode }: Props) {
           <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-200/95">Süper yönetici</span>
           <div className="flex shrink-0 items-center gap-2">
             <Link
-              href="/admin#super-admin-team"
+              href={`${adminUrl()}#super-admin-team`}
               className="text-[11px] font-semibold text-amber-100 underline decoration-amber-300/80 underline-offset-2"
             >
               Alt yöneticiler
             </Link>
             <Link
-              href="/admin/admins"
+              href={adminUrl("/admins")}
               className="rounded-lg border border-amber-400/60 bg-white/10 px-2 py-1 text-[11px] font-bold text-white"
             >
               Tam sayfa

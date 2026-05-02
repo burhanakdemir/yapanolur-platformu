@@ -11,3 +11,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Webpack** açıkça: `NEXT_DEV_WEBPACK=1` (Win’de zaten varsayılan; diğer OS’ta zorlamak için kullanılır).
 - Turbopack hatası örneği: `FATAL: Turbopack error`, `Failed to write app endpoint …`, `Next.js package not found` → `npm run clean` (`.next` siler), sunucuyu kapatıp yeniden `npm run dev`; gerekirse sadece HTTP: `npm run dev:plain` veya `npm run dev:http`.
 - Kalıcı “ürün hızı” kıyası: `next build` + `next start` (dev her zaman daha ağırdır).
+
+## GitHub / uzaktan gönderim
+
+- **`git push`**, uzak repoya branch gönderme, **PR açma** veya eşdeğer uzaktan yayın adımlarını yalnızca kullanıcı **açıkça onay verdiyse** yap. Onay yoksa değişiklikleri yerelde bırak; gerekirse commit mesajı veya diff özeti öner, push etme.

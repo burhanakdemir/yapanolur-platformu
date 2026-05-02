@@ -5,26 +5,22 @@ import { cookies } from "next/headers";
 export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import { verifySessionToken } from "@/lib/auth";
-import { ADMIN_GATE_COOKIE, verifyAdminGateToken } from "@/lib/adminGate";
-import { getAdminPanelMode, isStaffAdminRole, isSuperAdminRole } from "@/lib/adminRoles";
+import { hasFullAdminAccess } from "@/lib/adminAccessServer";
+import { verifyAdminMfaPendingToken, ADMIN_MFA_PENDING_COOKIE } from "@/lib/adminMfaPending";
+import { getAdminPanelMode, isSuperAdminRole } from "@/lib/adminRoles";
 import AdminSuperTeamPanel from "./admin-super-team-panel";
 import AdminGateDevHint from "./admin-gate-dev-hint";
 import AdminGateLogout from "./admin-gate-logout";
 import AdminPasswordForm from "./admin-password-form";
+import AdminMfaPanel from "./admin-mfa-panel";
 import SuperAdminLoginForm from "./super-admin-login-form";
 import { displayAdTitle } from "@/lib/adTitleDisplay";
 import { isLikelyDatabaseConnectionError } from "@/lib/dbErrors";
 import { getPrismaClient, prisma } from "@/lib/prisma";
 import { countPendingCreditInvoiceRequests } from "@/lib/prismaCreditInvoice";
+import { adminUrl } from "@/lib/adminUrls";
 import AdminDashboardNav from "./admin-dashboard-nav";
 import AdminStaffScopeBanner from "./admin-staff-scope-banner";
-
-async function hasAdminAccess(): Promise<boolean> {
-  const c = await cookies();
-  const session = await verifySessionToken(c.get("session_token")?.value);
-  if (isStaffAdminRole(session?.role)) return true;
-  return verifyAdminGateToken(c.get(ADMIN_GATE_COOKIE)?.value);
-}
 
 async function getPendingSnapshot() {
   const [
@@ -119,9 +115,30 @@ async function getPendingSnapshotSafe(): Promise<
 }
 
 export default async function AdminPage() {
-  const ok = await hasAdminAccess();
+  const ok = await hasFullAdminAccess();
 
   if (!ok) {
+    const c = await cookies();
+    const pending = await verifyAdminMfaPendingToken(c.get(ADMIN_MFA_PENDING_COOKIE)?.value);
+    if (pending) {
+      const row = await prisma.user.findFirst({
+        where: { id: pending.userId, role: { in: ["ADMIN", "SUPER_ADMIN"] } },
+        select: { email: true, adminTotpSecretEnc: true },
+      });
+      if (row) {
+        return (
+          <main className="mx-auto flex min-h-[60vh] w-full max-w-lg flex-col justify-center px-4 py-10">
+            <AdminMfaPanel email={row.email} needsEnrollment={!row.adminTotpSecretEnc} />
+            <p className="mt-8 text-center text-xs text-slate-500">
+              <Link href="/" className="font-medium text-orange-700 hover:text-orange-900 hover:underline">
+                ← Ana sayfaya dön
+              </Link>
+            </p>
+          </main>
+        );
+      }
+    }
+
     const devHints =
       process.env.NODE_ENV === "development"
         ? {
@@ -136,9 +153,9 @@ export default async function AdminPage() {
           <p className="text-xs font-semibold uppercase tracking-widest text-orange-100">Mühendisİlan</p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">Yönetici girişi</h1>
           <p className="mt-3 text-sm text-orange-50/95">
-            Sol kartta: <strong className="text-white">süper yönetici hesap şifresi</strong> (veritabanındaki) veya{" "}
-            <strong className="text-white">e-posta + şifre</strong> (yönetici hesabı) ile girin. Sağda kısa rol
-            açıklaması.
+            Önce şifre ile doğrulama; ardından <strong className="text-white">Authenticator (TOTP)</strong> kodu
+            gerekir. Sol kartta süper yönetici hesap şifresi veya yönetici{" "}
+            <strong className="text-white">e-posta + şifre</strong>; sağda rol özeti.
           </p>
         </div>
 
@@ -183,10 +200,10 @@ export default async function AdminPage() {
               Yönetici türleri
             </h2>
             <p className="mt-2 text-xs leading-relaxed text-slate-600">
-              <strong className="text-slate-800">Panel şifresi:</strong> Üye olmadan yalnızca yönetici paneline
-              erişim (tek ortam şifresi).{" "}
-              <strong className="text-slate-800">E-posta + şifre:</strong> Veritabanındaki yönetici hesabı ile tam
-              oturum; süper yönetici ekibi ve alt yönetici bölümleri role göre açılır.
+              <strong className="text-slate-800">İki aşama:</strong> Şifre doğrulandıktan sonra Authenticator ile 6
+              haneli kod (ilk girişte QR ile kurulum).{" "}
+              <strong className="text-slate-800">Süper şifre / e-posta:</strong> Veritabanındaki yönetici hesabı;
+              roller panele göre modülleri açar.
             </p>
             <ul className="mt-4 list-disc space-y-2 pl-4 text-xs text-slate-600">
               <li>
@@ -295,7 +312,7 @@ export default async function AdminPage() {
                   <ul className="mt-2 max-h-48 space-y-1.5 overflow-y-auto text-xs">
                     {recentAds.map((ad) => (
                       <li key={ad.id} className="truncate border-b border-orange-100/90 pb-2 last:border-0 last:pb-0">
-                        <Link href="/admin/listings" className="text-orange-900 hover:underline">
+                        <Link href={adminUrl("/listings")} className="text-orange-900 hover:underline">
                           {displayAdTitle(ad.title)}
                         </Link>
                       </li>
@@ -311,7 +328,7 @@ export default async function AdminPage() {
                   <ul className="mt-2 max-h-48 space-y-1.5 overflow-y-auto text-xs">
                     {recentMembers.map((u) => (
                       <li key={u.id} className="truncate border-b border-orange-100/90 pb-2 last:border-0 last:pb-0">
-                        <Link href="/admin/members" className="text-orange-900 hover:underline">
+                        <Link href={adminUrl("/members")} className="text-orange-900 hover:underline">
                           {u.name || u.email}
                         </Link>
                         {u.name ? <span className="block truncate text-xs text-slate-500">{u.email}</span> : null}
@@ -328,7 +345,7 @@ export default async function AdminPage() {
                   <ul className="mt-2 max-h-48 space-y-1.5 overflow-y-auto text-xs">
                     {recentSponsorPurchases.map((row) => (
                       <li key={row.id} className="truncate border-b border-orange-100/90 pb-2 last:border-0 last:pb-0">
-                        <Link href="/admin/sponsor-purchases" className="text-orange-900 hover:underline">
+                        <Link href={adminUrl("/sponsor-purchases")} className="text-orange-900 hover:underline">
                           №{row.user.memberNumber} · {row.periodDays} gün · {row.amountTryPaid.toLocaleString("tr-TR")} ₺
                         </Link>
                         <span className="block truncate text-[10px] text-slate-500">{row.user.name || row.user.email}</span>
@@ -349,7 +366,7 @@ export default async function AdminPage() {
 
             <div className="mt-2 space-y-1.5">
               <Link
-                href="/admin/listings"
+                href={adminUrl("/listings")}
                 className="admin-stat-tile flex items-center justify-between rounded-lg px-2 py-2 text-[13px] font-medium leading-snug text-orange-950 transition hover:ring-2 hover:ring-orange-300/60"
               >
                 <span>Yeni ilan talebi</span>
@@ -358,7 +375,7 @@ export default async function AdminPage() {
                 </span>
               </Link>
               <Link
-                href="/admin/members"
+                href={adminUrl("/members")}
                 className="admin-stat-tile flex items-center justify-between rounded-lg px-2 py-2 text-[13px] font-medium leading-snug text-orange-950 transition hover:ring-2 hover:ring-orange-300/60"
               >
                 <span>Yeni üye talebi</span>
@@ -367,7 +384,7 @@ export default async function AdminPage() {
                 </span>
               </Link>
               <Link
-                href="/admin/sponsor-purchases"
+                href={adminUrl("/sponsor-purchases")}
                 className="admin-stat-tile flex items-center justify-between rounded-lg px-2 py-2 text-[13px] font-medium leading-snug text-orange-950 transition hover:ring-2 hover:ring-orange-300/60"
               >
                 <span>Sponsorluk onayı</span>
@@ -376,7 +393,7 @@ export default async function AdminPage() {
                 </span>
               </Link>
               <Link
-                href="/admin/credit-invoices"
+                href={adminUrl("/credit-invoices")}
                 className="admin-stat-tile flex items-center justify-between rounded-lg px-2 py-2 text-[13px] font-medium leading-snug text-orange-950 transition hover:ring-2 hover:ring-orange-300/60"
               >
                 <span>Bekleyen faturalar</span>
@@ -387,7 +404,7 @@ export default async function AdminPage() {
               {isSuper ? (
                 <>
                   <Link
-                    href="/admin/odeme"
+                    href={adminUrl("/odeme")}
                     className="admin-stat-tile mt-0.5 flex items-center justify-between rounded-lg border border-emerald-200/80 bg-emerald-50/90 px-2 py-2 text-[13px] font-semibold leading-snug text-emerald-950 transition hover:ring-2 hover:ring-emerald-300/60"
                   >
                     <span>Ödeme (iyzico / PayTR)</span>
@@ -396,7 +413,7 @@ export default async function AdminPage() {
                     </span>
                   </Link>
                   <Link
-                    href="/admin/signup-sms-provider"
+                    href={adminUrl("/signup-sms-provider")}
                     className="admin-stat-tile mt-0.5 flex items-center justify-between rounded-lg border border-amber-200/80 bg-amber-50/90 px-2 py-2 text-[13px] font-semibold leading-snug text-amber-950 transition hover:ring-2 hover:ring-amber-300/60"
                   >
                     <span>Kayıt telefon SMS</span>

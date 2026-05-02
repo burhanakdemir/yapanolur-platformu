@@ -2,7 +2,9 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken } from "@/lib/auth";
+import { hasFullAdminAccess } from "@/lib/adminAccessServer";
 import { isStaffAdminRole } from "@/lib/adminRoles";
+import { adminUrl } from "@/lib/adminUrls";
 import { getCreditInvoiceRequestDelegate, warnCreditInvoiceDelegateMissing } from "@/lib/prismaCreditInvoice";
 
 const statusLabel: Record<string, string> = {
@@ -12,9 +14,12 @@ const statusLabel: Record<string, string> = {
 };
 
 export default async function AdminCreditInvoicesPage() {
+  if (!(await hasFullAdminAccess())) {
+    redirect(adminUrl());
+  }
   const session = await verifySessionToken((await cookies()).get("session_token")?.value);
   if (!session || !isStaffAdminRole(session.role)) {
-    redirect("/admin");
+    redirect(adminUrl());
   }
 
   const inv = getCreditInvoiceRequestDelegate();
@@ -56,7 +61,7 @@ export default async function AdminCreditInvoicesPage() {
             {items.map((row) => (
               <li key={row.id}>
                 <Link
-                  href={`/admin/credit-invoices/${row.id}`}
+                  href={adminUrl(`/credit-invoices/${row.id}`)}
                   className="flex flex-col gap-1 px-3 py-3 text-sm transition hover:bg-orange-50/80 md:flex-row md:items-center md:justify-between"
                 >
                   <span className="font-medium text-orange-950">

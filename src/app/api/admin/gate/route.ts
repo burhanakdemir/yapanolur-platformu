@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createSessionToken } from "@/lib/auth";
 import { ADMIN_GATE_COOKIE } from "@/lib/adminGate";
-import type { AppUserRole } from "@/lib/adminRoles";
 import { prisma } from "@/lib/prisma";
 import { shouldUseSecureCookie } from "@/lib/cookieSecure";
 import { rateLimitGuard } from "@/lib/rateLimit";
 import { hashPassword, isBcryptHash, verifyPassword } from "@/lib/passwordHash";
+import { createAdminMfaPendingToken, ADMIN_MFA_PENDING_COOKIE } from "@/lib/adminMfaPending";
 
 const bodySchema = z.object({
   /** Yalnızca veritabanında SUPER_ADMIN rolü olan hesaplardan birinin şifresi (düz metin, login ile aynı). */
@@ -36,6 +35,7 @@ export async function POST(req: Request) {
         password: true,
         role: true,
         isMemberApproved: true,
+        adminTotpSecretEnc: true,
       },
     });
 
@@ -64,27 +64,26 @@ export async function POST(req: Request) {
     }
     const user = matched;
 
-    const token = await createSessionToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role as AppUserRole,
-    });
-
+    const pendingJwt = await createAdminMfaPendingToken(user.id);
     const res = NextResponse.json({
       ok: true,
-      user: {
-        email: user.email,
-        role: user.role,
-        name: user.name,
-        memberPendingApproval: user.role === "MEMBER" ? !user.isMemberApproved : false,
-      },
+      step: "admin_mfa",
+      needsEnrollment: !user.adminTotpSecretEnc,
+      email: user.email,
     });
-    res.cookies.set("session_token", token, {
+    res.cookies.set("session_token", "", {
       httpOnly: true,
       sameSite: "lax",
       secure: shouldUseSecureCookie(req),
       path: "/",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 0,
+    });
+    res.cookies.set(ADMIN_MFA_PENDING_COOKIE, pendingJwt, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: shouldUseSecureCookie(req),
+      path: "/",
+      maxAge: 600,
     });
     return res;
   } catch (error) {

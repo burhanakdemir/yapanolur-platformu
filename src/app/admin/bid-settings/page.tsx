@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { adminUrl } from "@/lib/adminUrls";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
 
 type BidSettings = {
@@ -78,7 +79,7 @@ export default function AdminBidSettingsPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl space-y-4 p-4 md:p-6">
-      <Link className="admin-back-link" href="/admin">
+      <Link className="admin-back-link" href={adminUrl()}>
         ← Yonetici Ana Panel
       </Link>
       <h1 className="text-2xl font-bold tracking-tight">Teklif Ayarlari</h1>

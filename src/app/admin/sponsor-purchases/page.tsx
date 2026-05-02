@@ -5,13 +5,14 @@ import { canStaffAdminOrGateAdmin } from "@/lib/adminStaffOrGateAuth";
 import { isDatabaseUrlConfigurationError } from "@/lib/databaseUrlSanity";
 import { isLikelyDatabaseConnectionError } from "@/lib/dbErrors";
 import { getPrismaClient } from "@/lib/prisma";
+import { adminUrl } from "@/lib/adminUrls";
 import SponsorPurchasesAdminClient from "./sponsor-purchases-admin-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSponsorPurchasesPage() {
   if (!(await canStaffAdminOrGateAdmin())) {
-    redirect("/admin");
+    redirect(adminUrl());
   }
 
   let initialRows: Parameters<typeof SponsorPurchasesAdminClient>[0]["initialRows"];
@@ -29,7 +30,7 @@ export default async function AdminSponsorPurchasesPage() {
     if (isLikelyDatabaseConnectionError(e) || isDatabaseUrlConfigurationError(e)) {
       return (
         <main className="mx-auto w-full max-w-6xl space-y-4 px-4 py-6 md:px-6">
-          <Link className="admin-back-link text-sm" href="/admin">
+          <Link className="admin-back-link text-sm" href={adminUrl()}>
             ← Yönetici ana panel
           </Link>
           <section className="rounded-2xl border border-amber-200 bg-amber-50/90 p-6 shadow-sm">
@@ -65,7 +66,7 @@ export default async function AdminSponsorPurchasesPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl space-y-4 px-4 py-6 md:px-6">
-      <Link className="admin-back-link text-sm" href="/admin">
+      <Link className="admin-back-link text-sm" href={adminUrl()}>
         ← Yönetici ana panel
       </Link>
       <header>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { adminUrl } from "@/lib/adminUrls";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type ThreadMessage = {
@@ -176,7 +177,7 @@ export default function AdminSupportClient() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           className="chip inline-flex w-fit items-center gap-1 border-orange-300/80 bg-white/90 font-medium text-orange-900 shadow-sm transition hover:border-orange-400 hover:shadow"
-          href="/admin"
+          href={adminUrl()}
         >
           ← Yönetici paneli
         </Link>

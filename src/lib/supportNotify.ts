@@ -2,6 +2,7 @@ import type { SupportConversation } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendTransactionalEmail } from "@/lib/sendTransactionalEmail";
 import { getAppUrl } from "@/lib/appUrl";
+import { adminUrl } from "@/lib/adminUrls";
 import {
   SUPPORT_EMAIL_THROTTLE_MS,
   SUPPORT_ONLINE_GRACE_MINUTES,
@@ -48,15 +49,15 @@ export async function maybeNotifyStaffOffline(params: {
   }
 
   const appUrl = getAppUrl();
-  const adminUrl = `${appUrl}/admin/support#${params.conversation.id}`;
+  const adminSupportDeepLink = `${appUrl}${adminUrl("/support")}#${params.conversation.id}`;
   const subject =
     params.isNewConversation || params.reason === "new"
       ? "[Yapanolur] Yeni canlı destek talebi"
       : "[Yapanolur] Canlı destek: yeni ziyaretçi mesajı (çevrimdışı)";
 
-  const text = `Destek sohbeti: ${params.conversation.id}\nYönetici paneli: ${adminUrl}\n\nÇevrimiçi yönetici yokken bildirim gönderildi.`;
+  const text = `Destek sohbeti: ${params.conversation.id}\nYönetici paneli: ${adminSupportDeepLink}\n\nÇevrimiçi yönetici yokken bildirim gönderildi.`;
   const html = `<p><strong>Destek sohbeti</strong><br/>ID: <code>${params.conversation.id}</code></p>
-<p><a href="${adminUrl}">Yönetici panelinde aç</a></p>
+<p><a href="${adminSupportDeepLink}">Yönetici panelinde aç</a></p>
 <p>Çevrimiçi yönetici yokken e-posta ile bildirim gönderildi.</p>`;
 
   const extra = process.env.SUPPORT_NOTIFY_EXTRA_EMAIL?.trim();

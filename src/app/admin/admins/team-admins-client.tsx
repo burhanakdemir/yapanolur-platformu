@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
+import { adminUrl } from "@/lib/adminUrls";
 import { MAX_ADMIN_TEAM_SIZE } from "@/lib/adminRoles";
 
 type TeamRow = {
@@ -215,7 +216,7 @@ export default function TeamAdminsClient({
     return (
       <div className="glass-card rounded-2xl p-6">
         <p className="text-sm text-red-700">{loadError}</p>
-        <Link href="/admin" className="mt-4 inline-block text-sm font-medium text-orange-800 underline">
+        <Link href={adminUrl()} className="mt-4 inline-block text-sm font-medium text-orange-800 underline">
           ← Yönetici paneli
         </Link>
       </div>

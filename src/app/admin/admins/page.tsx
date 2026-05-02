@@ -2,14 +2,19 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken } from "@/lib/auth";
+import { hasFullAdminAccess } from "@/lib/adminAccessServer";
+import { adminUrl } from "@/lib/adminUrls";
 import { isSuperAdminRole, MAX_ADMIN_TEAM_SIZE } from "@/lib/adminRoles";
 import TeamAdminsClient from "./team-admins-client";
 
 export default async function AdminTeamPage() {
+  if (!(await hasFullAdminAccess())) {
+    redirect(adminUrl());
+  }
   const c = await cookies();
   const session = await verifySessionToken(c.get("session_token")?.value);
   if (!isSuperAdminRole(session?.role)) {
-    redirect("/admin");
+    redirect(adminUrl());
   }
 
   return (
@@ -17,7 +22,7 @@ export default async function AdminTeamPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           className="chip inline-flex w-fit items-center gap-1 border-orange-300/80 bg-white/90 font-medium text-orange-900 shadow-sm transition hover:border-orange-400 hover:shadow"
-          href="/admin"
+          href={adminUrl()}
         >
           ← Yönetici paneli
         </Link>

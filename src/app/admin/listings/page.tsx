@@ -3,6 +3,7 @@
 import { displayAdTitle } from "@/lib/adTitleDisplay";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { adminUrl } from "@/lib/adminUrls";
 import { SHOWCASE_DAY_OPTIONS } from "@/lib/showcaseDurations";
 
 type Owner = { email?: string };
@@ -129,7 +130,7 @@ function ApprovedAdRow({
       <td className="w-[16rem] min-w-[12rem] p-0.5 align-middle">
         <div className={CELL_FRAME_TITLE}>
           <Link
-            href={`/admin/listings/${ad.id}`}
+            href={adminUrl(`/listings/${ad.id}`)}
             title={displayAdTitle(ad.title)}
             className="line-clamp-3 w-full text-left text-xs font-semibold leading-snug text-orange-950 hover:underline"
           >
@@ -267,7 +268,7 @@ export default function AdminListingsPage() {
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-3 p-4 md:p-6">
-      <Link className="admin-back-link admin-back-link--compact" href="/admin">
+      <Link className="admin-back-link admin-back-link--compact" href={adminUrl()}>
         ← Panel
       </Link>
       <div className="flex flex-col gap-0.5 sm:flex-row sm:items-end sm:justify-between">
@@ -296,7 +297,7 @@ export default function AdminListingsPage() {
                   <td className="w-[16rem] min-w-[12rem] p-0.5 align-middle">
                     <div className={CELL_FRAME_TITLE}>
                       <Link
-                        href={`/admin/listings/${ad.id}`}
+                        href={adminUrl(`/listings/${ad.id}`)}
                         title={displayAdTitle(ad.title)}
                         className="line-clamp-3 w-full text-left text-xs font-semibold leading-snug text-orange-950 hover:underline"
                       >
@@ -379,7 +380,7 @@ export default function AdminListingsPage() {
       </section>
       {message ? <p className="text-[10px] text-slate-700">{message}</p> : null}
       <p className="text-[10px] text-slate-600">
-        <Link href="/admin/categories" className="text-orange-900 underline hover:no-underline">
+        <Link href={adminUrl("/categories")} className="text-orange-900 underline hover:no-underline">
           Kategori ayarlari
         </Link>{" "}
         icin ayri sayfa.

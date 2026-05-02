@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { isAdminSectionPathname } from "@/lib/adminUrls";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 type ThreadMessage = {
@@ -64,7 +65,7 @@ export default function SupportFloatingWidget({ anchor = "viewport" }: SupportFl
   const [meState, setMeState] = useState<"loading" | "guest" | "member">("loading");
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const hidden = pathname === "/admin" || pathname?.startsWith("/admin/");
+  const hidden = isAdminSectionPathname(pathname);
 
   /** Üye oturumu veya sunucuda userId bağlı sohbet: e-posta yok */
   const showGuestEmailField = meState !== "member" && !thread?.userId;

@@ -2,6 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { adminUrl } from "@/lib/adminUrls";
 
 type MemberDoc = { id: string; type: string; fileUrl: string };
 
@@ -225,7 +226,7 @@ export default function AdminMembersPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl space-y-3 p-3 md:p-6">
-      <Link className="admin-back-link admin-back-link--compact" href="/admin">
+      <Link className="admin-back-link admin-back-link--compact" href={adminUrl()}>
         ← Panel
       </Link>
 
@@ -296,7 +297,7 @@ export default function AdminMembersPage() {
                       <td className="p-0.5 align-middle">
                         <div className={`${MEM_CELL} items-center justify-center`}>
                           <Link
-                            href={`/admin/members/${m.id}`}
+                            href={adminUrl(`/members/${m.id}`)}
                             className="line-clamp-2 w-full min-w-0 rounded-md px-1.5 py-0.5 text-center font-medium text-orange-950 transition-colors hover:bg-orange-400 hover:text-white"
                           >
                             {m.name || "—"}

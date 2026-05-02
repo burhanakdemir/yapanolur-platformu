@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { adminUrl } from "@/lib/adminUrls";
 
 export default function SiteSettingsPage() {
   const [heroTitleTr, setHeroTitleTr] = useState("");
@@ -43,13 +44,13 @@ export default function SiteSettingsPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 p-4 md:p-6">
-      <Link className="admin-back-link" href="/admin">
+      <Link className="admin-back-link" href={adminUrl()}>
         ← Yönetici ana panel
       </Link>
       <h1 className="text-3xl font-bold tracking-tight text-orange-950">Site ayarları</h1>
       <p className="text-sm text-slate-600">
         Ana sayfa üst şerit için carousel slaytları:{" "}
-        <Link className="font-semibold text-orange-800 underline-offset-2 hover:underline" href="/admin/home-hero-slides">
+        <Link className="font-semibold text-orange-800 underline-offset-2 hover:underline" href={adminUrl("/home-hero-slides")}>
           Hero slaytları yönetimi
         </Link>
       </p>

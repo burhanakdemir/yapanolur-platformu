@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { filterAllowedWebhookUrls, parseNewAdEmailWebhookUrls, stringifyNewAdEmailWebhookUrls } from "@/lib/newAdEmailWebhooksJson";
 import type { NewAdApprovedWebhookPayload } from "@/lib/newAdApprovedWebhookPayload";
+import { adminUrl } from "@/lib/adminUrls";
 
 export default function IlanEpostaAyarPage() {
   const [newAdEmailAutoEnabled, setNewAdEmailAutoEnabled] = useState(true);
@@ -139,7 +140,7 @@ export default function IlanEpostaAyarPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-4 p-4 md:p-6">
-      <Link className="admin-back-link" href="/admin">
+      <Link className="admin-back-link" href={adminUrl()}>
         ← Yönetici ana panel
       </Link>
       <h1 className="text-3xl font-bold tracking-tight text-orange-950">Yeni ilan bildirimleri</h1>

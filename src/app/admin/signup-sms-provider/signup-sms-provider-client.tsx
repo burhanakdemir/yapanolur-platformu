@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
+import { adminUrl } from "@/lib/adminUrls";
 
 type Feedback = { kind: "ok" | "err"; text: string } | null;
 
@@ -171,7 +172,7 @@ export default function SignupSmsProviderClient() {
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-6">
       <div className="flex flex-wrap items-center gap-3">
-        <Link href="/admin" className="chip">
+        <Link href={adminUrl()} className="chip">
           ← Admin
         </Link>
         <h1 className="text-2xl font-bold tracking-tight">Kayıt — telefon SMS (İleti Merkezi / HTTP / Twilio)</h1>

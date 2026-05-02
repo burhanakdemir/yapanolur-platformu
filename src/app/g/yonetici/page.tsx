@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
+import { adminUrl } from "@/lib/adminUrls";
 
-/** Eski gizli adres; yonetici girisi artik /admin uzerinden. */
+/** Eski kısayol; kanonik yönetici girişi `adminUrl()` (varsayılan `/admin`, önek ayarlıysa örn. `/a/yonetici`). */
 export default function AdminGateLegacyPage() {
-  redirect("/admin");
+  redirect(adminUrl());
 }
