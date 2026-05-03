@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import MemberVoteSection from "@/components/MemberVoteSection";
 import MemberProfileComments from "@/components/MemberProfileComments";
+import MemberWorkExperiencePublic from "@/components/MemberWorkExperiencePublic";
 import MemberProfileContactButton from "@/components/MemberProfileContactButton";
 import { verifySessionToken } from "@/lib/auth";
 import { isStaffAdminRole, staffViewerRoleLabel } from "@/lib/adminRoles";
@@ -45,6 +46,25 @@ export default async function UyeProfilPage({ params, searchParams }: Props) {
           profession: { select: { name: true } },
         },
       },
+      workExperiences: {
+        orderBy: [{ createdAt: "desc" }],
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          province: true,
+          district: true,
+          blockParcel: true,
+          durationYears: true,
+          durationMonths: true,
+          durationDays: true,
+          imageUrl1: true,
+          imageUrl2: true,
+          imageUrl3: true,
+          profession: { select: { name: true } },
+          category: { select: { name: true } },
+        },
+      },
     },
   });
 
@@ -73,6 +93,11 @@ export default async function UyeProfilPage({ params, searchParams }: Props) {
           profession: "Meslek",
           location: "Konum",
           rating: "Puan ve değerlendirme",
+          workExperience: "İş deneyimi",
+          workDuration: "Bitiş süresi",
+          workLocation: "Konum",
+          workProfession: "Meslek",
+          workCategory: "Kategori",
           contactHint:
             "Telefon ve e-posta için aşağıdaki düğmeye tıklayın; gerekirse tek seferlik kredi ile görüntülenir.",
         }
@@ -85,6 +110,11 @@ export default async function UyeProfilPage({ params, searchParams }: Props) {
           profession: "Profession",
           location: "Location",
           rating: "Rating",
+          workExperience: "Work experience",
+          workDuration: "Duration",
+          workLocation: "Location",
+          workProfession: "Profession",
+          workCategory: "Category",
           contactHint:
             "Tap the button below for phone and email; a one-time credit fee may apply.",
         };
@@ -149,6 +179,18 @@ export default async function UyeProfilPage({ params, searchParams }: Props) {
           ) : null}
         </div>
       </div>
+
+      <MemberWorkExperiencePublic
+        items={user.workExperiences}
+        lang={lang}
+        copy={{
+          sectionTitle: t.workExperience,
+          durationLabel: t.workDuration,
+          locationLabel: t.workLocation,
+          professionLabel: t.workProfession,
+          categoryLabel: t.workCategory,
+        }}
+      />
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">{t.rating}</h2>

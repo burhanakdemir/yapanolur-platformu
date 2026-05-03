@@ -150,6 +150,38 @@ model User {
   homeHeroSponsorSlides       HomeHeroSlide[]        @relation("SponsorHeroSlides")
   sponsorHeroPurchases        SponsorHeroPurchaseRequest[] @relation("SponsorPurchaseBuyer")
   resolvedSponsorPurchases    SponsorHeroPurchaseRequest[] @relation("SponsorPurchaseResolver")
+  /** Tamamlanan iş örnekleri (profilde listelenir) */
+  workExperiences             MemberWorkExperience[]
+}
+
+/** Üyenin tamamladığı işler — kamuya üye profilinde görünür */
+model MemberWorkExperience {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  description  String   @db.Text
+  province     String
+  district     String
+  /** Opsiyonel ada / parsel bilgisi */
+  blockParcel  String?
+  /** İşin bitiş süresi (pano: yıl / ay / gün; sıfır olanlar gösterilmez) */
+  durationYears  Int @default(0)
+  durationMonths Int @default(0)
+  durationDays   Int @default(0)
+  professionId String?
+  profession   Profession? @relation(fields: [professionId], references: [id], onDelete: SetNull)
+  categoryId   String?
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  imageUrl1    String?
+  imageUrl2    String?
+  imageUrl3    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([professionId])
+  @@index([categoryId])
 }
 
 /** Uye profiline ucretli (kredi) yorum */
@@ -207,6 +239,7 @@ model Profession {
 
   memberProfiles MemberProfile[]
   ads            Ad[]
+  workExperiences MemberWorkExperience[]
 
   @@index([sortOrder, name])
 }
@@ -551,6 +584,7 @@ model Category {
   updatedAt   DateTime   @updatedAt
 
   ads         Ad[]
+  workExperiences MemberWorkExperience[]
 
   @@index([parentId, sortOrder])
   @@index([parentId, createdAt])

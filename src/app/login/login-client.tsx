@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { isStaffAdminRole } from "@/lib/adminRoles";
 import { adminUrl } from "@/lib/adminUrls";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
@@ -59,6 +60,11 @@ export default function LoginClient({ nextPath, explicitNext }: LoginClientProps
         </button>
       </form>
       {message && <p className="text-sm text-red-600">{message}</p>}
+      <p className="text-center text-sm text-slate-600">
+        <Link href="/" className="font-medium text-orange-700 underline-offset-2 hover:underline">
+          Ana sayfaya dön
+        </Link>
+      </p>
       </section>
     </main>
   );

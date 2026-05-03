@@ -195,6 +195,8 @@ export default async function UserPanelPage({ searchParams }: Props) {
           home: "Ana sayfa",
           newAd: "Yeni ilan ver",
           profileDocs: "Profil ve belgeler",
+          workExperience: "İş deneyimi",
+          workExperienceDesc: "Tamamlanan işleri ekleyin; profilinizde listelenir.",
           engineerSearch: "Mühendis ara",
           topup: "Bakiye yükle",
           sponsorHero: "Ana sayfa sponsorluğu",
@@ -269,6 +271,8 @@ export default async function UserPanelPage({ searchParams }: Props) {
           home: "Home",
           newAd: "Post a listing",
           profileDocs: "Profile & documents",
+          workExperience: "Work experience",
+          workExperienceDesc: "Add completed jobs; shown on your profile.",
           engineerSearch: "Find engineers",
           topup: "Add credit",
           sponsorHero: "Homepage sponsorship",
@@ -722,6 +726,18 @@ export default async function UserPanelPage({ searchParams }: Props) {
               {lang === "tr" ? "Üyelik bilgisi ve yüklenen belgeler." : "Membership details and documents."}
             </span>
           </Link>
+          {isMemberAccount ? (
+            <Link
+              href={lang === "en" ? "/panel/user/is-deneyimi?lang=en" : "/panel/user/is-deneyimi"}
+              className="admin-nav-card group rounded-2xl border border-orange-200/80 p-4 no-underline"
+            >
+              <span className="text-2xl" aria-hidden>
+                🧱
+              </span>
+              <span className="mt-2 block font-semibold text-orange-950">{t.workExperience}</span>
+              <span className="mt-1 block text-xs text-slate-600">{t.workExperienceDesc}</span>
+            </Link>
+          ) : null}
           <Link
             href={lang === "en" ? "/muhendis-ara?lang=en" : "/muhendis-ara"}
             className="admin-nav-card group rounded-2xl border border-orange-200/80 p-4 no-underline"

@@ -18,3 +18,38 @@ export function apiErrorMessage(error: unknown, fallback: string): string {
   }
   return fallback;
 }
+
+type ZodFlattenLike = {
+  fieldErrors?: Record<string, string[] | undefined>;
+  formErrors?: string[];
+};
+
+/**
+ * `issues` (Zod flatten) varsa alan mesajlarını ekler — kullanıcı "Kaydedilemedi" yerine nedeni görür.
+ */
+export function apiErrorMessageWithIssues(
+  body: Record<string, unknown>,
+  fallback: string,
+): string {
+  const base = apiErrorMessage(body.error, fallback);
+  const issues = body.issues as ZodFlattenLike | undefined;
+  if (!issues || typeof issues !== "object") return base;
+
+  const parts: string[] = [];
+  if (Array.isArray(issues.formErrors)) {
+    for (const m of issues.formErrors) {
+      if (m) parts.push(String(m));
+    }
+  }
+  if (issues.fieldErrors && typeof issues.fieldErrors === "object") {
+    for (const msgs of Object.values(issues.fieldErrors)) {
+      if (Array.isArray(msgs)) {
+        for (const m of msgs) {
+          if (m) parts.push(String(m));
+        }
+      }
+    }
+  }
+  if (parts.length === 0) return base;
+  return `${base} ${parts.slice(0, 10).join(" · ")}`.trim();
+}

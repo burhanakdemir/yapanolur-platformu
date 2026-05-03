@@ -29,6 +29,8 @@ export type RateLimitBucket =
   | "signupUpload"
   | "adCreate"
   | "adminTotp"
+  /** Üye paneli iş deneyimi CRUD */
+  | "workExperience"
   /** Genel site — anonim varlık ping’i (IP başına). */
   | "sitePresence";
 
@@ -43,6 +45,7 @@ const BUCKETS: Record<RateLimitBucket, { max: number; window: Duration; windowMs
   upload: { max: 60, window: "1 h", windowMs: 60 * 60 * 1000 },
   signupUpload: { max: 40, window: "1 h", windowMs: 60 * 60 * 1000 },
   adCreate: { max: 20, window: "1 h", windowMs: 60 * 60 * 1000 },
+  workExperience: { max: 60, window: "1 h", windowMs: 60 * 60 * 1000 },
 };
 
 let redisSingleton: Redis | null | undefined;

@@ -146,6 +146,13 @@ async function main() {
   if (!usePlainHttp) {
     console.log("Mod: HTTPS — tarayicida https://IP:" + port + " kullanin.");
     console.log("     Sadece HTTP icin: npm run dev:http veya DEV_USE_HTTP=1");
+    console.log(
+      "     Cursor/VS Code Simple Browser: http://localhost:" +
+        port +
+        " bu modda baglanmaz (ERR_FAILED). Adres cubuguna https://localhost:" +
+        port +
+        " yazin veya `npm run dev:http` ile HTTP kullanin.",
+    );
   } else {
     console.log("Mod: HTTP — tarayicida http://IP:" + port + " kullanin.");
     if (primary) {
