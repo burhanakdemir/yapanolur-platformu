@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
 import { adminUrl } from "@/lib/adminUrls";
-import { MAX_ADMIN_TEAM_SIZE } from "@/lib/adminRoles";
+import { MAX_ADMIN_TEAM_SIZE, MAX_SUPER_ADMIN_ACCOUNTS } from "@/lib/adminRoles";
 
 type TeamRow = {
   id: string;
@@ -20,6 +20,8 @@ type TeamRow = {
 type TeamPayload = {
   team: TeamRow[];
   maxSize: number;
+  /** GET yanıtı; yoksa sabit MAX_SUPER_ADMIN_ACCOUNTS kullanılır */
+  maxSuperAdmins?: number;
   selfId: string;
 };
 
@@ -49,6 +51,7 @@ export default function TeamAdminsClient({
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newName, setNewName] = useState("");
+  const [newRole, setNewRole] = useState<"ADMIN" | "SUPER_ADMIN">("ADMIN");
 
   const [pwdById, setPwdById] = useState<Record<string, string>>({});
   const [allProvinces, setAllProvinces] = useState<string[]>([]);
@@ -117,6 +120,7 @@ export default function TeamAdminsClient({
           email: newEmail.trim(),
           password: newPassword,
           name: newName.trim() || undefined,
+          role: newRole,
         }),
       });
       const json = await res.json().catch(() => ({})) as { error?: unknown };
@@ -127,7 +131,8 @@ export default function TeamAdminsClient({
       setNewEmail("");
       setNewPassword("");
       setNewName("");
-      setMessage("Yardımcı yönetici eklendi.");
+      setNewRole("ADMIN");
+      setMessage(newRole === "SUPER_ADMIN" ? "Ana yönetici eklendi." : "Yardımcı yönetici eklendi.");
       await load();
     } finally {
       setBusy(false);
@@ -233,6 +238,9 @@ export default function TeamAdminsClient({
 
   /** Sunucu eski önbellekle yanlış maxSize döndürse bile gösterim tek kaynak: adminRoles */
   const teamLimit = MAX_ADMIN_TEAM_SIZE;
+  const superCap = data.maxSuperAdmins ?? MAX_SUPER_ADMIN_ACCOUNTS;
+  const superCount = data.team.filter((t) => t.role === "SUPER_ADMIN").length;
+  const superSlotsLeft = Math.max(0, superCap - superCount);
   const slotsLeft = Math.max(0, teamLimit - data.team.length);
   const gapClass = compact ? "space-y-3" : embedded ? "space-y-5" : "space-y-8";
   const cardPad = compact ? "p-4" : "p-6";
@@ -268,13 +276,14 @@ export default function TeamAdminsClient({
       <section className={innerCardClass}>
         <h2 className={h2Class}>Mevcut ekip</h2>
         <p className={`mt-1 ${bodyText}`}>
-          En fazla {teamLimit} yönetici (ana + yardımcılar). Şu an {data.team.length} / {teamLimit}.
+          Toplam en fazla {teamLimit} yönetici (ana + yardımcılar). Şu an {data.team.length} / {teamLimit}.
+          {" "}
+          Ana yönetici: {superCount} / {superCap}.
         </p>
         <ul className={compact ? "mt-3 space-y-2" : "mt-4 space-y-4"}>
           {data.team.map((row) => {
             const isSelf = row.id === data.selfId;
             const isSuper = row.role === "SUPER_ADMIN";
-            const superCount = data.team.filter((t) => t.role === "SUPER_ADMIN").length;
             const showDelete =
               !isSelf && (row.role === "ADMIN" || (isSuper && superCount > 1));
             const rowProvFilter = provinceFilterById[row.id] ?? "";
@@ -490,11 +499,59 @@ export default function TeamAdminsClient({
 
       {slotsLeft > 0 ? (
         <section className={innerCardClass}>
-          <h2 className={h2Class}>Yardımcı yönetici ekle</h2>
+          <h2 className={h2Class}>Yönetici ekle</h2>
           <p className={`mt-1 ${bodyText}`}>
-            Yeni hesap <strong>yardımcı yönetici</strong> olarak oluşturulur (ana yönetici ataması veritabanından yapılır).
+            Hesap türünü seçin. Ana yönetici en fazla <strong>{superCap}</strong> hesap (tam yetki + ekip yönetimi).
+            Yardımcı yöneticiler il ile kısıtlanabilir.
           </p>
           <form className={compact ? "mt-3 space-y-2" : "mt-4 space-y-3"} onSubmit={onAdd}>
+            <div>
+              <span className={labelClass}>Yönetici türü</span>
+              <div
+                className={
+                  compact
+                    ? "mt-1 flex flex-col gap-2 rounded-lg border border-orange-200/80 bg-white p-2"
+                    : "mt-1 flex flex-col gap-2 rounded-lg border border-orange-200/80 bg-white p-3 sm:flex-row sm:flex-wrap sm:gap-4"
+                }
+              >
+                <label className="flex cursor-pointer items-start gap-2 text-sm text-slate-800">
+                  <input
+                    type="radio"
+                    name="new-admin-role"
+                    className="mt-1"
+                    checked={newRole === "ADMIN"}
+                    onChange={() => setNewRole("ADMIN")}
+                  />
+                  <span>
+                    <strong>Yardımcı yönetici</strong>
+                    <span className="block text-xs font-normal text-slate-600">
+                      Panel modülleri; süper yönetici alanları kısıtlı olabilir, il yetkisi atanabilir.
+                    </span>
+                  </span>
+                </label>
+                <label
+                  className={`flex cursor-pointer items-start gap-2 text-sm ${
+                    superSlotsLeft === 0 ? "cursor-not-allowed text-slate-400" : "text-slate-800"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="new-admin-role"
+                    className="mt-1"
+                    disabled={superSlotsLeft === 0}
+                    checked={newRole === "SUPER_ADMIN"}
+                    onChange={() => setNewRole("SUPER_ADMIN")}
+                  />
+                  <span>
+                    <strong>Ana yönetici (süper yönetici)</strong>
+                    <span className="block text-xs font-normal text-slate-600">
+                      Tam yetki, yönetici ekibi. Kalan kot: {superSlotsLeft} / {superCap}.
+                      {superSlotsLeft === 0 ? " Kotayı doldurdunuz." : ""}
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </div>
             <label className={labelClass}>
               E-posta
               <input
@@ -527,7 +584,7 @@ export default function TeamAdminsClient({
             </label>
             <button
               type="submit"
-              disabled={busy}
+              disabled={busy || (newRole === "SUPER_ADMIN" && superSlotsLeft === 0)}
               className={
                 compact
                   ? "btn-primary w-full py-2 text-sm disabled:opacity-50"
