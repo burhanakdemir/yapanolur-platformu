@@ -97,6 +97,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     }
 
     const hasFilters = !!(category || tab !== "live" || province || district || neighborhood);
+    const geoHierarchyBroken =
+      Boolean(neighborhood && !province) || Boolean(district && !province);
 
     if (!hasFilters && lang === "en") {
       return {
@@ -138,6 +140,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       title,
       description,
       alternates: { canonical },
+      ...(geoHierarchyBroken ? { robots: { index: false, follow: true } } : {}),
       openGraph: {
         title,
         description,

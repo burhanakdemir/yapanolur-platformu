@@ -29,6 +29,7 @@ export type AdminQuickLink = {
 export const ADMIN_QUICK_LINKS: readonly AdminQuickLink[] = [
   { href: adminUrl(), label: "Özet" },
   { href: "/executive", label: "İş özeti", superOnly: true },
+  { href: adminUrl("/seo"), label: "SEO", superOnly: true },
   { href: adminUrl("/site-settings"), label: "Site", superOnly: true },
   { href: adminUrl("/home-hero-slides"), label: "Hero slayt" },
   { href: adminUrl("/sponsor-hero"), label: "Sponsor hero", superOnly: true },
@@ -60,6 +61,14 @@ export const ADMIN_SECTION_GROUPS: AdminNavGroup[] = [
         description:
           "Kredi, ödeme, ilan ve teklif özetleri; günlük operasyon ayarları bu ekranda yoktur.",
         href: "/executive",
+        superOnly: true,
+      },
+      {
+        id: "seo",
+        title: "SEO özeti",
+        description:
+          "APP_URL, robots/sitemap/RSS, doğrulama ortamı, yapılandırılmış veri ve Search Console bağlantıları.",
+        href: adminUrl("/seo"),
         superOnly: true,
       },
     ],

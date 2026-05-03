@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import AdDetailPage from "./AdDetailClient";
 import AdDetailSeoLead from "./AdDetailSeoLead";
 import { prisma } from "@/lib/prisma";
-import { buildAdListingJsonLd, listingPageUrls } from "@/lib/adDetailJsonLd";
+import {
+  buildAdBreadcrumbJsonLd,
+  buildAdListingJsonLd,
+  listingPageUrls,
+} from "@/lib/adDetailJsonLd";
+import { displayAdTitle } from "@/lib/adTitleDisplay";
 import { absoluteAssetUrl, adDetailMetaStrings, siteName } from "@/lib/metadataHelpers";
 import { BRAND_LOGO_PATH } from "@/lib/brand";
 import { getAppUrl } from "@/lib/appUrl";
@@ -131,8 +136,9 @@ export default async function AdDetailRoutePage({ params, searchParams }: Props)
         auctionEndsAt: true,
         category: {
           select: {
+            id: true,
             name: true,
-            parent: { select: { name: true } },
+            parent: { select: { id: true, name: true } },
           },
         },
         photos: {
@@ -159,7 +165,7 @@ export default async function AdDetailRoutePage({ params, searchParams }: Props)
   const urls = listingPageUrls(base, id);
   const pageUrl = lang === "en" ? urls.en : urls.tr;
 
-  const jsonLd =
+  const productJsonLd =
     ad?.status === "APPROVED"
       ? buildAdListingJsonLd(
           {
@@ -175,12 +181,35 @@ export default async function AdDetailRoutePage({ params, searchParams }: Props)
         )
       : null;
 
+  const breadcrumbJsonLd =
+    ad?.status === "APPROVED"
+      ? buildAdBreadcrumbJsonLd(
+          base,
+          pageUrl,
+          displayAdTitle(ad.title),
+          lang,
+          ad.category
+            ? {
+                id: ad.category.id,
+                name: ad.category.name,
+                parent: ad.category.parent,
+              }
+            : null,
+        )
+      : null;
+
   return (
     <>
-      {jsonLd ? (
+      {productJsonLd ? (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        />
+      ) : null}
+      {breadcrumbJsonLd ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
         />
       ) : null}
       {ad?.status === "APPROVED" ? (
