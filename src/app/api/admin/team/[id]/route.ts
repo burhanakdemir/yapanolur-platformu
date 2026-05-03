@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { verifySessionToken } from "@/lib/auth";
-import { isSuperAdminRole } from "@/lib/adminRoles";
+import { requireSuperAdminTeamManager } from "@/lib/adminTeamManagementAuth";
 import { hashPassword } from "@/lib/passwordHash";
 
 export const dynamic = "force-dynamic";
@@ -17,17 +15,8 @@ const patchSchema = z.object({
 
 type Params = { params: Promise<{ id: string }> };
 
-async function requireSuperAdminSession() {
-  const token = (await cookies()).get("session_token")?.value;
-  const session = await verifySessionToken(token);
-  if (!session || !isSuperAdminRole(session.role)) {
-    return { session: null as Awaited<ReturnType<typeof verifySessionToken>>, response: NextResponse.json({ error: "Yetkisiz" }, { status: 403 }) };
-  }
-  return { session, response: null };
-}
-
 export async function PATCH(req: Request, { params }: Params) {
-  const { response } = await requireSuperAdminSession();
+  const { response } = await requireSuperAdminTeamManager();
   if (response) return response;
 
   const { id } = await params;
@@ -121,7 +110,7 @@ export async function PATCH(req: Request, { params }: Params) {
 }
 
 export async function DELETE(_req: Request, { params }: Params) {
-  const { session, response } = await requireSuperAdminSession();
+  const { session, response } = await requireSuperAdminTeamManager();
   if (response) return response;
 
   const { id } = await params;

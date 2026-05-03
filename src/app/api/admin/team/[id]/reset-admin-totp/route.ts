@@ -1,8 +1,6 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifySessionToken } from "@/lib/auth";
-import { isSuperAdminRole } from "@/lib/adminRoles";
+import { requireSuperAdminTeamManager } from "@/lib/adminTeamManagementAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,11 +11,8 @@ type Params = { params: Promise<{ id: string }> };
  * Hedef: ADMIN veya SUPER_ADMIN — TOTP alanlarını sıfırlar (yeniden kurulum gerekir).
  */
 export async function POST(_req: Request, { params }: Params) {
-  const token = (await cookies()).get("session_token")?.value;
-  const session = await verifySessionToken(token);
-  if (!session || !isSuperAdminRole(session.role) || session.adminTotp !== true) {
-    return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
-  }
+  const { response } = await requireSuperAdminTeamManager();
+  if (response) return response;
 
   const { id } = await params;
   if (!id?.trim()) {

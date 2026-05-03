@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { verifySessionToken } from "@/lib/auth";
-import { isSuperAdminRole, MAX_ADMIN_TEAM_SIZE } from "@/lib/adminRoles";
+import { requireSuperAdminTeamManager } from "@/lib/adminTeamManagementAuth";
+import { MAX_ADMIN_TEAM_SIZE } from "@/lib/adminRoles";
 import { nextMemberNumber } from "@/lib/memberNumber";
 import { Prisma } from "@/generated/prisma/client";
 import { hashPassword } from "@/lib/passwordHash";
@@ -18,18 +17,9 @@ const postSchema = z.object({
   provinces: z.array(z.string().trim().min(1).max(120)).max(81).optional(),
 });
 
-async function requireSuperAdminSession() {
-  const token = (await cookies()).get("session_token")?.value;
-  const session = await verifySessionToken(token);
-  if (!session || !isSuperAdminRole(session.role)) {
-    return { session: null as Awaited<ReturnType<typeof verifySessionToken>>, response: NextResponse.json({ error: "Yetkisiz" }, { status: 403 }) };
-  }
-  return { session, response: null };
-}
-
 /** Yönetici ekibi (SUPER_ADMIN + ADMIN), şifresiz liste */
 export async function GET() {
-  const { session, response } = await requireSuperAdminSession();
+  const { session, response } = await requireSuperAdminTeamManager();
   if (response) return response;
 
   const team = await prisma.user.findMany({
@@ -60,7 +50,7 @@ export async function GET() {
 
 /** Yeni yardımcı yönetici (ADMIN) — ekip limiti adminRoles.ts ile yönetilir */
 export async function POST(req: Request) {
-  const { response } = await requireSuperAdminSession();
+  const { response } = await requireSuperAdminTeamManager();
   if (response) return response;
 
   let body: z.infer<typeof postSchema>;
