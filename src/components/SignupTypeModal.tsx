@@ -109,7 +109,7 @@ export default function SignupTypeModal({
             <strong className="font-semibold text-orange-950">kurumsal</strong> üyelik seçin. Seçiminizi sonradan bu
             ekrandan değiştirebilirsiniz (e-posta / telefon doğrulaması etkilenmez).
           </p>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
             <button
               type="button"
               onClick={() => onSelectIndividual()}

@@ -901,11 +901,11 @@ function MembersPageContent() {
   );
 
   return (
-    <main id="uye-kayit" className="mx-auto w-full max-w-3xl p-6 space-y-4">
+    <main id="uye-kayit" className="mx-auto w-full max-w-3xl p-6 space-y-5">
       <HomeBackButtonLink href={lang === "en" ? "/?lang=en" : "/?lang=tr"}>
         ← {d.nav.home}
       </HomeBackButtonLink>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
         <h1 className="min-w-0 text-3xl font-bold tracking-tight sm:text-4xl">{d.nav.memberDocs}</h1>
         {!loadingProfile && !isReadonly && (
           <Link
