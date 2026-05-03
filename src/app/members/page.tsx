@@ -892,9 +892,7 @@ function MembersPageContent() {
     setPasswordChanging(false);
   }
 
-  const emailInputDescribedBy = !isReadonly
-    ? ["email-verify-hint", regEmailError ? "reg-email-error" : ""].filter(Boolean).join(" ") || undefined
-    : undefined;
+  const emailInputDescribedBy = !isReadonly && regEmailError ? "reg-email-error" : undefined;
 
   const signupGateOpen = Boolean(
     !isReadonly && !savedProfile && signupPathChoice === null && !registrationJustCompleted,
@@ -1045,20 +1043,6 @@ function MembersPageContent() {
           )}
         {!isReadonly && emailOtpGate && (
           <>
-            <p id="email-verify-hint" className="text-xs text-slate-600 leading-relaxed">
-              {emailOtpGate && phoneOtpGate && (
-                <>
-                  Önce e-postanızı, ardından telefonunuzu doğrulamanız gerekir; ikisi tamamlanmadan kayıt alanları
-                  açılmaz.{" "}
-                </>
-              )}
-              {emailOtpGate && !phoneOtpGate && (
-                <>E-postanızı doğruladıktan sonra kayıt alanları açılır (telefon SMS doğrulaması bu sitede kapalı). </>
-              )}
-              E-posta kodu{" "}
-              <strong className="font-medium text-slate-800">{formatSignupOtpTtlTr(signupOtpTtlMinutes)}</strong>{" "}
-              geçerlidir; süre dolunca yeni kod isteyin.
-            </p>
             {emailOtpFeedback ? (
               <p
                 className="rounded-md border border-orange-200 bg-white px-3 py-2 text-sm text-slate-800"
@@ -1136,14 +1120,6 @@ function MembersPageContent() {
           {!isReadonly && (
             <input type="hidden" name="phone" value={phoneHiddenValue} readOnly aria-hidden="true" />
           )}
-          <p id="member-phone-hint" className="text-xs text-slate-600">
-            Ülke kodunu seçin; hat numarasını ulusal formatta yazın. Türkiye için başta 0 olmadan da
-            girebilirsiniz.
-            {phoneOtpGate
-              ? " E-posta doğrulandıktan sonra SMS kodu alıp «Telefonu doğrula» ile onaylayın."
-              : " Telefon doğrulaması kapalıysa numarayı boş bırakabilir veya isteğe bağlı girersiniz; doluysa E.164 formatında saklanır."}{" "}
-            Kayıt E.164 formatında saklanır.
-          </p>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
             <div className="sm:w-[min(100%,15rem)] shrink-0">
               <label htmlFor="member-phone-country" className="sr-only">
@@ -1187,7 +1163,7 @@ function MembersPageContent() {
                 disabled={blockUntilEmailVerified && !isReadonly}
                 aria-invalid={phoneFieldError ? true : undefined}
                 aria-labelledby="member-phone-label"
-                aria-describedby={phoneFieldError ? "phone-field-error member-phone-hint" : "member-phone-hint"}
+                aria-describedby={phoneFieldError ? "phone-field-error" : undefined}
                 onChange={(e) => {
                   setPhoneNational(e.target.value);
                   setPhoneFieldError("");
