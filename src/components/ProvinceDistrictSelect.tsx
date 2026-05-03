@@ -64,10 +64,10 @@ export default function ProvinceDistrictSelect({
   const districtDisabled = Boolean(disabled) || !provinceId;
 
   return (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-slate-700">İl</label>
+    <div className="space-y-1.5">
+      <label className="block text-xs font-medium text-slate-700">İl</label>
       <select
-        className="w-full rounded-lg border bg-white p-2 text-sm disabled:cursor-not-allowed disabled:bg-orange-100"
+        className="h-9 w-full rounded-lg border bg-white px-2.5 py-0 text-sm leading-tight disabled:cursor-not-allowed disabled:bg-orange-100"
         value={provinceId}
         disabled={disabled}
         onChange={(e) => {
@@ -88,9 +88,9 @@ export default function ProvinceDistrictSelect({
           </option>
         ))}
       </select>
-      <label className="block text-sm font-medium text-slate-700">İlçe</label>
+      <label className="block text-xs font-medium text-slate-700">İlçe</label>
       <select
-        className="w-full rounded-lg border bg-white p-2 text-sm disabled:cursor-not-allowed disabled:bg-orange-100"
+        className="h-9 w-full rounded-lg border bg-white px-2.5 py-0 text-sm leading-tight disabled:cursor-not-allowed disabled:bg-orange-100"
         value={districtId}
         disabled={districtDisabled}
         onChange={(e) => {

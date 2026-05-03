@@ -43,15 +43,20 @@ export default function LoginClient({ nextPath, explicitNext }: LoginClientProps
   }
 
   return (
-    <main className="mx-auto max-w-md p-6 space-y-4">
-      <section className="glass-card rounded-2xl p-6 space-y-4">
-      <h1 className="text-3xl font-bold">Giris Yap</h1>
-      <form className="space-y-3" onSubmit={onSubmit}>
-        <input name="email" className="w-full border rounded-lg p-2" placeholder="E-posta" required />
+    <main className="mx-auto max-w-md space-y-6 px-4 py-5 sm:px-6">
+      <section className="glass-card space-y-2 rounded-2xl p-4">
+      <h1 className="text-2xl font-bold tracking-tight">Giris Yap</h1>
+      <form className="space-y-2" onSubmit={onSubmit}>
+        <input
+          name="email"
+          className="w-full rounded-lg border px-2.5 py-1.5 text-sm"
+          placeholder="E-posta"
+          required
+        />
         <input
           name="password"
           type="password"
-          className="w-full border rounded-lg p-2"
+          className="w-full rounded-lg border px-2.5 py-1.5 text-sm"
           placeholder="Sifre"
           required
         />

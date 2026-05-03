@@ -901,12 +901,12 @@ function MembersPageContent() {
   );
 
   return (
-    <main id="uye-kayit" className="mx-auto w-full max-w-3xl p-6 space-y-5">
+    <main id="uye-kayit" className="mx-auto w-full max-w-3xl px-4 py-5 sm:px-6 sm:py-6 space-y-16">
       <HomeBackButtonLink href={lang === "en" ? "/?lang=en" : "/?lang=tr"}>
         ← {d.nav.home}
       </HomeBackButtonLink>
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
-        <h1 className="min-w-0 text-3xl font-bold tracking-tight sm:text-4xl">{d.nav.memberDocs}</h1>
+      <div className="flex flex-col gap-14 sm:flex-row sm:items-center sm:justify-between sm:gap-x-24 sm:gap-y-10">
+        <h1 className="min-w-0 text-2xl font-bold tracking-tight sm:text-3xl">{d.nav.memberDocs}</h1>
         {!loadingProfile && !isReadonly && (
           <Link
             href={membersLoginHref(lang, postAuthNext)}
@@ -917,21 +917,21 @@ function MembersPageContent() {
         )}
       </div>
       {loadingProfile && (
-        <section className="glass-card space-y-2 rounded-2xl p-5">
+        <section className="glass-card space-y-2 rounded-2xl p-4">
           <p className="text-sm">{d.memberPage.loading}</p>
         </section>
       )}
       {!loadingProfile && (
-      <form className="glass-card relative space-y-3 rounded-2xl p-5" onSubmit={onSubmit}>
+      <form className="glass-card relative space-y-2 rounded-2xl p-4" onSubmit={onSubmit}>
         <div inert={signupGateOpen ? true : undefined}>
         {!isReadonly && (
           <nav
             aria-label={d.memberPage.registrationProgressLabel}
-            className="rounded-xl border border-orange-100 bg-orange-50/40 p-3"
+            className="rounded-xl border border-orange-100 bg-orange-50/40 px-2.5 py-2"
           >
             <ol className="flex flex-wrap items-center gap-2 text-xs text-slate-700 sm:text-sm">
               <li className="flex items-center gap-1.5">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orange-200 font-semibold text-orange-950">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-200 text-xs font-semibold text-orange-950">
                   1
                 </span>
                 <span>{d.memberPage.step1}</span>
@@ -940,7 +940,7 @@ function MembersPageContent() {
                 →
               </li>
               <li className="flex items-center gap-1.5">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orange-200 font-semibold text-orange-950">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-200 text-xs font-semibold text-orange-950">
                   2
                 </span>
                 <span>{d.memberPage.step2}</span>
@@ -949,7 +949,7 @@ function MembersPageContent() {
                 →
               </li>
               <li className="flex items-center gap-1.5">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orange-200 font-semibold text-orange-950">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-200 text-xs font-semibold text-orange-950">
                   3
                 </span>
                 <span>{d.memberPage.step3}</span>
@@ -977,7 +977,7 @@ function MembersPageContent() {
               aria-readonly="true"
               value={String(displayMemberNumber)}
               onChange={() => {}}
-              className="w-full cursor-not-allowed select-all rounded-lg border border-orange-300 bg-orange-100 p-2 text-orange-950 tabular-nums focus:outline-none focus:ring-0"
+              className="w-full cursor-not-allowed select-all rounded-lg border border-orange-300 bg-orange-100 px-2.5 py-1.5 text-orange-950 tabular-nums focus:outline-none focus:ring-0"
             />
             <p className="text-xs text-slate-500">Bu numara sistem tarafından atanır; değiştirilemez.</p>
           </div>
@@ -987,7 +987,7 @@ function MembersPageContent() {
             id="member-reg-email"
             name="email"
             type="email"
-            className="w-full border rounded-lg p-2 bg-orange-100 text-orange-900 border-orange-300 cursor-not-allowed"
+            className="w-full border rounded-lg px-2.5 py-1.5 bg-orange-100 text-orange-900 border-orange-300 cursor-not-allowed"
             placeholder="E-posta"
             autoComplete="email"
             defaultValue={savedProfile?.email || ""}
@@ -1018,7 +1018,7 @@ function MembersPageContent() {
               void clearSignupProofCookie();
               void clearSignupPhoneProofCookie();
             }}
-              className={`w-full border rounded-lg p-2 bg-white ${regEmailError ? "border-red-500" : ""}`}
+              className={`w-full border rounded-lg px-2.5 py-1.5 bg-white ${regEmailError ? "border-red-500" : ""}`}
               placeholder="E-posta"
               autoComplete="email"
               required
@@ -1068,7 +1068,7 @@ function MembersPageContent() {
                 {emailOtpFeedback}
               </p>
             ) : null}
-            <div className="space-y-2 rounded-lg border border-orange-100 bg-orange-50/50 p-2">
+            <div className="space-y-2 rounded-lg border border-orange-100 bg-orange-50/50 px-2 py-1.5">
               {emailOtpSecondsLeft > 0 && (
                 <p
                   className="rounded-md border border-orange-200 bg-white px-3 py-2 text-center text-sm font-semibold tabular-nums text-orange-950"
@@ -1097,7 +1097,7 @@ function MembersPageContent() {
                     autoComplete="one-time-code"
                     value={emailOtpCode}
                     onChange={(e) => setEmailOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    className="w-full rounded-lg border border-orange-200 bg-white p-2 text-center font-mono text-sm tracking-widest"
+                    className="w-full rounded-lg border border-orange-200 bg-white px-2.5 py-1.5 text-center font-mono text-sm tracking-widest"
                     placeholder="••••••"
                     aria-label="E-posta doğrulama kodu"
                   />
@@ -1127,7 +1127,7 @@ function MembersPageContent() {
           </>
         )}
         <div className="space-y-1">
-          <span id="member-phone-label" className="block text-sm font-medium text-slate-700">
+          <span id="member-phone-label" className="block text-xs font-medium text-slate-700">
             Telefon{" "}
             <span className="font-normal text-slate-500">
               {phoneOtpGate ? "(zorunlu — SMS doğrulama)" : "(isteğe bağlı — SMS doğrulama kapalı)"}
@@ -1151,7 +1151,7 @@ function MembersPageContent() {
               </label>
               <select
                 id="member-phone-country"
-                className={`h-[42px] w-full rounded-lg border px-2 text-sm ${isReadonly ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-900" : blockUntilEmailVerified ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500" : "border-slate-300 bg-white"}`}
+                className={`h-9 w-full rounded-lg border px-2 text-sm leading-none ${isReadonly ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-900" : blockUntilEmailVerified ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500" : "border-slate-300 bg-white"}`}
                 value={phoneCountryIso}
                 disabled={isReadonly || blockUntilEmailVerified}
                 aria-label="Ülke kodu"
@@ -1180,7 +1180,7 @@ function MembersPageContent() {
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel-national"
-                className={`w-full rounded-lg border p-2 ${isReadonly ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-900" : blockUntilEmailVerified ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500" : phoneFieldError ? "border-red-500 bg-white" : "border-slate-300 bg-white"}`}
+                className={`w-full rounded-lg border px-2.5 py-1.5 ${isReadonly ? "cursor-not-allowed border-orange-300 bg-orange-100 text-orange-900" : blockUntilEmailVerified ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500" : phoneFieldError ? "border-red-500 bg-white" : "border-slate-300 bg-white"}`}
                 placeholder={phoneCountryIso === "TR" ? "5XX XXX XX XX veya 05XX…" : "Ulusal hat numarası"}
                 value={phoneNational}
                 readOnly={isReadonly}
@@ -1208,7 +1208,7 @@ function MembersPageContent() {
         </div>
         {!isReadonly && phoneOtpGate && (
           <div
-            className={`space-y-2 rounded-lg border border-orange-100 bg-orange-50/50 p-2 ${blockUntilEmailVerified ? "opacity-60" : ""}`}
+            className={`space-y-2 rounded-lg border border-orange-100 bg-orange-50/50 px-2 py-1.5 ${blockUntilEmailVerified ? "opacity-60" : ""}`}
           >
             <p id="phone-verify-hint" className="text-xs text-slate-600 leading-relaxed">
               E-posta doğrulandıktan sonra telefonunuza SMS gönderilir. Kod{" "}
@@ -1248,7 +1248,7 @@ function MembersPageContent() {
                   disabled={blockUntilEmailVerified}
                   value={phoneOtpCode}
                   onChange={(e) => setPhoneOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  className="w-full rounded-lg border border-orange-200 bg-white p-2 text-center font-mono text-sm tracking-widest disabled:cursor-not-allowed"
+                  className="w-full rounded-lg border border-orange-200 bg-white px-2.5 py-1.5 text-center font-mono text-sm tracking-widest disabled:cursor-not-allowed"
                   placeholder="••••••"
                   aria-describedby="phone-verify-hint"
                 />
@@ -1289,7 +1289,7 @@ function MembersPageContent() {
             <input
               id="billing-company"
               name="billingCompanyTitle"
-              className={`w-full rounded-lg border border-orange-200 p-2 ${blockUntilFullyVerified ? "cursor-not-allowed bg-slate-100 text-slate-500" : "bg-white"}`}
+              className={`w-full rounded-lg border border-orange-200 px-2.5 py-1.5 ${blockUntilFullyVerified ? "cursor-not-allowed bg-slate-100 text-slate-500" : "bg-white"}`}
               placeholder="Ticari ünvan (listelerde ve profilde görünen üye adı)"
               disabled={blockUntilFullyVerified}
               required
@@ -1310,7 +1310,7 @@ function MembersPageContent() {
             <input
               id="member-name-readonly"
               name="name"
-              className="w-full border rounded-lg p-2 bg-orange-100 text-orange-900 border-orange-300 cursor-not-allowed"
+              className="w-full border rounded-lg px-2.5 py-1.5 bg-orange-100 text-orange-900 border-orange-300 cursor-not-allowed"
               defaultValue={savedProfile?.name || ""}
               readOnly
               required
@@ -1325,7 +1325,7 @@ function MembersPageContent() {
             ) : null}
           </>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
             <div>
               <label htmlFor="member-given-name" className="mb-1 block text-xs font-semibold text-slate-600">
                 {billingAccountType === "CORPORATE" ? "Yetkili adı" : "Ad"}
@@ -1334,7 +1334,7 @@ function MembersPageContent() {
                 id="member-given-name"
                 name="givenName"
                 autoComplete="given-name"
-                className={`w-full border rounded-lg p-2 ${blockUntilFullyVerified ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-white"}`}
+                className={`w-full border rounded-lg px-2.5 py-1.5 ${blockUntilFullyVerified ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-white"}`}
                 placeholder={billingAccountType === "CORPORATE" ? "Yetkili adı" : "Adınız"}
                 disabled={blockUntilFullyVerified}
                 required
@@ -1348,7 +1348,7 @@ function MembersPageContent() {
                 id="member-family-name"
                 name="familyName"
                 autoComplete="family-name"
-                className={`w-full border rounded-lg p-2 ${blockUntilFullyVerified ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-white"}`}
+                className={`w-full border rounded-lg px-2.5 py-1.5 ${blockUntilFullyVerified ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-white"}`}
                 placeholder={billingAccountType === "CORPORATE" ? "Yetkili soyadı" : "Soyadınız"}
                 disabled={blockUntilFullyVerified}
                 required
@@ -1360,7 +1360,7 @@ function MembersPageContent() {
           <input
             name="password"
             type="password"
-            className={`w-full border rounded-lg p-2 ${blockUntilFullyVerified ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-white"}`}
+            className={`w-full border rounded-lg px-2.5 py-1.5 ${blockUntilFullyVerified ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-white"}`}
             placeholder="Şifre"
             disabled={blockUntilFullyVerified}
             required
@@ -1372,7 +1372,7 @@ function MembersPageContent() {
         {!isReadonly && signupPathChoice !== null && (
           <fieldset
             disabled={blockUntilFullyVerified}
-            className="space-y-3 rounded-xl border border-orange-200 bg-orange-50/40 p-4 disabled:opacity-60 disabled:pointer-events-none"
+            className="space-y-2 rounded-xl border border-orange-200 bg-orange-50/40 p-3 disabled:opacity-60 disabled:pointer-events-none"
           >
             <legend className="text-sm font-semibold text-slate-800 px-1">Fatura bilgileri</legend>
             <p className="text-xs text-slate-600 leading-relaxed">
@@ -1403,14 +1403,14 @@ function MembersPageContent() {
                   inputMode="numeric"
                   autoComplete="off"
                   maxLength={11}
-                  className="w-full rounded-lg border border-orange-200 bg-white p-2 font-mono tabular-nums tracking-wide"
+                  className="w-full rounded-lg border border-orange-200 bg-white px-2.5 py-1.5 font-mono tabular-nums tracking-wide"
                   placeholder="11 hane"
                   required
                 />
               </div>
             )}
             {billingAccountType === "CORPORATE" && (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div className="space-y-1">
                   <label htmlFor="billing-tax-office" className="block text-xs font-medium text-slate-700">
                     Vergi dairesi
@@ -1418,7 +1418,7 @@ function MembersPageContent() {
                   <input
                     id="billing-tax-office"
                     name="billingTaxOffice"
-                    className="w-full rounded-lg border border-orange-200 bg-white p-2"
+                    className="w-full rounded-lg border border-orange-200 bg-white px-2.5 py-1.5"
                     placeholder="Örn. Kadıköy"
                     required
                   />
@@ -1432,12 +1432,12 @@ function MembersPageContent() {
                     name="billingVkn"
                     inputMode="numeric"
                     maxLength={10}
-                    className="w-full rounded-lg border border-orange-200 bg-white p-2 font-mono tabular-nums"
+                    className="w-full rounded-lg border border-orange-200 bg-white px-2.5 py-1.5 font-mono tabular-nums"
                     placeholder="10 hane"
                     required
                   />
                 </div>
-                <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-orange-100 bg-white/90 p-3 text-sm text-slate-800">
+                <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-orange-100 bg-white/90 p-2 text-sm text-slate-800">
                   <input
                     type="checkbox"
                     className="mt-0.5 accent-orange-600"
@@ -1463,8 +1463,8 @@ function MembersPageContent() {
                   <textarea
                     id="billing-address-line"
                     name="billingAddressLine"
-                    rows={3}
-                    className="w-full rounded-lg border border-orange-200 bg-white p-2 text-sm"
+                    rows={2}
+                    className="w-full rounded-lg border border-orange-200 bg-white px-2.5 py-1.5 text-sm leading-snug"
                     placeholder="Mahalle, cadde/sokak, bina no, daire (il ve ilçe yukarıda seçilir)"
                     required
                     defaultValue=""
@@ -1478,7 +1478,7 @@ function MembersPageContent() {
                     id="billing-postal"
                     name="billingPostalCode"
                     inputMode="numeric"
-                    className="w-full max-w-xs rounded-lg border border-orange-200 bg-white p-2 font-mono tabular-nums"
+                    className="w-full max-w-xs rounded-lg border border-orange-200 bg-white px-2.5 py-1.5 font-mono tabular-nums"
                     placeholder="34000"
                     maxLength={10}
                   />
@@ -1486,7 +1486,7 @@ function MembersPageContent() {
               </>
             ) : (
               <>
-                <div className="space-y-1 rounded-lg border border-orange-100 bg-white/60 p-3">
+                <div className="space-y-1 rounded-lg border border-orange-100 bg-white/60 p-2">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-orange-900/80">
                     Kurumsal fatura adresi
                   </p>
@@ -1496,8 +1496,8 @@ function MembersPageContent() {
                   <textarea
                     id="billing-address-line"
                     name="billingAddressLine"
-                    rows={3}
-                    className="w-full rounded-lg border border-orange-200 bg-white p-2 text-sm"
+                    rows={2}
+                    className="w-full rounded-lg border border-orange-200 bg-white px-2.5 py-1.5 text-sm leading-snug"
                     placeholder="Mahalle, cadde/sokak, bina no, daire (il ve ilçe yukarıda seçilir)"
                     required
                     defaultValue=""
@@ -1510,13 +1510,13 @@ function MembersPageContent() {
                       id="billing-postal"
                       name="billingPostalCode"
                       inputMode="numeric"
-                      className="w-full max-w-xs rounded-lg border border-orange-200 bg-white p-2 font-mono tabular-nums"
+                      className="w-full max-w-xs rounded-lg border border-orange-200 bg-white px-2.5 py-1.5 font-mono tabular-nums"
                       placeholder="34000"
                       maxLength={10}
                     />
                   </div>
                 </div>
-                <div className="space-y-3 rounded-lg border border-dashed border-orange-200 bg-white/90 p-3">
+                <div className="space-y-2 rounded-lg border border-dashed border-orange-200 bg-white/90 p-2">
                   <p className="text-xs font-semibold text-slate-800">İletişim / ayrı fatura (bireysel)</p>
                   <p className="text-xs text-slate-600">
                     Üyelik ve iletişim için kullanılacak adres; kurumsal fatura adresinden farklı olabilir.
@@ -1531,7 +1531,7 @@ function MembersPageContent() {
                       inputMode="numeric"
                       autoComplete="off"
                       maxLength={11}
-                      className="w-full rounded-lg border border-orange-200 bg-white p-2 font-mono tabular-nums tracking-wide"
+                      className="w-full rounded-lg border border-orange-200 bg-white px-2.5 py-1.5 font-mono tabular-nums tracking-wide"
                       placeholder="11 hane"
                       required
                     />
@@ -1543,8 +1543,8 @@ function MembersPageContent() {
                     <textarea
                       id="billing-contact-address"
                       name="billingContactAddressLine"
-                      rows={3}
-                      className="w-full rounded-lg border border-orange-200 bg-white p-2 text-sm"
+                      rows={2}
+                      className="w-full rounded-lg border border-orange-200 bg-white px-2.5 py-1.5 text-sm leading-snug"
                       placeholder="Mahalle, cadde/sokak, bina no, daire"
                       required
                       defaultValue=""
@@ -1558,7 +1558,7 @@ function MembersPageContent() {
                       id="billing-contact-postal"
                       name="billingContactPostalCode"
                       inputMode="numeric"
-                      className="w-full max-w-xs rounded-lg border border-orange-200 bg-white p-2 font-mono tabular-nums"
+                      className="w-full max-w-xs rounded-lg border border-orange-200 bg-white px-2.5 py-1.5 font-mono tabular-nums"
                       placeholder="34000"
                       maxLength={10}
                     />
@@ -1641,7 +1641,7 @@ function MembersPageContent() {
           />
         </div>
         <div className="space-y-1">
-          <label htmlFor="member-profession" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="member-profession" className="block text-xs font-medium text-slate-700">
             {d.memberPage.professionLabel}
           </label>
           <ProfessionCombobox
@@ -1706,7 +1706,7 @@ function MembersPageContent() {
             <p className="text-xs text-orange-700">
               Kilitli alanlar değiştirilemez. Belge, profil fotoğrafı ve şifre güncellemesi aşağıdan yapılabilir.
             </p>
-            <div className="space-y-2 rounded-lg border border-orange-200 bg-white p-2">
+            <div className="space-y-2 rounded-lg border border-orange-200 bg-white px-2.5 py-1.5">
               <p className="text-sm font-medium">Profil fotoğrafı (isteğe bağlı)</p>
               {savedProfile?.profilePhotoUrl ? (
                 <Image
@@ -1741,7 +1741,7 @@ function MembersPageContent() {
               ) : null}
             </div>
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="space-y-2 rounded-lg border border-orange-200 bg-white p-2">
+              <div className="space-y-2 rounded-lg border border-orange-200 bg-white px-2.5 py-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-medium">{d.memberPage.docSlotDiploma}</p>
                   <span className="chip shrink-0">
@@ -1768,7 +1768,7 @@ function MembersPageContent() {
                   onChange={(e) => setReadonlyDocFiles((prev) => ({ ...prev, diploma: e.target.files?.[0] }))}
                 />
               </div>
-              <div className="space-y-2 rounded-lg border border-orange-200 bg-white p-2">
+              <div className="space-y-2 rounded-lg border border-orange-200 bg-white px-2.5 py-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-medium">{d.memberPage.docSlotEngineering}</p>
                   <span className="chip shrink-0">
@@ -1795,7 +1795,7 @@ function MembersPageContent() {
                   onChange={(e) => setReadonlyDocFiles((prev) => ({ ...prev, engineering: e.target.files?.[0] }))}
                 />
               </div>
-              <div className="space-y-2 rounded-lg border border-orange-200 bg-white p-2">
+              <div className="space-y-2 rounded-lg border border-orange-200 bg-white px-2.5 py-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-medium">{d.memberPage.docSlotTax}</p>
                   <span className="chip shrink-0">
@@ -1826,25 +1826,25 @@ function MembersPageContent() {
             <button className="btn-primary" type="button" disabled={docUploading} onClick={() => void onUploadDocuments()}>
               {docUploading ? "Yükleniyor…" : "Belgeleri yükle"}
             </button>
-            <div className="space-y-2 rounded-lg border border-orange-200 bg-white p-2">
+            <div className="space-y-2 rounded-lg border border-orange-200 bg-white px-2.5 py-1.5">
               <p className="text-sm font-medium">Şifre değiştir</p>
               <input
                 type="password"
-                className="w-full border rounded-lg p-2 bg-white text-sm"
+                className="w-full border rounded-lg px-2.5 py-1.5 bg-white text-sm"
                 placeholder="Mevcut şifre"
                 value={passwordForm.currentPassword}
                 onChange={(e) => setPasswordForm((p) => ({ ...p, currentPassword: e.target.value }))}
               />
               <input
                 type="password"
-                className="w-full border rounded-lg p-2 bg-white text-sm"
+                className="w-full border rounded-lg px-2.5 py-1.5 bg-white text-sm"
                 placeholder="Yeni şifre"
                 value={passwordForm.newPassword}
                 onChange={(e) => setPasswordForm((p) => ({ ...p, newPassword: e.target.value }))}
               />
               <input
                 type="password"
-                className="w-full border rounded-lg p-2 bg-white text-sm"
+                className="w-full border rounded-lg px-2.5 py-1.5 bg-white text-sm"
                 placeholder="Yeni şifre tekrar"
                 value={passwordForm.confirmPassword}
                 onChange={(e) => setPasswordForm((p) => ({ ...p, confirmPassword: e.target.value }))}
