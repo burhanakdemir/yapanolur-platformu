@@ -27,9 +27,9 @@ export async function generateMetadata(): Promise<Metadata> {
   await connection();
   return {
     metadataBase: getSafeMetadataBase(),
-    applicationName: "İlan",
-    title: "İlan ve İhale Platformu",
-    description: "Türkiye odaklı ilan ve ihale teklif platformu",
+    applicationName: "YapanOlur",
+    title: "YapanOlur — İlan ve ihale platformu",
+    description: "YapanOlur: Türkiye odaklı ilan ve ihale teklif platformu",
     icons: {
       icon: [
         { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
@@ -40,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     appleWebApp: {
       capable: true,
-      title: "İlan",
+      title: "YapanOlur",
       statusBarStyle: "default",
     },
     ...siteVerificationMetadata(),

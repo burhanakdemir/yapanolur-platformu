@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "İlan ve İhale Platformu",
-    short_name: "İlan",
-    description: "Türkiye odaklı ilan ve ihale teklif platformu",
+    name: "YapanOlur",
+    short_name: "YapanOlur",
+    description: "YapanOlur — Türkiye odaklı ilan ve ihale teklif platformu",
     start_url: "/",
     scope: "/",
     display: "standalone",
