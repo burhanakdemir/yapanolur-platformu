@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { verifySessionToken } from "@/lib/auth";
 import { isStaffAdminRole, staffViewerRoleLabel } from "@/lib/adminRoles";
 import { buildMemberRatingPayload } from "@/lib/memberRatingPayload";
+import { notifyProfileOwnerPeerVote } from "@/lib/memberProfileNotificationEmail";
+import { shouldSendPeerVoteEmail } from "@/lib/memberProfileVoteNotifyPolicy";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -60,6 +62,13 @@ export async function POST(req: Request, { params }: Params) {
 
     const { action } = bodySchema.parse(await req.json());
 
+    const existingVote = await prisma.memberPeerVote.findUnique({
+      where: {
+        fromUserId_toUserId: { fromUserId: voterId, toUserId: targetUserId },
+      },
+      select: { type: true },
+    });
+
     if (action === "clear") {
       await prisma.memberPeerVote.deleteMany({
         where: { fromUserId: voterId, toUserId: targetUserId },
@@ -79,6 +88,14 @@ export async function POST(req: Request, { params }: Params) {
         },
         create: { fromUserId: voterId, toUserId: targetUserId, type: "DISLIKE" },
         update: { type: "DISLIKE" },
+      });
+    }
+
+    if (action !== "clear" && shouldSendPeerVoteEmail(action, existingVote)) {
+      void notifyProfileOwnerPeerVote({
+        targetUserId,
+        voteType: action === "like" ? "LIKE" : "DISLIKE",
+        voterUserId: voterId,
       });
     }
 

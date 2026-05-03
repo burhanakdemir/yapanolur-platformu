@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { verifySessionToken } from "@/lib/auth";
 import { isStaffAdminRole } from "@/lib/adminRoles";
 import { sumUserCreditTry } from "@/lib/userCredit";
+import { notifyProfileOwnerNewComment } from "@/lib/memberProfileNotificationEmail";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -103,6 +104,15 @@ export async function POST(req: Request, { params }: Params) {
         },
       });
       return c;
+    });
+
+    void notifyProfileOwnerNewComment({
+      targetUserId,
+      commentBody: comment.body,
+      commentCreatedAt: comment.createdAt,
+      fromUserId: session.userId,
+      fromMemberNumber: comment.fromUser.memberNumber,
+      fromName: comment.fromUser.name,
     });
 
     return NextResponse.json({ ok: true, comment });

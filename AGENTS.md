@@ -12,6 +12,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Turbopack hatası örneği: `FATAL: Turbopack error`, `Failed to write app endpoint …`, `Next.js package not found` → `npm run clean` (`.next` siler), sunucuyu kapatıp yeniden `npm run dev`; gerekirse sadece HTTP: `npm run dev:plain` veya `npm run dev:http`.
 - Kalıcı “ürün hızı” kıyası: `next build` + `next start` (dev her zaman daha ağırdır).
 
+## E-posta (profil bildirimleri)
+
+- Profil sahibine **yeni yorum** ve **beğeni/olumsuz oy** bildirimi: `src/lib/memberProfileNotificationEmail.ts` (`sendTransactionalEmail`; SMTP yoksa API yine başarılı kalır).
+- Tümünü kapatmak için: **`MEMBER_PROFILE_EMAIL_NOTIFY=0`** (veya `false` / `off`).
+
 ## GitHub / uzaktan gönderim
 
 - **`git push`**, uzak repoya branch gönderme, **PR açma** veya eşdeğer uzaktan yayın adımlarını yalnızca kullanıcı **açıkça onay verdiyse** yap. Onay yoksa değişiklikleri yerelde bırak; gerekirse commit mesajı veya diff özeti öner, push etme.
