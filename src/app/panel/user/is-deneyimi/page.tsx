@@ -80,6 +80,10 @@ export default async function IsDeneyimiPage({ searchParams }: Props) {
           selectProfession: "Meslek seçin",
           selectCategory: "Kategori seçin",
           professionCategoryHint: "İlan oluştururken kullandığınız kategori hiyerarşisinden seçin.",
+          modalClose: "Kapat",
+          detailModalHint: "İş kaydı ayrıntıları",
+          openDetailAria: "Ayrıntıları göster",
+          enlargeImageAria: "Görseli büyüt",
         }
       : {
           title: "Work experience",
@@ -129,6 +133,10 @@ export default async function IsDeneyimiPage({ searchParams }: Props) {
           selectProfession: "Select profession",
           selectCategory: "Select category",
           professionCategoryHint: "Pick from the same category tree used when posting listings.",
+          modalClose: "Close",
+          detailModalHint: "Job entry details",
+          openDetailAria: "Show details",
+          enlargeImageAria: "Enlarge image",
         };
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import FileInputTr from "@/components/FileInputTr";
@@ -77,6 +78,10 @@ type Props = {
     imagesUploadSuccess: string;
     chooseFilesFirst: string;
     pendingImagesNotUploaded: string;
+    modalClose: string;
+    detailModalHint: string;
+    openDetailAria: string;
+    enlargeImageAria: string;
   };
 };
 
@@ -123,6 +128,30 @@ export default function WorkExperienceClient({ lang, backHref, labels }: Props) 
 
   const [imageSlots, setImageSlots] = useState<ImageSlot[]>(emptyImageSlots);
   const [imagesUploading, setImagesUploading] = useState(false);
+  const [detailItem, setDetailItem] = useState<WorkExperienceItem | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  const closeLightbox = useCallback(() => setLightboxUrl(null), []);
+  const closeDetail = useCallback(() => setDetailItem(null), []);
+
+  useEffect(() => {
+    if (!lightboxUrl && !detailItem) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [lightboxUrl, detailItem]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      if (lightboxUrl) closeLightbox();
+      else if (detailItem) closeDetail();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxUrl, detailItem, closeLightbox, closeDetail]);
 
   const [professionOptions, setProfessionOptions] = useState<{ id: string; name: string }[]>([]);
   const [categoryFlat, setCategoryFlat] = useState<{ id: string; name: string; depth: number }[]>([]);
@@ -572,32 +601,24 @@ export default function WorkExperienceClient({ lang, backHref, labels }: Props) 
               {items.map((item) => (
                 <li
                   key={item.id}
-                  className="rounded-lg border border-orange-200/80 bg-white/90 p-2 shadow-sm sm:p-2.5"
+                  className="rounded-lg border border-orange-200/80 bg-white/90 p-1.5 shadow-sm sm:p-2"
                 >
-                  <div className="flex gap-2 sm:gap-2.5">
-                    <div className="min-w-0 flex-1 space-y-0.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="min-w-0 truncate text-sm font-semibold leading-tight text-orange-950">
-                          {item.title}
-                        </p>
-                        <div className="flex shrink-0 gap-1">
-                          <button
-                            type="button"
-                            className="rounded border border-orange-300 bg-white px-2 py-0.5 text-[11px] font-medium leading-none text-orange-900"
-                            onClick={() => openEdit(item)}
-                          >
-                            {labels.edit}
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded border border-red-200 bg-white px-2 py-0.5 text-[11px] font-medium leading-none text-red-800"
-                            onClick={() => void onDelete(item.id)}
-                          >
-                            {labels.delete}
-                          </button>
-                        </div>
-                      </div>
-                      <p className="text-[11px] leading-snug text-slate-600">
+                  <div className="flex items-start gap-1.5">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      className="min-w-0 flex-1 cursor-pointer rounded-md px-0.5 py-0.5 text-left outline-none ring-orange-400/80 hover:bg-orange-50/60 focus-visible:ring-2"
+                      onClick={() => setDetailItem(item)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setDetailItem(item);
+                        }
+                      }}
+                      aria-label={`${labels.openDetailAria}: ${item.title}`}
+                    >
+                      <p className="truncate text-sm font-semibold leading-tight text-orange-950">{item.title}</p>
+                      <p className="mt-0.5 text-[11px] leading-snug text-slate-600">
                         <span className="text-slate-500">{labels.durationSummaryLabel}:</span> {durationLine(item)}
                         {item.professionName ? (
                           <>
@@ -617,29 +638,169 @@ export default function WorkExperienceClient({ lang, backHref, labels }: Props) 
                         {item.blockParcel ? ` · ${item.blockParcel}` : ""}
                       </p>
                       {item.description ? (
-                        <p className="line-clamp-2 text-xs leading-snug text-slate-800">{item.description}</p>
+                        <p className="mt-0.5 line-clamp-1 text-xs leading-snug text-slate-800">{item.description}</p>
                       ) : null}
                     </div>
-                    {item.imageUrls.length > 0 ? (
-                      <div className="flex shrink-0 flex-col gap-0.5 self-start">
-                        {item.imageUrls.map((url) => (
-                          <div
-                            key={url}
-                            className="h-9 w-9 shrink-0 overflow-hidden rounded border border-orange-100 sm:h-10 sm:w-10"
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={url} alt="" className="h-full w-full object-cover" />
-                          </div>
-                        ))}
-                      </div>
-                    ) : null}
+                    <div className="flex shrink-0 gap-1 pt-0.5">
+                      <button
+                        type="button"
+                        className="rounded border border-orange-300 bg-white px-2 py-0.5 text-[11px] font-medium leading-none text-orange-900"
+                        onClick={() => openEdit(item)}
+                      >
+                        {labels.edit}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded border border-red-200 bg-white px-2 py-0.5 text-[11px] font-medium leading-none text-red-800"
+                        onClick={() => void onDelete(item.id)}
+                      >
+                        {labels.delete}
+                      </button>
+                    </div>
                   </div>
+                  {item.imageUrls.length > 0 ? (
+                    <div className="mt-1 flex flex-wrap gap-1 border-t border-orange-100/90 pt-1">
+                      {item.imageUrls.map((url) => (
+                        <button
+                          key={url}
+                          type="button"
+                          className="h-8 w-8 shrink-0 overflow-hidden rounded border border-orange-100 bg-orange-50/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-orange-400"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLightboxUrl(url);
+                          }}
+                          aria-label={labels.enlargeImageAria}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt="" className="h-full w-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </li>
               ))}
             </ul>
           )}
         </section>
       ) : null}
+
+      {typeof document !== "undefined" && detailItem
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[190] flex items-center justify-center bg-black/45 p-4 backdrop-blur-[1px]"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="work-exp-detail-title"
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget) closeDetail();
+              }}
+            >
+              <div
+                className="max-h-[min(90vh,880px)] w-full max-w-lg overflow-y-auto rounded-2xl border border-orange-200 bg-white p-4 shadow-xl sm:p-5"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-start justify-between gap-2 border-b border-orange-100 pb-3">
+                  <div className="min-w-0">
+                    <h2 id="work-exp-detail-title" className="text-lg font-bold text-orange-950">
+                      {detailItem.title}
+                    </h2>
+                    <p className="text-xs text-slate-500">{labels.detailModalHint}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-sm text-slate-700 hover:bg-slate-50"
+                    onClick={closeDetail}
+                  >
+                    {labels.modalClose}
+                  </button>
+                </div>
+                <div className="mt-3 space-y-1.5 text-sm text-slate-700">
+                  <p>
+                    <span className="text-slate-500">{labels.durationSummaryLabel}: </span>
+                    {durationLine(detailItem)}
+                  </p>
+                  {detailItem.professionName ? (
+                    <p>
+                      <span className="text-slate-500">{labels.professionLabel}: </span>
+                      {detailItem.professionName}
+                    </p>
+                  ) : null}
+                  {detailItem.categoryName ? (
+                    <p>
+                      <span className="text-slate-500">{labels.categoryLabel}: </span>
+                      {detailItem.categoryName}
+                    </p>
+                  ) : null}
+                  <p>
+                    <span className="text-slate-500">{labels.locationLabel}: </span>
+                    {detailItem.province} / {detailItem.district}
+                    {detailItem.blockParcel ? ` · ${detailItem.blockParcel}` : ""}
+                  </p>
+                </div>
+                <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-slate-900">{detailItem.description}</p>
+                {detailItem.imageUrls.length > 0 ? (
+                  <div className="mt-4 flex flex-wrap gap-2 border-t border-orange-100 pt-4">
+                    {detailItem.imageUrls.map((url) => (
+                      <button
+                        key={url}
+                        type="button"
+                        className="h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-orange-200 bg-orange-50/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400"
+                        onClick={() => setLightboxUrl(url)}
+                        aria-label={labels.enlargeImageAria}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="" className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="mt-5 flex flex-wrap gap-2 border-t border-orange-100 pt-4">
+                  <button
+                    type="button"
+                    className="btn-primary px-3 py-1.5 text-sm"
+                    onClick={() => {
+                      openEdit(detailItem);
+                      closeDetail();
+                    }}
+                  >
+                    {labels.edit}
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {typeof document !== "undefined" && lightboxUrl
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+              role="dialog"
+              aria-modal="true"
+              aria-label={labels.enlargeImageAria}
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget) closeLightbox();
+              }}
+            >
+              <button
+                type="button"
+                className="absolute right-4 top-4 rounded-lg bg-white/10 px-3 py-1.5 text-sm font-medium text-white hover:bg-white/20"
+                onClick={closeLightbox}
+              >
+                {labels.modalClose}
+              </button>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={lightboxUrl}
+                alt=""
+                className="max-h-[min(90vh,900px)] max-w-full rounded-lg object-contain shadow-2xl"
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
