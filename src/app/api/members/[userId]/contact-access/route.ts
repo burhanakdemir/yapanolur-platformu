@@ -14,13 +14,27 @@ type Params = { params: Promise<{ userId: string }> };
 
 function contactPayload(target: {
   email: string;
-  memberProfile: { phone: string | null; province: string | null; district: string | null } | null;
+  memberProfile: {
+    phone: string | null;
+    province: string | null;
+    district: string | null;
+    billingAccountType: string;
+    billingAuthorizedGivenName: string | null;
+    billingAuthorizedFamilyName: string | null;
+  } | null;
 }) {
+  const mp = target.memberProfile;
+  const authParts = [mp?.billingAuthorizedGivenName?.trim(), mp?.billingAuthorizedFamilyName?.trim()].filter(
+    Boolean,
+  ) as string[];
+  const authorizedPersonName =
+    mp?.billingAccountType === "CORPORATE" && authParts.length > 0 ? authParts.join(" ") : null;
   return {
     email: target.email,
-    phone: target.memberProfile?.phone ?? null,
-    province: target.memberProfile?.province ?? null,
-    district: target.memberProfile?.district ?? null,
+    phone: mp?.phone ?? null,
+    province: mp?.province ?? null,
+    district: mp?.district ?? null,
+    authorizedPersonName,
   };
 }
 
@@ -44,6 +58,9 @@ export async function GET(_req: Request, { params }: Params) {
             phone: true,
             province: true,
             district: true,
+            billingAccountType: true,
+            billingAuthorizedGivenName: true,
+            billingAuthorizedFamilyName: true,
             profession: { select: { name: true } },
           },
         },

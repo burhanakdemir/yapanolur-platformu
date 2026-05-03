@@ -43,6 +43,8 @@ export async function GET() {
           billingContactTcKimlik: true,
           billingContactAddressLine: true,
           billingContactPostalCode: true,
+          billingAuthorizedGivenName: true,
+          billingAuthorizedFamilyName: true,
           documents: {
             select: { id: true, type: true, fileUrl: true },
             orderBy: { createdAt: "asc" },

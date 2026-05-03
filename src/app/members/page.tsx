@@ -80,6 +80,8 @@ function MembersPageContent() {
       billingContactTcKimlik?: string | null;
       billingContactAddressLine?: string | null;
       billingContactPostalCode?: string | null;
+      billingAuthorizedGivenName?: string | null;
+      billingAuthorizedFamilyName?: string | null;
     };
   } | null>(null);
   const [professions, setProfessions] = useState<{ id: string; name: string }[]>([]);
@@ -609,6 +611,7 @@ function MembersPageContent() {
     const givenName = String(form.get("givenName") || "").trim();
     const familyName = String(form.get("familyName") || "").trim();
     const fullNameFromParts = `${givenName} ${familyName}`.trim();
+    const companyTitle = String(form.get("billingCompanyTitle") || "").trim();
     if (!isReadonly && emailOtpGate && !emailVerified) {
       setMessage("Önce e-posta kodunu alıp «E-postayı doğrula» ile onaylayın.");
       return;
@@ -674,7 +677,7 @@ function MembersPageContent() {
       }
     }
     if (!isReadonly && billingType === "CORPORATE") {
-      if (String(form.get("billingCompanyTitle") || "").trim().length < 2) {
+      if (companyTitle.length < 2) {
         setMessage("Kurumsal ünvan zorunludur.");
         return;
       }
@@ -714,7 +717,11 @@ function MembersPageContent() {
         .toLowerCase(),
       name: isReadonly
         ? String(form.get("name") || "").trim()
-        : fullNameFromParts,
+        : billingType === "CORPORATE"
+          ? companyTitle
+          : fullNameFromParts,
+      authorizedGivenName: !isReadonly && billingType === "CORPORATE" ? givenName : "",
+      authorizedFamilyName: !isReadonly && billingType === "CORPORATE" ? familyName : "",
       password: String(form.get("password") || ""),
       profilePhotoUrl: String(form.get("profilePhotoUrl") || "").trim() || undefined,
       phone: String(form.get("phone") || ""),
@@ -723,7 +730,7 @@ function MembersPageContent() {
       professionId,
       billingAccountType: billingType,
       billingTcKimlik: String(form.get("billingTcKimlik") || "").trim(),
-      billingCompanyTitle: String(form.get("billingCompanyTitle") || "").trim(),
+      billingCompanyTitle: companyTitle,
       billingTaxOffice: String(form.get("billingTaxOffice") || "").trim(),
       billingVkn: String(form.get("billingVkn") || "").trim(),
       billingAddressLine: addrLine,
@@ -1274,10 +1281,31 @@ function MembersPageContent() {
             )}
           </div>
         )}
+        {!isReadonly && billingAccountType === "CORPORATE" && signupPathChoice !== null && (
+          <div className="space-y-1">
+            <label htmlFor="billing-company" className="mb-1 block text-xs font-semibold text-slate-600">
+              Şirket ünvanı
+            </label>
+            <input
+              id="billing-company"
+              name="billingCompanyTitle"
+              className={`w-full rounded-lg border border-orange-200 p-2 ${blockUntilFullyVerified ? "cursor-not-allowed bg-slate-100 text-slate-500" : "bg-white"}`}
+              placeholder="Ticari ünvan (listelerde ve profilde görünen üye adı)"
+              disabled={blockUntilFullyVerified}
+              required
+            />
+            <p className="text-xs text-slate-500">
+              Bu ünvan üyelik kaydınızda herkese görünür. Yetkili kişi adı ve soyadı aşağıda; yalnızca sizin profilinizde ve
+              iletişim bilgisini ücretle açanlara gösterilir.
+            </p>
+          </div>
+        )}
         {isReadonly ? (
           <>
             <label htmlFor="member-name-readonly" className="mb-1 block text-xs font-semibold text-slate-600">
-              Ad Soyad
+              {savedProfile?.memberProfile.billingAccountType === "CORPORATE"
+                ? "Şirket ünvanı (görünen ad)"
+                : "Ad Soyad"}
             </label>
             <input
               id="member-name-readonly"
@@ -1287,12 +1315,20 @@ function MembersPageContent() {
               readOnly
               required
             />
+            {savedProfile?.memberProfile.billingAccountType === "CORPORATE" &&
+            (savedProfile.memberProfile.billingAuthorizedGivenName?.trim() ||
+              savedProfile.memberProfile.billingAuthorizedFamilyName?.trim()) ? (
+              <p className="mt-2 text-sm text-slate-800">
+                <span className="font-semibold text-slate-600">Yetkili kişi: </span>
+                {`${savedProfile.memberProfile.billingAuthorizedGivenName?.trim() ?? ""} ${savedProfile.memberProfile.billingAuthorizedFamilyName?.trim() ?? ""}`.trim()}
+              </p>
+            ) : null}
           </>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="member-given-name" className="mb-1 block text-xs font-semibold text-slate-600">
-                Ad
+                {billingAccountType === "CORPORATE" ? "Yetkili adı" : "Ad"}
               </label>
               <input
                 id="member-given-name"
@@ -1306,7 +1342,7 @@ function MembersPageContent() {
             </div>
             <div>
               <label htmlFor="member-family-name" className="mb-1 block text-xs font-semibold text-slate-600">
-                Soyad
+                {billingAccountType === "CORPORATE" ? "Yetkili soyadı" : "Soyad"}
               </label>
               <input
                 id="member-family-name"
@@ -1319,11 +1355,6 @@ function MembersPageContent() {
               />
             </div>
           </div>
-        )}
-        {!isReadonly && billingAccountType === "CORPORATE" && (
-          <p className="text-xs text-slate-600">
-            Kurumsal üyelikte ad ve soyad faturada görünecek yetkili kişiye aittir; ticari ünvan aşağıda ayrıca istenir.
-          </p>
         )}
         {!isReadonly && (
           <input
@@ -1380,18 +1411,6 @@ function MembersPageContent() {
             )}
             {billingAccountType === "CORPORATE" && (
               <div className="space-y-3">
-                <div className="space-y-1">
-                  <label htmlFor="billing-company" className="block text-xs font-medium text-slate-700">
-                    Ticari ünvan
-                  </label>
-                  <input
-                    id="billing-company"
-                    name="billingCompanyTitle"
-                    className="w-full rounded-lg border border-orange-200 bg-white p-2"
-                    placeholder="Şirket unvanı (faturada görünecek)"
-                    required
-                  />
-                </div>
                 <div className="space-y-1">
                   <label htmlFor="billing-tax-office" className="block text-xs font-medium text-slate-700">
                     Vergi dairesi
@@ -1573,6 +1592,11 @@ function MembersPageContent() {
                   <dd>{savedProfile.memberProfile.billingTaxOffice ?? "—"}</dd>
                   <dt className="text-slate-500">VKN</dt>
                   <dd className="font-mono tabular-nums">{savedProfile.memberProfile.billingVkn ?? "—"}</dd>
+                  <dt className="text-slate-500">Yetkili kişi</dt>
+                  <dd>
+                    {`${savedProfile.memberProfile.billingAuthorizedGivenName?.trim() ?? ""} ${savedProfile.memberProfile.billingAuthorizedFamilyName?.trim() ?? ""}`.trim() ||
+                      "—"}
+                  </dd>
                   <dt className="text-slate-500">Fatura = iletişim</dt>
                   <dd>{savedProfile.memberProfile.billingContactSameAsInvoice !== false ? "Evet" : "Hayır (ayrı iletişim)"}</dd>
                 </>

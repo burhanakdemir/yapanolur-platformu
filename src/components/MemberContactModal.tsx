@@ -28,6 +28,8 @@ type ContactAccessPayload = {
     phone: string | null;
     province: string | null;
     district: string | null;
+    /** Kurumsal üye: ücretli iletişimde yetkili ad soyad */
+    authorizedPersonName: string | null;
   } | null;
   pendingApproval?: boolean;
   error?: string;
@@ -167,6 +169,7 @@ export default function MemberContactModal({ userId, open, onClose, lang, loginN
           province: "İl",
           district: "İlçe",
           profession: "Meslek",
+          authorizedPerson: "Yetkili kişi",
         }
       : {
           title: "Member contact details",
@@ -190,6 +193,7 @@ export default function MemberContactModal({ userId, open, onClose, lang, loginN
           province: "Province",
           district: "District",
           profession: "Profession",
+          authorizedPerson: "Authorized contact",
         };
 
   const fee = data?.settings?.memberContactFeeAmountTry ?? 0;
@@ -299,6 +303,12 @@ export default function MemberContactModal({ userId, open, onClose, lang, loginN
                   <p className="text-xs text-slate-500">{t.freeHint}</p>
                 ) : null}
                 <dl className="grid gap-2 sm:grid-cols-[6rem_1fr]">
+                  {data.contact.authorizedPersonName ? (
+                    <>
+                      <dt className="text-slate-500">{t.authorizedPerson}</dt>
+                      <dd className="font-medium text-slate-900">{data.contact.authorizedPersonName}</dd>
+                    </>
+                  ) : null}
                   <dt className="text-slate-500">{t.email}</dt>
                   <dd className="break-all font-medium text-slate-900">{data.contact.email}</dd>
                   <dt className="text-slate-500">{t.phone}</dt>

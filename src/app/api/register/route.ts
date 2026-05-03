@@ -64,6 +64,9 @@ const bodySchema = z
     billingContactTcKimlik: optionalTrimmedString(),
     billingContactAddressLine: optionalTrimmedString(),
     billingContactPostalCode: optionalTrimmedString(),
+    /** Kurumsal: yetkili ad (User.name = şirket ünvanı) */
+    authorizedGivenName: optionalTrimmedString(),
+    authorizedFamilyName: optionalTrimmedString(),
   })
   .superRefine((data, ctx) => {
     const postal = data.billingPostalCode?.trim();
@@ -106,6 +109,22 @@ const bodySchema = z
           code: z.ZodIssueCode.custom,
           message: "Vergi numarası 10 haneli olmalıdır.",
           path: ["billingVkn"],
+        });
+      }
+      const ag = data.authorizedGivenName?.trim() ?? "";
+      const af = data.authorizedFamilyName?.trim() ?? "";
+      if (ag.length < 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Kurumsal kayıtta yetkili adı zorunludur.",
+          path: ["authorizedGivenName"],
+        });
+      }
+      if (af.length < 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Kurumsal kayıtta yetkili soyadı zorunludur.",
+          path: ["authorizedFamilyName"],
         });
       }
       if (!data.billingContactSameAsInvoice) {
@@ -233,10 +252,15 @@ export async function POST(req: Request) {
 
     const user = await prisma.$transaction(async (tx) => {
       const n = await nextMemberNumber(tx);
+      const displayMemberName =
+        data.billingAccountType === "CORPORATE"
+          ? (data.billingCompanyTitle?.trim() ?? data.name.trim())
+          : data.name.trim();
+
       const created = await insertMemberUser(tx, {
         memberNumber: n,
         email: data.email,
-        name: data.name,
+        name: displayMemberName,
         password: passwordHashed,
         profilePhotoUrl: data.profilePhotoUrl ?? null,
         newAdEmailOptIn: data.newAdEmailOptIn,
@@ -264,6 +288,11 @@ export async function POST(req: Request) {
           ? data.billingContactPostalCode?.trim() || null
           : null;
 
+      const authGivenStore =
+        data.billingAccountType === "CORPORATE" ? data.authorizedGivenName?.trim() ?? null : null;
+      const authFamilyStore =
+        data.billingAccountType === "CORPORATE" ? data.authorizedFamilyName?.trim() ?? null : null;
+
       const profile = await tx.memberProfile.upsert({
         where: { userId: created.id },
         update: {
@@ -284,6 +313,8 @@ export async function POST(req: Request) {
           billingContactTcKimlik: contactTcStore,
           billingContactAddressLine: contactAddrStore,
           billingContactPostalCode: contactPostalStore,
+          billingAuthorizedGivenName: authGivenStore,
+          billingAuthorizedFamilyName: authFamilyStore,
         },
         create: {
           userId: created.id,
@@ -304,6 +335,8 @@ export async function POST(req: Request) {
           billingContactTcKimlik: contactTcStore,
           billingContactAddressLine: contactAddrStore,
           billingContactPostalCode: contactPostalStore,
+          billingAuthorizedGivenName: authGivenStore,
+          billingAuthorizedFamilyName: authFamilyStore,
         },
       });
 

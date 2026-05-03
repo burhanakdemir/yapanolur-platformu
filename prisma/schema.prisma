@@ -261,6 +261,10 @@ model MemberProfile {
   billingTcKimlik     String?
   /** Kurumsal fatura: ticari ünvan */
   billingCompanyTitle String?
+  /** Kurumsal: yetkili kişi adı (halka açık profilde gösterilmez; ücretli iletişim / kendi profili) */
+  billingAuthorizedGivenName  String?
+  /** Kurumsal: yetkili kişi soyadı */
+  billingAuthorizedFamilyName String?
   /** Kurumsal: vergi dairesi adı */
   billingTaxOffice    String?
   /** Kurumsal: vergi numarası (10 hane) */

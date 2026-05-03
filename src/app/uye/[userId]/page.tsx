@@ -42,6 +42,9 @@ export default async function UyeProfilPage({ params, searchParams }: Props) {
           phone: true,
           province: true,
           district: true,
+          billingAccountType: true,
+          billingAuthorizedGivenName: true,
+          billingAuthorizedFamilyName: true,
           profession: { select: { name: true } },
         },
       },
@@ -81,6 +84,14 @@ export default async function UyeProfilPage({ params, searchParams }: Props) {
   });
   if (!initial) notFound();
 
+  const authorizedPersonLine =
+    user.memberProfile.billingAccountType === "CORPORATE"
+      ? [user.memberProfile.billingAuthorizedGivenName, user.memberProfile.billingAuthorizedFamilyName]
+          .map((s) => (typeof s === "string" ? s.trim() : ""))
+          .filter(Boolean)
+          .join(" ")
+      : "";
+
   const t =
     lang === "tr"
       ? {
@@ -99,6 +110,7 @@ export default async function UyeProfilPage({ params, searchParams }: Props) {
           workCategory: "Kategori",
           contactHint:
             "Telefon ve e-posta için aşağıdaki düğmeye tıklayın; gerekirse tek seferlik kredi ile görüntülenir.",
+          authorizedPerson: "Yetkili kişi",
         }
       : {
           home: "Home",
@@ -116,6 +128,7 @@ export default async function UyeProfilPage({ params, searchParams }: Props) {
           workCategory: "Category",
           contactHint:
             "Tap the button below for phone and email; a one-time credit fee may apply.",
+          authorizedPerson: "Authorized contact",
         };
 
   const qs = new URLSearchParams({ lang }).toString();
@@ -171,6 +184,12 @@ export default async function UyeProfilPage({ params, searchParams }: Props) {
             <span className="text-slate-500">{t.location}: </span>
             {[user.memberProfile.province, user.memberProfile.district].filter(Boolean).join(" · ") || "—"}
           </p>
+          {(viewerOwnsProfile || viewerIsAdmin) && authorizedPersonLine ? (
+            <p className="mt-3 rounded-lg border border-orange-100 bg-orange-50/90 px-3 py-2 text-sm text-orange-950">
+              <span className="font-semibold">{t.authorizedPerson}: </span>
+              {authorizedPersonLine}
+            </p>
+          ) : null}
           {!viewerOwnsProfile ? (
             <div className="mt-4 space-y-2">
               <p className="text-xs text-slate-600">{t.contactHint}</p>
