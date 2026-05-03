@@ -2,8 +2,8 @@ import { getAppUrl } from "@/lib/appUrl";
 import { displayAdDescription, displayAdTitle } from "@/lib/adTitleDisplay";
 import type { Lang } from "@/lib/i18n";
 
-const SITE_NAME_TR = "İlan ve İhale Platformu";
-const SITE_NAME_EN = "Listings & Auctions";
+const SITE_NAME_TR = "YapanOlur";
+const SITE_NAME_EN = "YapanOlur";
 
 /** Open Graph / Twitter için kısa düz metin (HTML yok). */
 function truncateForMeta(text: string, max = 155): string {

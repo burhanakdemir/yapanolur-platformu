@@ -95,7 +95,7 @@ type Dictionary = {
 
 export const dictionary: Record<Lang, Dictionary> = {
   tr: {
-    siteTitle: "İlan ve İhale Platformu",
+    siteTitle: "YapanOlur",
     siteDescription:
       "Mühendislik, şehir planlama, inşaat ve renovasyon ilanları için teklif platformu.",
     home: {
@@ -196,7 +196,7 @@ export const dictionary: Record<Lang, Dictionary> = {
     },
   },
   en: {
-    siteTitle: "Tender and Ad Platform",
+    siteTitle: "YapanOlur",
     siteDescription:
       "Bidding platform for engineering, urban planning, construction and renovation ads.",
     home: {

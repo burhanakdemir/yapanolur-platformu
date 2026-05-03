@@ -43,6 +43,14 @@ export async function generateMetadata(): Promise<Metadata> {
       title: "YapanOlur",
       statusBarStyle: "default",
     },
+    /** Bazı iOS sürümleri yalnızca bu etiketi okuyabiliyor; manifest ile aynı marka. */
+    other: {
+      "apple-mobile-web-app-title": "YapanOlur",
+    },
+    openGraph: {
+      siteName: "YapanOlur",
+      type: "website",
+    },
     ...siteVerificationMetadata(),
   };
 }

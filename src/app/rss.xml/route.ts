@@ -30,7 +30,7 @@ export async function GET() {
     items = [];
   }
 
-  const channelTitle = "İlan ve İhale Platformu — yeni ilanlar";
+  const channelTitle = "YapanOlur — yeni ilanlar";
   const channelLink = base;
   const description = "Onaylı ilanlar (RSS 2.0)";
 

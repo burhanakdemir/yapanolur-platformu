@@ -13,14 +13,14 @@ export function buildSiteGraphJsonLd(base: string): Record<string, unknown> {
       {
         "@type": "Organization",
         "@id": orgId,
-        name: "İlan ve İhale Platformu",
+        name: "YapanOlur",
         url: root,
         logo: `${root}${BRAND_LOGO_PATH}`,
       },
       {
         "@type": "WebSite",
         "@id": siteId,
-        name: "İlan ve İhale Platformu",
+        name: "YapanOlur",
         url: root,
         publisher: { "@id": orgId },
         inLanguage: ["tr-TR", "en-GB"],
