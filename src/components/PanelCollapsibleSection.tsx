@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 
 type Props = {
   sectionId: string;
@@ -23,6 +23,9 @@ export default function PanelCollapsibleSection({
   const [pinned, setPinned] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
 
+  /** Dokunmatik / kaba işaretçi: hover yok; içerik sürekli görünsün (arama formları kullanılabilsin). */
+  const [primaryInputNoHover, setPrimaryInputNoHover] = useState(false);
+
   useEffect(() => {
     queueMicrotask(() => {
       try {
@@ -36,6 +39,10 @@ export default function PanelCollapsibleSection({
     });
   }, [sectionId]);
 
+  useLayoutEffect(() => {
+    setPrimaryInputNoHover(window.matchMedia("(hover: none)").matches);
+  }, []);
+
   useEffect(() => {
     if (!storageReady) return;
     try {
@@ -45,7 +52,7 @@ export default function PanelCollapsibleSection({
     }
   }, [storageReady, pinned, sectionId]);
 
-  const open = pinned || hover;
+  const open = pinned || hover || primaryInputNoHover;
 
   return (
     <section

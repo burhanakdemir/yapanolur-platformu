@@ -1,4 +1,3 @@
-import Link from "next/link";
 import HomeBackButtonLink from "@/components/HomeBackButtonLink";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -128,12 +127,13 @@ export default async function UyeProfilPage({ params, searchParams }: Props) {
     <main className="mx-auto w-full max-w-lg space-y-6 p-6">
       <div className="flex flex-wrap items-center gap-2">
         <HomeBackButtonLink href={homeHref}>{t.home}</HomeBackButtonLink>
-        <Link className="chip inline-flex w-fit text-sm" href={projectSearchHref}>
+        {/* Tam sayfa geçiş: #proje-arama kaydırması ve /muhendis-ara yüklemesi istemci yönlendirmesinde güvenilir */}
+        <a className="chip inline-flex w-fit text-sm no-underline" href={projectSearchHref}>
           {t.projectSearch}
-        </Link>
-        <Link className="chip inline-flex w-fit text-sm" href={muhendisHref}>
+        </a>
+        <a className="chip inline-flex w-fit text-sm no-underline" href={muhendisHref}>
           {t.engineerSearch}
-        </Link>
+        </a>
       </div>
 
       {viewerOwnsProfile && !user.isMemberApproved ? (

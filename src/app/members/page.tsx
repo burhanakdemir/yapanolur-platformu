@@ -56,6 +56,7 @@ function MembersPageContent() {
   const [isUploading, setIsUploading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savedProfile, setSavedProfile] = useState<{
+    id: string;
     memberNumber: number;
     email: string;
     name: string | null;
@@ -1535,7 +1536,17 @@ function MembersPageContent() {
                 {photoUploading ? "Yükleniyor…" : "Profil fotoğrafı yükle"}
               </button>
             </div>
-            <p className="text-sm font-semibold text-slate-800">{d.memberPage.panelDocumentsHeading}</p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-slate-800">{d.memberPage.panelDocumentsHeading}</p>
+              {savedProfile?.id ? (
+                <Link
+                  href={lang === "en" ? `/uye/${savedProfile.id}?lang=en` : `/uye/${savedProfile.id}`}
+                  className="chip inline-flex w-fit shrink-0 items-center gap-1 border-orange-300/90 bg-white text-xs font-medium text-orange-900 no-underline shadow-sm hover:border-orange-400 sm:text-sm"
+                >
+                  {lang === "tr" ? "← Profil sayfama dön" : "← Back to my profile"}
+                </Link>
+              ) : null}
+            </div>
             <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-2 rounded-lg border border-orange-200 bg-white p-2">
                 <div className="flex items-center justify-between gap-2">
