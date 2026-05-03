@@ -1325,46 +1325,46 @@ function MembersPageContent() {
             ) : null}
           </>
         ) : (
-          <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
-            <div>
-              <label htmlFor="member-given-name" className="mb-1 block text-xs font-semibold text-slate-600">
-                {billingAccountType === "CORPORATE" ? "Yetkili adı" : "Ad"}
-              </label>
-              <input
-                id="member-given-name"
-                name="givenName"
-                autoComplete="given-name"
-                className={`w-full border rounded-lg px-2.5 py-1.5 ${blockUntilFullyVerified ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-white"}`}
-                placeholder={billingAccountType === "CORPORATE" ? "Yetkili adı" : "Adınız"}
-                disabled={blockUntilFullyVerified}
-                required
-              />
+          <div className="flex flex-col gap-4">
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+              <div>
+                <label htmlFor="member-given-name" className="mb-1 block text-xs font-semibold text-slate-600">
+                  {billingAccountType === "CORPORATE" ? "Yetkili adı" : "Ad"}
+                </label>
+                <input
+                  id="member-given-name"
+                  name="givenName"
+                  autoComplete="given-name"
+                  className={`w-full border rounded-lg px-2.5 py-1.5 ${blockUntilFullyVerified ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-white"}`}
+                  placeholder={billingAccountType === "CORPORATE" ? "Yetkili adı" : "Adınız"}
+                  disabled={blockUntilFullyVerified}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="member-family-name" className="mb-1 block text-xs font-semibold text-slate-600">
+                  {billingAccountType === "CORPORATE" ? "Yetkili soyadı" : "Soyad"}
+                </label>
+                <input
+                  id="member-family-name"
+                  name="familyName"
+                  autoComplete="family-name"
+                  className={`w-full border rounded-lg px-2.5 py-1.5 ${blockUntilFullyVerified ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-white"}`}
+                  placeholder={billingAccountType === "CORPORATE" ? "Yetkili soyadı" : "Soyadınız"}
+                  disabled={blockUntilFullyVerified}
+                  required
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor="member-family-name" className="mb-1 block text-xs font-semibold text-slate-600">
-                {billingAccountType === "CORPORATE" ? "Yetkili soyadı" : "Soyad"}
-              </label>
-              <input
-                id="member-family-name"
-                name="familyName"
-                autoComplete="family-name"
-                className={`w-full border rounded-lg px-2.5 py-1.5 ${blockUntilFullyVerified ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-white"}`}
-                placeholder={billingAccountType === "CORPORATE" ? "Yetkili soyadı" : "Soyadınız"}
-                disabled={blockUntilFullyVerified}
-                required
-              />
-            </div>
+            <input
+              name="password"
+              type="password"
+              className={`w-full border rounded-lg px-2.5 py-1.5 ${blockUntilFullyVerified ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-white"}`}
+              placeholder="Şifre"
+              disabled={blockUntilFullyVerified}
+              required
+            />
           </div>
-        )}
-        {!isReadonly && (
-          <input
-            name="password"
-            type="password"
-            className={`w-full border rounded-lg px-2.5 py-1.5 ${blockUntilFullyVerified ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-white"}`}
-            placeholder="Şifre"
-            disabled={blockUntilFullyVerified}
-            required
-          />
         )}
         {!isReadonly && signupPathChoice !== null && (
           <input type="hidden" name="billingAccountType" value={billingAccountType} />
