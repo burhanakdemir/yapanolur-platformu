@@ -88,45 +88,49 @@ export default function SignupTypeModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-[81] flex max-h-[min(90vh,32rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-orange-200 bg-white shadow-xl"
+        className="relative z-[81] flex max-h-[min(90vh,32rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border-2 border-orange-500/45 bg-orange-50/90 shadow-xl"
       >
-        <div className="flex items-start justify-between gap-3 border-b border-orange-100 px-5 py-4 sm:px-6">
-          <h2 id={titleId} className="text-lg font-bold leading-tight text-orange-950 sm:text-xl">
+        <div className="flex items-start justify-between gap-3 border-b border-white/20 bg-gradient-to-r from-orange-500 to-orange-400 px-5 py-4 sm:px-6">
+          <h2 id={titleId} className="text-lg font-bold leading-tight text-white/90 sm:text-xl">
             Kayıt türü seçin
           </h2>
           <button
             type="button"
             onClick={() => onDismissToIndividual()}
-            className="shrink-0 rounded-lg p-2 text-sm font-semibold text-slate-600 transition hover:bg-orange-50 hover:text-orange-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+            className="shrink-0 rounded-lg p-2 text-sm font-semibold text-white/90 transition hover:bg-white/15 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
             aria-label="Kapat (bireysel kayıt)"
           >
             ✕
           </button>
         </div>
-        <div className="overflow-y-auto px-5 py-4 sm:px-6 sm:py-5">
-          <p className="mb-4 text-sm leading-relaxed text-slate-600">
-            Devam etmek için <strong className="text-slate-800">bireysel</strong> veya{" "}
-            <strong className="text-slate-800">kurumsal</strong> üyelik seçin. Seçiminizi sonradan bu
+        <div className="overflow-y-auto bg-orange-50/70 px-5 py-4 sm:px-6 sm:py-5">
+          <p className="mb-4 text-sm leading-relaxed text-orange-950/75">
+            Devam etmek için <strong className="font-semibold text-orange-950">bireysel</strong> veya{" "}
+            <strong className="font-semibold text-orange-950">kurumsal</strong> üyelik seçin. Seçiminizi sonradan bu
             ekrandan değiştirebilirsiniz (e-posta / telefon doğrulaması etkilenmez).
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <button
               type="button"
               onClick={() => onSelectIndividual()}
-              className="flex min-h-[5.5rem] flex-col items-start justify-center rounded-xl border-2 border-orange-200 bg-orange-50/80 px-4 py-4 text-left transition hover:border-orange-400 hover:bg-orange-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+              className="group flex min-h-[5.5rem] flex-col items-start justify-center rounded-[10px] border-2 border-orange-400/80 bg-orange-100/90 px-4 py-4 text-left shadow-sm transition hover:border-transparent hover:bg-gradient-to-r hover:from-orange-500 hover:to-orange-400 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
             >
-              <span className="text-base font-bold text-orange-950">Bireysel kayıt</span>
-              <span className="mt-1 text-xs font-normal text-slate-600">
+              <span className="text-base font-bold text-orange-950 group-hover:text-white/90">
+                Bireysel kayıt
+              </span>
+              <span className="mt-1 text-xs font-normal text-orange-900/70 group-hover:text-white/80">
                 TC kimlik ve bireysel fatura bilgileri ile mevcut form.
               </span>
             </button>
             <button
               type="button"
               onClick={() => onSelectCorporate()}
-              className="flex min-h-[5.5rem] flex-col items-start justify-center rounded-xl border-2 border-orange-200 bg-white px-4 py-4 text-left transition hover:border-orange-400 hover:bg-orange-50/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+              className="group flex min-h-[5.5rem] flex-col items-start justify-center rounded-[10px] border-2 border-orange-400/80 bg-orange-50/95 px-4 py-4 text-left shadow-sm transition hover:border-transparent hover:bg-gradient-to-r hover:from-orange-500 hover:to-orange-400 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
             >
-              <span className="text-base font-bold text-orange-950">Kurumsal kayıt</span>
-              <span className="mt-1 text-xs font-normal text-slate-600">
+              <span className="text-base font-bold text-orange-950 group-hover:text-white/90">
+                Kurumsal kayıt
+              </span>
+              <span className="mt-1 text-xs font-normal text-orange-900/70 group-hover:text-white/80">
                 Yetkili kişi adı-soyadı ve şirket fatura bilgileri.
               </span>
             </button>
