@@ -18,7 +18,7 @@ export function getClientIp(req: Request): string {
   return "unknown";
 }
 
-export type RateLimitBucket =
+type RateLimitBucket =
   | "login"
   | "register"
   | "otp"

@@ -43,13 +43,13 @@ const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
   FAILED: "Başarısız",
 };
 
-export type ExecutiveAlert = {
+type ExecutiveAlert = {
   severity: "warning" | "info";
   title: string;
   detail: string;
 };
 
-export type ExecutiveDashboardData = {
+type ExecutiveDashboardData = {
   /** URL / seçimle uyumlu; geçersiz özel tarihte `month` olabilir. */
   period: ExecutivePeriod;
   periodRange: IstRange;

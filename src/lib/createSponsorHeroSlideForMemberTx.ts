@@ -1,6 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 
-export type SponsorHeroMemberFields = {
+type SponsorHeroMemberFields = {
   userId: string;
   memberNumber: number;
   name: string | null;

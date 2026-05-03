@@ -2,7 +2,7 @@ import { createHmac } from "node:crypto";
 import { logIletiMerkeziApiFailure, logIletiMerkeziSuccessDebug } from "@/lib/iletMerkeziSafeLog";
 
 /** Resmi JSON endpoint — yardım: iletimerkezi.com JSON SMS API */
-export const ILETI_MERKEZI_SEND_SMS_JSON_URL = "https://api.iletimerkezi.com/v1/send-sms/json";
+const ILETI_MERKEZI_SEND_SMS_JSON_URL = "https://api.iletimerkezi.com/v1/send-sms/json";
 
 /**
  * Laravel macellan/ileti-merkezi ile uyumlu: hash_hmac('sha256', apiKey, apiSecret)
@@ -13,7 +13,7 @@ export function iletiMerkeziAuthenticationHash(apiKey: string, apiSecret: string
 }
 
 /** E.164 → İleti Merkezi’nin beklediği rakam dizisi (örn. 905551234567). */
-export function phoneDigitsForIletiMerkezi(phoneE164: string): string {
+function phoneDigitsForIletiMerkezi(phoneE164: string): string {
   return phoneE164.replace(/\D/g, "");
 }
 
@@ -21,7 +21,7 @@ export function phoneDigitsForIletiMerkezi(phoneE164: string): string {
  * macellan/ileti-merkezi ile aynı: `d/m/Y H:i`, anında gönderim için şu an (TR saati).
  * İstekte bu alan yoksa bazı hesaplarda JSON API kabul etmeyebilir.
  */
-export function iletiMerkeziSendDateTimeNow(): string {
+function iletiMerkeziSendDateTimeNow(): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Istanbul",
     day: "2-digit",

@@ -21,7 +21,7 @@ export function stringifyNewAdEmailWebhookUrls(urls: string[]): string {
   );
 }
 
-export function isAllowedWebhookUrlForPolicy(url: string): boolean {
+function isAllowedWebhookUrlForPolicy(url: string): boolean {
   try {
     const u = new URL(url);
     return u.protocol === "https:" || u.protocol === "http:";

@@ -1,7 +1,7 @@
 import path from "path";
 import { ALLOWED_UPLOAD_EXTENSIONS, MAX_UPLOAD_BYTES } from "@/lib/uploadConstraints";
 
-export type ParsedUploadPayload =
+type ParsedUploadPayload =
   | { ok: true; filename: string; buffer: Buffer }
   | { ok: false; status: number; error: string; code?: string };
 

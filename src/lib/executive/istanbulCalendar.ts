@@ -14,7 +14,7 @@ export function istYmdNow(now = new Date()): string {
 }
 
 /** ISO hafta günü: Pazartesi=1 … Pazar=7 (İstanbul takvimine göre). */
-export function istIsoWeekdayMon1Sun7(ymd: string): number {
+function istIsoWeekdayMon1Sun7(ymd: string): number {
   const [y, m, d] = ymd.split("-").map(Number);
   const inst = new Date(Date.UTC(y, m - 1, d, 12 - 3, 0, 0, 0));
   const short = new Intl.DateTimeFormat("en-US", {
@@ -38,13 +38,13 @@ export function addCalendarDaysYmd(ymd: string, delta: number): string {
 }
 
 /** İstanbul YYYY-MM-DD gece yarısının UTC karşılığı (TRT +3). */
-export function istMidnightUtc(ymd: string): Date {
+function istMidnightUtc(ymd: string): Date {
   const [y, m, d] = ymd.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d, -3, 0, 0, 0));
 }
 
 /** Haftanın Pazartesi günü (aynı ISO hafta, İstanbul). */
-export function istMondayOfWeekContaining(ymd: string): string {
+function istMondayOfWeekContaining(ymd: string): string {
   const wd = istIsoWeekdayMon1Sun7(ymd);
   return addCalendarDaysYmd(ymd, -(wd - 1));
 }
@@ -57,7 +57,7 @@ export function istFirstDayOfMonth(ymd: string): string {
 }
 
 /** Sonraki ayın ilk günü YYYY-MM-DD (üst sınır exclusive için). */
-export function istFirstDayOfNextMonth(ymd: string): string {
+function istFirstDayOfNextMonth(ymd: string): string {
   const y = Number(ymd.slice(0, 4));
   const mo = Number(ymd.slice(5, 7));
   const nextFirst = new Date(Date.UTC(y, mo, 1));

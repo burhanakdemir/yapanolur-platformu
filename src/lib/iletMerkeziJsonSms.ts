@@ -6,19 +6,13 @@ import {
 } from "@/lib/iletMerkeziEnvNames";
 import { sendIletiMerkeziSignupOtp } from "@/lib/iletMerkeziSignupSms";
 
-export {
-  ILETI_MERKEZI_ENV_PASS,
-  ILETI_MERKEZI_ENV_SENDER,
-  ILETI_MERKEZI_ENV_USER,
-} from "@/lib/iletMerkeziEnvNames";
-
-export type IletiMerkeziJsonCredentials = {
+type IletiMerkeziJsonCredentials = {
   user: string;
   pass: string;
   sender: string;
 };
 
-export function getIletiMerkeziCredentialsFromEnv(): IletiMerkeziJsonCredentials | null {
+function getIletiMerkeziCredentialsFromEnv(): IletiMerkeziJsonCredentials | null {
   const user = process.env[ILETI_MERKEZI_ENV_USER]?.trim() ?? "";
   const pass = process.env[ILETI_MERKEZI_ENV_PASS]?.trim() ?? "";
   const sender = process.env[ILETI_MERKEZI_ENV_SENDER]?.trim() ?? "";

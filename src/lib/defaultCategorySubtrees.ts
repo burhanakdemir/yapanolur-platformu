@@ -6,7 +6,7 @@ import { DEFAULT_MAIN_CATEGORY_NAMES } from "@/lib/mainCategoryNames";
  * Varsayılan alt listeler boş; alt kategorileri yönetim panelinden ekleyin.
  * `syncDefaultCategorySubtrees` yalnızca bu dizilerde tanımlı (ve DB’de olmayan) altları ekler.
  */
-export const DEFAULT_CATEGORY_SUBTREES: ReadonlyArray<{
+const DEFAULT_CATEGORY_SUBTREES: ReadonlyArray<{
   parentName: string;
   children: readonly string[];
 }> = [

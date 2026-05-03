@@ -24,7 +24,7 @@ type BeforeInstallPromptEventPlus = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-export type HomePwaInstallEligibility = "sidebar-guest" | "sidebar-member";
+type HomePwaInstallEligibility = "sidebar-guest" | "sidebar-member";
 
 export default function HomePwaInstallCta({
   lang,

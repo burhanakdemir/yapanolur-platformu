@@ -16,7 +16,7 @@ async function fetchAdminSettingsRow(prisma: PrismaClient) {
   });
 }
 
-export async function getSignupSmsAdminConfig(prisma: PrismaClient) {
+async function getSignupSmsAdminConfig(prisma: PrismaClient) {
   return fetchAdminSettingsRow(prisma);
 }
 

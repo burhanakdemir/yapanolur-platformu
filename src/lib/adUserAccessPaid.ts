@@ -2,7 +2,7 @@
  * Aynı ilanda detay görüntüleme veya teklif erişimi ücretlerinden biri ödendiyse
  * diğeri de aynı ilan için tekrar istenmez.
  */
-export type AdAccessPaidFields = {
+type AdAccessPaidFields = {
   detailPaidAt: Date | null;
   bidAccessPaidAt: Date | null;
 };

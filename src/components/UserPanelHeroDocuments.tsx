@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-export type HeroDoc = { id: string; type: string; fileUrl: string };
+type HeroDoc = { id: string; type: string; fileUrl: string };
 
 type Labels = {
   diploma: string;

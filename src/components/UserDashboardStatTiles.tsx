@@ -5,16 +5,16 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { displayAdTitle } from "@/lib/adTitleDisplay";
 
-export type StatListingRow = { id: string; title: string; status: string };
-export type StatBidRow = {
+type StatListingRow = { id: string; title: string; status: string };
+type StatBidRow = {
   id: string;
   amountTry: number;
   createdAt: string;
   adId: string;
   adTitle: string;
 };
-export type StatPendingRow = { id: string; title: string; createdAt: string };
-export type StatPaymentRow = {
+type StatPendingRow = { id: string; title: string; createdAt: string };
+type StatPaymentRow = {
   id: string;
   amountTry: number;
   createdAt: string;

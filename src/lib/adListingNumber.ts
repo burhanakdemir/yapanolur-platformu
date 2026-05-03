@@ -1,14 +1,14 @@
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 
 /** Tam sayi (yalnizca rakamlar); aralik 234–99999999. */
-export const LISTING_NUMBER_MIN = 234;
-export const LISTING_NUMBER_MAX = 99_999_999;
+const LISTING_NUMBER_MIN = 234;
+const LISTING_NUMBER_MAX = 99_999_999;
 
 /**
  * Yeni ilan: mevcut en buyuk listingNumber + 1 (bos tabloda 234).
  * Gecmis veriler migrate ile tek sira haline getirilir; uygulama toplu degistirmez.
  */
-export async function nextListingNumber(tx: Prisma.TransactionClient): Promise<number> {
+async function nextListingNumber(tx: Prisma.TransactionClient): Promise<number> {
   const last = await tx.ad.findFirst({
     orderBy: { listingNumber: "desc" },
     select: { listingNumber: true },

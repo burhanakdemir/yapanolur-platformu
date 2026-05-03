@@ -1,10 +1,15 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "ignore": ["src/generated/**"],
+  "ignore": [
+    "src/generated/**",
+    "public/sw.js",
+    "mobile/android/app/src/main/assets/public/**"
+  ],
   "ignoreDependencies": [
     "@prisma/client",
     "@capacitor/android",
-    "@capacitor/core"
+    "@capacitor/core",
+    "process"
   ],
   "ignoreBinaries": ["powershell"]
 }

@@ -1,6 +1,21 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+
+function subscribeHoverNone(onStoreChange: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const mq = window.matchMedia("(hover: none)");
+  mq.addEventListener("change", onStoreChange);
+  return () => mq.removeEventListener("change", onStoreChange);
+}
+
+function snapshotHoverNone(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
+}
+
+function serverSnapshotHoverNone(): boolean {
+  return false;
+}
 
 type Props = {
   sectionId: string;
@@ -24,7 +39,11 @@ export default function PanelCollapsibleSection({
   const [storageReady, setStorageReady] = useState(false);
 
   /** Dokunmatik / kaba işaretçi: hover yok; içerik sürekli görünsün (arama formları kullanılabilsin). */
-  const [primaryInputNoHover, setPrimaryInputNoHover] = useState(false);
+  const primaryInputNoHover = useSyncExternalStore(
+    subscribeHoverNone,
+    snapshotHoverNone,
+    serverSnapshotHoverNone,
+  );
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -38,10 +57,6 @@ export default function PanelCollapsibleSection({
       setStorageReady(true);
     });
   }, [sectionId]);
-
-  useLayoutEffect(() => {
-    setPrimaryInputNoHover(window.matchMedia("(hover: none)").matches);
-  }, []);
 
   useEffect(() => {
     if (!storageReady) return;

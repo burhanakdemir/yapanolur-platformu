@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { normalizePhoneInputToE164 } from "@/lib/intlPhone";
 import {
   OTP_PURPOSE_SIGNUP_PHONE,
-  OTP_SIGNUP_PHONE_TTL_MINUTES,
+  OTP_SIGNUP_EMAIL_TTL_MINUTES,
   verifyAndConsumeOtp,
 } from "@/lib/otp";
 import { formatSignupOtpTtlTr } from "@/lib/signupOtpTtl";
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
     if (!ok) {
       return NextResponse.json(
         {
-          error: `Telefon kodu hatalı veya süresi dolmuş (${formatSignupOtpTtlTr(OTP_SIGNUP_PHONE_TTL_MINUTES)}). Yeni kod isteyip tekrar deneyin.`,
+          error: `Telefon kodu hatalı veya süresi dolmuş (${formatSignupOtpTtlTr(OTP_SIGNUP_EMAIL_TTL_MINUTES)}). Yeni kod isteyip tekrar deneyin.`,
         },
         { status: 400 },
       );

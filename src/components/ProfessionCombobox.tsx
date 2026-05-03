@@ -3,9 +3,9 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
-export type ProfessionOption = { id: string; name: string };
+type ProfessionOption = { id: string; name: string };
 
-export type ProfessionComboboxLabels = {
+type ProfessionComboboxLabels = {
   placeholder: string;
   noResults: string;
   clear: string;

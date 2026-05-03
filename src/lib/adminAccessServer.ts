@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { verifySessionToken, type SessionPayload } from "@/lib/auth";
+import { verifySessionToken } from "@/lib/auth";
 import { ADMIN_GATE_COOKIE, verifyAdminGateToken } from "@/lib/adminGate";
 import { isStaffAdminRole } from "@/lib/adminRoles";
 
@@ -11,8 +11,4 @@ export async function hasFullAdminAccess(): Promise<boolean> {
     return session?.adminTotp === true;
   }
   return verifyAdminGateToken(c.get(ADMIN_GATE_COOKIE)?.value);
-}
-
-export function staffSessionNeedsTotp(session: SessionPayload | null): boolean {
-  return isStaffAdminRole(session?.role) && session?.adminTotp !== true;
 }

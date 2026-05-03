@@ -3,7 +3,7 @@
  * Middleware webpack bazen `process.env.NEXT_PUBLIC_*` okumasını boş sabitler; `env` ile bundle'a yazılır.
  */
 
-export function normalizeAdminPanelPathPrefix(raw: string): string {
+function normalizeAdminPanelPathPrefix(raw: string): string {
   const t = raw.trim();
   if (!t) return "";
   const withSlash = t.startsWith("/") ? t : `/${t}`;
@@ -11,7 +11,7 @@ export function normalizeAdminPanelPathPrefix(raw: string): string {
 }
 
 /** `.env` / süreç ortamından ham değer (normalize öncesi). */
-export function rawAdminPanelPathFromEnv(): string {
+function rawAdminPanelPathFromEnv(): string {
   if (!Object.prototype.hasOwnProperty.call(process.env, "NEXT_PUBLIC_ADMIN_PANEL_PATH")) {
     /** Anahtar yok: üretim dahil varsayılan gizli taban. Klasik `/admin` için ortamda `NEXT_PUBLIC_ADMIN_PANEL_PATH=` (boş) tanımlayın. */
     return "/a/yonetici";

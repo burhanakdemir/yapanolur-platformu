@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { isAllowedUploadUrl } from "@/lib/uploadUrl";
 
-export const WORK_TITLE_MAX = 200;
-export const WORK_DESCRIPTION_MAX = 2000;
-export const WORK_BLOCK_PARCEL_MAX = 120;
+const WORK_TITLE_MAX = 200;
+const WORK_DESCRIPTION_MAX = 2000;
+const WORK_BLOCK_PARCEL_MAX = 120;
 
 const MAX_DURATION_YEARS = 50;
 const MAX_DURATION_MONTHS = 11;
@@ -28,7 +28,7 @@ const baseFields = {
   imageUrls: z.array(imageUrlSchema).max(3).optional(),
 };
 
-export const memberWorkExperienceCreateSchema = z
+const memberWorkExperienceCreateSchema = z
   .object(baseFields)
   .superRefine((data, ctx) => {
     if (data.durationYears === 0 && data.durationMonths === 0 && data.durationDays === 0) {
@@ -39,8 +39,6 @@ export const memberWorkExperienceCreateSchema = z
       });
     }
   });
-
-export type MemberWorkExperienceCreateInput = z.infer<typeof memberWorkExperienceCreateSchema>;
 
 export function normalizeImageSlots(urls: string[] | undefined): [string | null, string | null, string | null] {
   const u = (urls ?? []).filter(Boolean).slice(0, 3);

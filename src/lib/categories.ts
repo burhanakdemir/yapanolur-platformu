@@ -6,7 +6,7 @@ import {
   LEGACY_MAIN_CATEGORY_RENAMES,
 } from "@/lib/mainCategoryNames";
 
-export type CategoryNode = {
+type CategoryNode = {
   id: string;
   name: string;
   imageUrl: string | null;
@@ -14,8 +14,6 @@ export type CategoryNode = {
   sortOrder: number;
   children: CategoryNode[];
 };
-
-export { DEFAULT_MAIN_CATEGORY_NAMES } from "@/lib/mainCategoryNames";
 
 async function renameLegacyMainCategoryNames(): Promise<void> {
   for (const [from, to] of LEGACY_MAIN_CATEGORY_RENAMES) {

@@ -37,7 +37,7 @@ function isKnownObjectStorageHost(hostname: string): boolean {
   return false;
 }
 
-export function allowedUploadHosts(): string[] {
+function allowedUploadHosts(): string[] {
   const fromEnv = (process.env.ALLOWED_UPLOAD_HOSTS ?? "")
     .split(",")
     .map((s) => s.trim())

@@ -12,7 +12,7 @@ function looksLikeBareEmail(s: string): boolean {
 /**
  * `From` başlığından MAIL FROM için düz adres çıkarır (`İsim <x@y.com>` veya `x@y.com`).
  */
-export function smtpBareEmailFromHeader(fromField: string): string | null {
+function smtpBareEmailFromHeader(fromField: string): string | null {
   const t = fromField.trim();
   if (!t) return null;
   const m = t.match(/<([^<>]+)>/);

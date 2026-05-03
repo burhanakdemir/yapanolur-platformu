@@ -4,7 +4,7 @@ import { shouldUseSecureCookie } from "@/lib/cookieSecure";
 
 /** Üye (MEMBER) oturumu — sunucu tarafı hareketsizlik süresi (JWT `lastActivity`). */
 
-export function getMemberIdleTimeoutMs(): number {
+function getMemberIdleTimeoutMs(): number {
   const raw = process.env.MEMBER_IDLE_TIMEOUT_MINUTES?.trim();
   const n = raw ? Number(raw) : NaN;
   if (Number.isFinite(n) && n >= 5 && n <= 24 * 60) {

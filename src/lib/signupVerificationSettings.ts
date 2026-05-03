@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 
-export type SignupVerificationFlags = {
+type SignupVerificationFlags = {
   signupEmailVerificationRequired: boolean;
   signupPhoneVerificationRequired: boolean;
 };

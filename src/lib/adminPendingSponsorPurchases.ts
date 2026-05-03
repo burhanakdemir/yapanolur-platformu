@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 
 /** Yönetici sponsor onayı listesi — API ve RSC aynı seçimi kullanır. */
-export function pendingSponsorPurchasesSelect() {
+function pendingSponsorPurchasesSelect() {
   return {
     id: true,
     periodDays: true,

@@ -1,4 +1,4 @@
-export type DashboardRange = "today" | "7d" | "30d";
+type DashboardRange = "today" | "7d" | "30d";
 
 export function getDashboardRange(value?: string): DashboardRange {
   if (value === "today" || value === "7d" || value === "30d") return value;
@@ -17,7 +17,7 @@ export function getRangeStart(range: DashboardRange) {
 }
 
 /** YYYY-MM-DD (yerel takvim) */
-export function parseYmd(s: string | undefined): Date | null {
+function parseYmd(s: string | undefined): Date | null {
   if (!s) return null;
   const t = s.trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return null;
@@ -31,26 +31,26 @@ export function parseYmd(s: string | undefined): Date | null {
   return dt;
 }
 
-export function formatYmdLocal(d: Date): string {
+function formatYmdLocal(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
 
-export function startOfDayLocal(d: Date): Date {
+function startOfDayLocal(d: Date): Date {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
   return x;
 }
 
-export function endOfDayLocal(d: Date): Date {
+function endOfDayLocal(d: Date): Date {
   const x = new Date(d);
   x.setHours(23, 59, 59, 999);
   return x;
 }
 
-export type DashboardDateRangeResult = {
+type DashboardDateRangeResult = {
   since: Date;
   until: Date;
   fromIso: string;

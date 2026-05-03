@@ -61,7 +61,5 @@ function mergeNextDevAllowedOriginsIntoEnv() {
 }
 
 module.exports = {
-  listLanIPv4,
-  listLanIPv6,
   mergeNextDevAllowedOriginsIntoEnv,
 };

@@ -93,9 +93,3 @@ export class DatabaseConnectionError extends Error {
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
-
-export function toDatabaseConnectionError(error: unknown): DatabaseConnectionError {
-  const wrapped = new DatabaseConnectionError();
-  (wrapped as Error & { cause?: unknown }).cause = error;
-  return wrapped;
-}

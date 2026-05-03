@@ -2,7 +2,7 @@ import type { PrismaClient } from "@/generated/prisma/client";
 
 import { computeMemberStarScore } from "@/lib/memberRating";
 
-export type MemberRatingLiker = {
+type MemberRatingLiker = {
   id: string;
   memberNumber: number;
   name: string | null;

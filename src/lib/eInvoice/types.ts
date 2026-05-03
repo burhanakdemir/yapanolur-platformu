@@ -13,13 +13,6 @@ export type EInvoiceBuyerSnapshot = {
   billingPostalCode: string | null;
 };
 
-export type EInvoiceLineItem = {
-  description: string;
-  quantity: number;
-  unitPriceTry: number;
-  totalTry: number;
-};
-
 export type IssueCreditTopUpInput = {
   paymentOrderId: string;
   creditInvoiceRequestId: string;

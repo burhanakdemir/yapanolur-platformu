@@ -1,6 +1,6 @@
 /** GA4 / GTM yoksa bile `window` CustomEvent ile dinlenebilir; `gtag` varsa event gönderilir. */
 
-export type PwaInstallTrackEvent =
+type PwaInstallTrackEvent =
   | "pwa_cta_click"
   | "pwa_modal_open"
   | "pwa_android_install_click"

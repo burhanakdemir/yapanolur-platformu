@@ -10,7 +10,7 @@ import { apiErrorMessage, apiErrorMessageWithIssues } from "@/lib/apiErrorMessag
 import { clientApiUrl } from "@/lib/clientApi";
 import { uploadMemberImage } from "@/lib/uploadMemberImage";
 
-export type WorkExperienceItem = {
+type WorkExperienceItem = {
   id: string;
   title: string;
   description: string;

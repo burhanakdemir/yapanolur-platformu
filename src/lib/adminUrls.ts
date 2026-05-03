@@ -42,10 +42,6 @@ export function adminBrowserPathToInternal(pathname: string): string {
   return pathname;
 }
 
-export function isLegacyAdminBrowserPath(pathname: string): boolean {
-  return pathname === "/admin" || pathname === "/admin/" || pathname.startsWith("/admin/");
-}
-
 /** İstemci: mevcut route yönetici arayüzü mü (yer işaretleri / footer)? */
 export function isAdminSectionPathname(pathname: string | null | undefined): boolean {
   if (!pathname) return false;

@@ -23,11 +23,11 @@ function isValidGuestEmail(email: string): boolean {
   return email.length <= 320 && GUEST_EMAIL_RE.test(email);
 }
 
-export function generateVisitorKey(): string {
+function generateVisitorKey(): string {
   return randomBytes(20).toString("hex");
 }
 
-export async function findActiveConversation(
+async function findActiveConversation(
   session: SessionPayload | null,
   visitorKey: string | null,
 ): Promise<SupportConversation | null> {

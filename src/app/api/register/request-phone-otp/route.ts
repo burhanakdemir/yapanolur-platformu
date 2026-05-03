@@ -6,7 +6,7 @@ import {
   assertOtpRateOk,
   generateSixDigitCode,
   OTP_PURPOSE_SIGNUP_PHONE,
-  OTP_SIGNUP_PHONE_TTL_MINUTES,
+  OTP_SIGNUP_EMAIL_TTL_MINUTES,
   saveOtpChallenge,
 } from "@/lib/otp";
 import { normalizePhoneInputToE164 } from "@/lib/intlPhone";
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         ok: true,
         verificationDisabled: true,
-        otpTtlMinutes: OTP_SIGNUP_PHONE_TTL_MINUTES,
+        otpTtlMinutes: OTP_SIGNUP_EMAIL_TTL_MINUTES,
         smsSent: false,
         hint: "Site yöneticisi telefon doğrulamasını kapattı; kayıt için SMS OTP gerekmez.",
       });
@@ -94,11 +94,11 @@ export async function POST(req: Request) {
       );
     }
 
-    await saveOtpChallenge(prisma, OTP_PURPOSE_SIGNUP_PHONE, target, code, OTP_SIGNUP_PHONE_TTL_MINUTES);
+    await saveOtpChallenge(prisma, OTP_PURPOSE_SIGNUP_PHONE, target, code, OTP_SIGNUP_EMAIL_TTL_MINUTES);
 
     const res = NextResponse.json({
       ok: true,
-      otpTtlMinutes: OTP_SIGNUP_PHONE_TTL_MINUTES,
+      otpTtlMinutes: OTP_SIGNUP_EMAIL_TTL_MINUTES,
       smsSent: smsResult.sent,
       channel: smsResult.channel,
       hint: smsResult.sent

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /** Vitrin süre seçenekleri (gün): 3, 5, bir hafta, 15, bir ay */
 export const SHOWCASE_DAY_VALUES = [3, 5, 7, 15, 30] as const;
-export type ShowcaseDayValue = (typeof SHOWCASE_DAY_VALUES)[number];
+type ShowcaseDayValue = (typeof SHOWCASE_DAY_VALUES)[number];
 
 const allowed = new Set<number>(SHOWCASE_DAY_VALUES);
 

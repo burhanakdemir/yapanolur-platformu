@@ -19,7 +19,7 @@ export type AdminNavGroup = {
   sections: AdminNavSection[];
 };
 
-export type AdminQuickLink = {
+type AdminQuickLink = {
   href: string;
   label: string;
   superOnly?: boolean;
@@ -235,10 +235,6 @@ export const ADMIN_SECTION_GROUPS: AdminNavGroup[] = [
     ],
   },
 ];
-
-export function flattenAdminSections(): AdminNavSection[] {
-  return ADMIN_SECTION_GROUPS.flatMap((g) => g.sections);
-}
 
 /** Süper dışı panellerde ödeme sağlayıcı vb. bölümleri düşürür. */
 export function filterNavGroupsByMode(

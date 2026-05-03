@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     if (level === "provinces") {
       try {
         const res = await fetch(`${BASE}/provinces`, {
-          cache: "force-cache",
+          next: { revalidate: 60 * 60 * 24 },
           signal: AbortSignal.timeout(FETCH_MS),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);

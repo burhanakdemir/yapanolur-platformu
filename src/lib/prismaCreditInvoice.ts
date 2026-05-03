@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 const STALE_CLIENT_HINT =
   "[credit-invoice] Prisma semasi guncel degil veya migration uygulanmadi. Calistirin: npx prisma generate && npx prisma migrate dev";
 
-export type CreditInvoiceRequestDelegate = PrismaClient["creditInvoiceRequest"];
+type CreditInvoiceRequestDelegate = PrismaClient["creditInvoiceRequest"];
 
 /**
  * Eski `node_modules` veya `prisma generate` calismamis ortamda delegate runtime'da yok olabilir.

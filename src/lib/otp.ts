@@ -18,14 +18,11 @@ export const OTP_PURPOSE_SIGNUP_PHONE = "signup_phone";
 /** Kayıt e-posta OTP geçerlilik süresi (dakika); `SIGNUP_OTP_TTL_MINUTES` ile yapılandırılır. */
 export const OTP_SIGNUP_EMAIL_TTL_MINUTES = getSignupOtpTtlMinutes();
 
-/** Kayıt telefon OTP — e-posta ile aynı süre. */
-export const OTP_SIGNUP_PHONE_TTL_MINUTES = OTP_SIGNUP_EMAIL_TTL_MINUTES;
-
 export function generateSixDigitCode(): string {
   return String(randomInt(0, 1_000_000)).padStart(6, "0");
 }
 
-export function hashOtp(target: string, purpose: string, code: string): string {
+function hashOtp(target: string, purpose: string, code: string): string {
   return createHash("sha256")
     .update(`${getOtpPepper()}:${purpose}:${target}:${code}`)
     .digest("hex");
@@ -81,42 +78,5 @@ export async function verifyAndConsumeOtp(
   const ok = row.codeHash === hashOtp(target, purpose, code.trim());
   if (!ok) return false;
   await prisma.otpChallenge.deleteMany({ where: { purpose, target } });
-  return true;
-}
-
-/** Uye kayitta e-posta ve telefon OTP birlikte dogrulanir (biri yanlissa ikisi de kalir). */
-export async function verifyAndConsumeSignupOtps(
-  prisma: PrismaClient,
-  params: {
-    email: string;
-    emailCode: string;
-    phoneE164: string;
-    phoneCode: string;
-  },
-): Promise<boolean> {
-  const emailTarget = params.email.toLowerCase().trim();
-  const rowE = await prisma.otpChallenge.findFirst({
-    where: {
-      purpose: OTP_PURPOSE_SIGNUP_EMAIL,
-      target: emailTarget,
-      expiresAt: { gt: new Date() },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-  const rowP = await prisma.otpChallenge.findFirst({
-    where: {
-      purpose: OTP_PURPOSE_SIGNUP_PHONE,
-      target: params.phoneE164,
-      expiresAt: { gt: new Date() },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-  if (!rowE || !rowP) return false;
-  const okE = rowE.codeHash === hashOtp(emailTarget, OTP_PURPOSE_SIGNUP_EMAIL, params.emailCode.trim());
-  const okP =
-    rowP.codeHash === hashOtp(params.phoneE164, OTP_PURPOSE_SIGNUP_PHONE, params.phoneCode.trim());
-  if (!okE || !okP) return false;
-  await prisma.otpChallenge.delete({ where: { id: rowE.id } });
-  await prisma.otpChallenge.delete({ where: { id: rowP.id } });
   return true;
 }

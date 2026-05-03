@@ -17,7 +17,7 @@ function normalizeProvinceName(v: string): string {
   return v.trim();
 }
 
-export async function resolveAdminProvinceDecision(
+async function resolveAdminProvinceDecision(
   session: SessionPayload | null,
 ): Promise<ScopeDecision> {
   const enabled = isAdminProvinceScopingEnabled();

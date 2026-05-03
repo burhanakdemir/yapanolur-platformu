@@ -6,7 +6,7 @@ const SITE_NAME_TR = "İlan ve İhale Platformu";
 const SITE_NAME_EN = "Listings & Auctions";
 
 /** Open Graph / Twitter için kısa düz metin (HTML yok). */
-export function truncateForMeta(text: string, max = 155): string {
+function truncateForMeta(text: string, max = 155): string {
   const t = text.replace(/\s+/g, " ").trim();
   if (t.length <= max) return t;
   return `${t.slice(0, max - 1).trim()}…`;
@@ -60,7 +60,7 @@ export function adDetailMetaStrings(
   return { pageTitle, description: desc || `${noLabel} ${ad.listingNumber}` };
 }
 
-export type HomeTabMeta = "live" | "upcoming" | "expired";
+type HomeTabMeta = "live" | "upcoming" | "expired";
 
 /** Ana sayfa `?categoryId=` / `tab` / konum filtreleri için başlık ve açıklama. */
 export function homeSearchMetaStrings(
@@ -145,5 +145,3 @@ export function homeSearchMetaStrings(
     description: truncateForMeta(description, 160),
   };
 }
-
-export { SITE_NAME_TR, SITE_NAME_EN };

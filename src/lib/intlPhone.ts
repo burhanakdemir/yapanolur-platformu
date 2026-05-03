@@ -18,7 +18,7 @@ export function flagEmoji(iso2: string): string {
   return String.fromCodePoint(A + a - 65, A + b - 65);
 }
 
-export type CountryDialOption = { iso: CountryCode; dial: string; label: string };
+type CountryDialOption = { iso: CountryCode; dial: string; label: string };
 
 let cachedList: CountryDialOption[] | null = null;
 
@@ -69,12 +69,6 @@ export function tryFormatE164(countryIso: CountryCode, nationalRaw: string): str
   } catch {
     return null;
   }
-}
-
-export function isOptionalPhoneValid(e164OrEmpty: string): boolean {
-  const s = e164OrEmpty.trim();
-  if (!s) return true;
-  return isValidPhoneNumber(s);
 }
 
 /**

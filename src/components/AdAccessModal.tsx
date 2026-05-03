@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { AdAccessAdSummary, type AdAccessSummaryAd } from "@/components/AdAccessAdSummary";
 
-export type AccessPayload = {
+type AccessPayload = {
   ad: AdAccessSummaryAd & { id: string };
   settings: {
     detailViewFeeEnabled: boolean;

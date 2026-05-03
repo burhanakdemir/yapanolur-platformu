@@ -1,4 +1,4 @@
-export type Bid = {
+type Bid = {
   id: string;
   amountTry: number;
   message: string | null;
@@ -11,7 +11,7 @@ export type Bid = {
   };
 };
 
-export type AdPhoto = {
+type AdPhoto = {
   id: string;
   url: string;
   sortOrder: number;

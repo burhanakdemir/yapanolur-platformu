@@ -1,4 +1,4 @@
-export type LogLevel = "info" | "warn" | "error";
+type LogLevel = "info" | "warn" | "error";
 
 const isProd = process.env.NODE_ENV === "production";
 

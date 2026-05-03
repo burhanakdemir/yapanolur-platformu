@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export type PanelCommentRow = {
+type PanelCommentRow = {
   id: string;
   body: string;
   createdAt: string;

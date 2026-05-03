@@ -1,7 +1,7 @@
 import { Prisma } from "@/generated/prisma/client";
 
-export const MEMBER_NUMBER_MIN = 124;
-export const MEMBER_NUMBER_MAX = 99_999_999;
+const MEMBER_NUMBER_MIN = 124;
+const MEMBER_NUMBER_MAX = 99_999_999;
 
 /**
  * Son uye numarasini bulur. Prisma istemcisi `memberNumber` alanini tanimas
