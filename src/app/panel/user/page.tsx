@@ -7,9 +7,6 @@ import { prisma } from "@/lib/prisma";
 import { resolveDashboardDateRange } from "@/lib/date-range";
 import AdTitleEditor from "@/components/AdTitleEditor";
 import UserShowcaseList from "@/components/UserShowcaseList";
-import SearchFilters from "@/components/SearchFilters";
-import EngineerSearch from "@/components/EngineerSearch";
-import { ensureDefaultTopCategories, getCategoryTree } from "@/lib/categories";
 import { displayAdTitle } from "@/lib/adTitleDisplay";
 import MemberStarRating from "@/components/MemberStarRating";
 import MemberPanelCommentReplies from "@/components/MemberPanelCommentReplies";
@@ -219,10 +216,6 @@ export default async function UserPanelPage({ searchParams }: Props) {
           statAmountLabel: "Tutar",
           statDateLabel: "Tarih",
           statProviderLabel: "Sağlayıcı",
-          searchTitle: "İlan ara",
-          searchDesc: "İl, ilçe, mahalle ve kategori ile yayında olan ilanlara göz atın.",
-          professionSearchTitle: "Meslek sahibi ara",
-          professionSearchDesc: "İl, ilçe ve meslek ile onaylı üyeleri listeleyin; iletişim için profil sayfasına gidin.",
           myAdsTitle: "İlanlarım — başlık düzenle",
           myAdsDesc: "Yayında veya onay bekleyen ilanlarınızın başlığını buradan güncelleyebilirsiniz.",
           status: "Durum",
@@ -295,10 +288,6 @@ export default async function UserPanelPage({ searchParams }: Props) {
           statAmountLabel: "Amount",
           statDateLabel: "Date",
           statProviderLabel: "Provider",
-          searchTitle: "Search listings",
-          searchDesc: "Filter live listings by location and category.",
-          professionSearchTitle: "Find professionals",
-          professionSearchDesc: "Browse approved members by province, district, and profession; open profiles to contact.",
           myAdsTitle: "My listings — edit title",
           myAdsDesc: "Update titles for listings that are live or awaiting approval.",
           status: "Status",
@@ -474,10 +463,6 @@ export default async function UserPanelPage({ searchParams }: Props) {
     paidAt: p.paidAt?.toISOString() ?? null,
     provider: String(p.provider),
   }));
-
-  await ensureDefaultTopCategories();
-  const categoryTree = await getCategoryTree();
-  const flatCategories = flattenCategories(categoryTree as CategoryTreeNode[]);
 
   let memberStarScore: number | null = null;
   let memberBalanceTry = 0;
@@ -700,11 +685,14 @@ export default async function UserPanelPage({ searchParams }: Props) {
           </section>
         ) : null}
 
-        {/* Quick actions */}
-        <section aria-label="Quick actions" className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {/* Quick actions — tek sıra; dar görünümde yatay kaydırma */}
+        <section
+          aria-label="Quick actions"
+          className="flex flex-nowrap gap-2 overflow-x-auto pb-1 pt-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] sm:overflow-visible sm:pb-0"
+        >
           <Link
             href={`/ads/new?lang=${lang}`}
-            className="admin-nav-card group rounded-2xl border border-orange-200/80 p-4 no-underline"
+            className="admin-nav-card group flex min-h-[118px] min-w-[148px] shrink-0 flex-col rounded-2xl border border-orange-200/80 p-3 no-underline sm:min-w-0 sm:flex-1 sm:p-4"
           >
             <span className="text-2xl" aria-hidden>
               📋
@@ -716,7 +704,7 @@ export default async function UserPanelPage({ searchParams }: Props) {
           </Link>
           <Link
             href={`/members?lang=${lang}`}
-            className="admin-nav-card group rounded-2xl border border-orange-200/80 p-4 no-underline"
+            className="admin-nav-card group flex min-h-[118px] min-w-[148px] shrink-0 flex-col rounded-2xl border border-orange-200/80 p-3 no-underline sm:min-w-0 sm:flex-1 sm:p-4"
           >
             <span className="text-2xl" aria-hidden>
               🪪
@@ -729,7 +717,7 @@ export default async function UserPanelPage({ searchParams }: Props) {
           {isMemberAccount ? (
             <Link
               href={lang === "en" ? "/panel/user/is-deneyimi?lang=en" : "/panel/user/is-deneyimi"}
-              className="admin-nav-card group rounded-2xl border border-orange-200/80 p-4 no-underline"
+              className="admin-nav-card group flex min-h-[118px] min-w-[148px] shrink-0 flex-col rounded-2xl border border-orange-200/80 p-3 no-underline sm:min-w-0 sm:flex-1 sm:p-4"
             >
               <span className="text-2xl" aria-hidden>
                 🧱
@@ -740,7 +728,7 @@ export default async function UserPanelPage({ searchParams }: Props) {
           ) : null}
           <Link
             href={lang === "en" ? "/muhendis-ara?lang=en" : "/muhendis-ara"}
-            className="admin-nav-card group rounded-2xl border border-orange-200/80 p-4 no-underline"
+            className="admin-nav-card group flex min-h-[118px] min-w-[148px] shrink-0 flex-col rounded-2xl border border-orange-200/80 p-3 no-underline sm:min-w-0 sm:flex-1 sm:p-4"
           >
             <span className="text-2xl" aria-hidden>
               🔍
@@ -752,7 +740,7 @@ export default async function UserPanelPage({ searchParams }: Props) {
           </Link>
           <Link
             href={lang === "en" ? "/panel/user/topup?lang=en" : "/panel/user/topup"}
-            className="admin-nav-card group rounded-2xl border border-orange-200/80 p-4 no-underline"
+            className="admin-nav-card group flex min-h-[118px] min-w-[148px] shrink-0 flex-col rounded-2xl border border-orange-200/80 p-3 no-underline sm:min-w-0 sm:flex-1 sm:p-4"
           >
             <span className="text-2xl" aria-hidden>
               💳
@@ -765,7 +753,7 @@ export default async function UserPanelPage({ searchParams }: Props) {
           {isMemberAccount ? (
             <Link
               href={lang === "en" ? "/panel/user/sponsorship?lang=en" : "/panel/user/sponsorship"}
-              className="admin-nav-card group rounded-2xl border border-amber-300/90 bg-amber-50/40 p-4 no-underline"
+              className="admin-nav-card group flex min-h-[118px] min-w-[148px] shrink-0 flex-col rounded-2xl border border-amber-300/90 bg-amber-50/40 p-3 no-underline sm:min-w-0 sm:flex-1 sm:p-4"
             >
               <span className="text-2xl" aria-hidden>
                 ✨
@@ -819,32 +807,6 @@ export default async function UserPanelPage({ searchParams }: Props) {
             }}
           />
         </section>
-
-        {/* Search */}
-        <PanelCollapsibleSection
-          sectionId="listing-search"
-          title={t.searchTitle}
-          description={<p className="text-sm text-slate-600">{t.searchDesc}</p>}
-          pinLabel={t.pinSectionKeep}
-          unpinLabel={t.pinSectionRelease}
-        >
-          <SearchFilters
-            lang={lang}
-            categories={flatCategories}
-            initial={{ categoryId: undefined, province: undefined, district: undefined, neighborhood: undefined }}
-          />
-        </PanelCollapsibleSection>
-
-        {/* Meslek sahibi ara (ana sayfadaki ile aynı bileşen) */}
-        <PanelCollapsibleSection
-          sectionId="profession-search"
-          title={t.professionSearchTitle}
-          description={<p className="text-sm text-slate-600">{t.professionSearchDesc}</p>}
-          pinLabel={t.pinSectionKeep}
-          unpinLabel={t.pinSectionRelease}
-        >
-          <EngineerSearch lang={lang} basePath="/muhendis-ara" mergeSearchParams={false} initial={{}} />
-        </PanelCollapsibleSection>
 
         {/* Beğendiğim üyeler (profil beğenisi) */}
         <PanelCollapsibleSection
@@ -1047,17 +1009,4 @@ export default async function UserPanelPage({ searchParams }: Props) {
       </div>
     </main>
   );
-}
-
-type CategoryTreeNode = {
-  id: string;
-  name: string;
-  children: CategoryTreeNode[];
-};
-
-function flattenCategories(
-  nodes: CategoryTreeNode[],
-  depth = 0,
-): { id: string; name: string; depth: number }[] {
-  return nodes.flatMap((n) => [{ id: n.id, name: n.name, depth }, ...flattenCategories(n.children, depth + 1)]);
 }
