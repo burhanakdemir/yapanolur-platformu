@@ -35,9 +35,9 @@ export default function MemberWorkExperiencePublic({
   if (items.length === 0) return null;
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">{copy.sectionTitle}</h2>
-      <ul className="space-y-4">
+    <section className="space-y-2">
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-600">{copy.sectionTitle}</h2>
+      <ul className="space-y-1.5">
         {items.map((item) => {
           const imgs = [item.imageUrl1, item.imageUrl2, item.imageUrl3].filter(Boolean) as string[];
           const durationText = formatMemberWorkDuration(
@@ -49,43 +49,48 @@ export default function MemberWorkExperiencePublic({
           return (
             <li
               key={item.id}
-              className="rounded-xl border border-orange-200/90 bg-orange-50/40 p-4 shadow-sm"
+              className="rounded-lg border border-orange-200/90 bg-orange-50/40 p-2 shadow-sm sm:p-2.5"
             >
-              <p className="font-semibold text-orange-950">{item.title}</p>
-              <p className="mt-1 text-sm text-slate-700">
-                <span className="text-slate-500">{copy.durationLabel}: </span>
-                {durationText}
-              </p>
-              {item.profession?.name ? (
-                <p className="mt-1 text-sm text-slate-700">
-                  <span className="text-slate-500">{copy.professionLabel}: </span>
-                  {item.profession.name}
-                </p>
-              ) : null}
-              {item.category?.name ? (
-                <p className="mt-1 text-sm text-slate-700">
-                  <span className="text-slate-500">{copy.categoryLabel}: </span>
-                  {item.category.name}
-                </p>
-              ) : null}
-              <p className="mt-1 text-sm text-slate-700">
-                {copy.locationLabel}: {item.province} / {item.district}
-                {item.blockParcel ? ` · ${item.blockParcel}` : ""}
-              </p>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-slate-800">{item.description}</p>
-              {imgs.length > 0 ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {imgs.map((url) => (
-                    <div
-                      key={url}
-                      className="h-20 w-20 overflow-hidden rounded-lg border border-orange-200 bg-white"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={url} alt="" className="h-full w-full object-cover" />
-                    </div>
-                  ))}
+              <div className="flex gap-2 sm:gap-2.5">
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <p className="truncate text-sm font-semibold leading-tight text-orange-950">{item.title}</p>
+                  <p className="text-[11px] leading-snug text-slate-700">
+                    <span className="text-slate-500">{copy.durationLabel}:</span> {durationText}
+                    {item.profession?.name ? (
+                      <>
+                        {" · "}
+                        <span className="text-slate-500">{copy.professionLabel}:</span> {item.profession.name}
+                      </>
+                    ) : null}
+                    {item.category?.name ? (
+                      <>
+                        {" · "}
+                        <span className="text-slate-500">{copy.categoryLabel}:</span> {item.category.name}
+                      </>
+                    ) : null}
+                    {" · "}
+                    <span className="text-slate-500">{copy.locationLabel}:</span> {item.province} /{" "}
+                    {item.district}
+                    {item.blockParcel ? ` · ${item.blockParcel}` : ""}
+                  </p>
+                  {item.description ? (
+                    <p className="line-clamp-2 text-xs leading-snug text-slate-800">{item.description}</p>
+                  ) : null}
                 </div>
-              ) : null}
+                {imgs.length > 0 ? (
+                  <div className="flex shrink-0 flex-col gap-0.5 self-start">
+                    {imgs.map((url) => (
+                      <div
+                        key={url}
+                        className="h-9 w-9 shrink-0 overflow-hidden rounded border border-orange-200 bg-white sm:h-10 sm:w-10"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="" className="h-full w-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </li>
           );
         })}

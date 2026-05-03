@@ -561,73 +561,78 @@ export default function WorkExperienceClient({ lang, backHref, labels }: Props) 
       ) : null}
 
       {mode === "list" ? (
-        <section className="glass-card space-y-3 rounded-2xl p-5">
-          <h2 className="text-lg font-semibold text-orange-950">{labels.listTitle}</h2>
+        <section className="glass-card space-y-2 rounded-2xl p-4 sm:p-5">
+          <h2 className="text-base font-semibold text-orange-950 sm:text-lg">{labels.listTitle}</h2>
           {loading ? (
             <p className="text-sm text-slate-600">{labels.loading}</p>
           ) : items.length === 0 ? (
             <p className="text-sm text-slate-600">{labels.empty}</p>
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-1.5">
               {items.map((item) => (
                 <li
                   key={item.id}
-                  className="rounded-xl border border-orange-200/80 bg-white/90 p-4 shadow-sm"
+                  className="rounded-lg border border-orange-200/80 bg-white/90 p-2 shadow-sm sm:p-2.5"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-orange-950">{item.title}</p>
-                      <p className="mt-1 text-xs text-slate-600">
-                        <span className="text-slate-500">{labels.durationSummaryLabel}: </span>
-                        {durationLine(item)}
-                      </p>
-                      {item.professionName ? (
-                        <p className="mt-1 text-sm text-slate-700">
-                          <span className="text-slate-500">{labels.professionLabel}: </span>
-                          {item.professionName}
+                  <div className="flex gap-2 sm:gap-2.5">
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="min-w-0 truncate text-sm font-semibold leading-tight text-orange-950">
+                          {item.title}
                         </p>
-                      ) : null}
-                      {item.categoryName ? (
-                        <p className="mt-1 text-sm text-slate-700">
-                          <span className="text-slate-500">{labels.categoryLabel}: </span>
-                          {item.categoryName}
-                        </p>
-                      ) : null}
-                      <p className="mt-1 text-sm text-slate-700">
-                        {labels.locationLabel}: {item.province} / {item.district}
+                        <div className="flex shrink-0 gap-1">
+                          <button
+                            type="button"
+                            className="rounded border border-orange-300 bg-white px-2 py-0.5 text-[11px] font-medium leading-none text-orange-900"
+                            onClick={() => openEdit(item)}
+                          >
+                            {labels.edit}
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded border border-red-200 bg-white px-2 py-0.5 text-[11px] font-medium leading-none text-red-800"
+                            onClick={() => void onDelete(item.id)}
+                          >
+                            {labels.delete}
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-[11px] leading-snug text-slate-600">
+                        <span className="text-slate-500">{labels.durationSummaryLabel}:</span> {durationLine(item)}
+                        {item.professionName ? (
+                          <>
+                            {" · "}
+                            <span className="text-slate-500">{labels.professionLabel}:</span> {item.professionName}
+                          </>
+                        ) : null}
+                        {item.categoryName ? (
+                          <>
+                            {" · "}
+                            <span className="text-slate-500">{labels.categoryLabel}:</span> {item.categoryName}
+                          </>
+                        ) : null}
+                        {" · "}
+                        <span className="text-slate-500">{labels.locationLabel}:</span> {item.province} /{" "}
+                        {item.district}
                         {item.blockParcel ? ` · ${item.blockParcel}` : ""}
                       </p>
-                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-800">{item.description}</p>
-                      {item.imageUrls.length > 0 ? (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {item.imageUrls.map((url) => (
-                            <div
-                              key={url}
-                              className="h-16 w-16 overflow-hidden rounded-lg border border-orange-100"
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={url} alt="" className="h-full w-full object-cover" />
-                            </div>
-                          ))}
-                        </div>
+                      {item.description ? (
+                        <p className="line-clamp-2 text-xs leading-snug text-slate-800">{item.description}</p>
                       ) : null}
                     </div>
-                    <div className="flex shrink-0 gap-2">
-                      <button
-                        type="button"
-                        className="rounded-lg border border-orange-300 px-2 py-1 text-xs font-medium text-orange-900"
-                        onClick={() => openEdit(item)}
-                      >
-                        {labels.edit}
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-lg border border-red-200 px-2 py-1 text-xs font-medium text-red-800"
-                        onClick={() => void onDelete(item.id)}
-                      >
-                        {labels.delete}
-                      </button>
-                    </div>
+                    {item.imageUrls.length > 0 ? (
+                      <div className="flex shrink-0 flex-col gap-0.5 self-start">
+                        {item.imageUrls.map((url) => (
+                          <div
+                            key={url}
+                            className="h-9 w-9 shrink-0 overflow-hidden rounded border border-orange-100 sm:h-10 sm:w-10"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={url} alt="" className="h-full w-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </li>
               ))}
