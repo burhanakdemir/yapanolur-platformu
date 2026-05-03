@@ -529,47 +529,47 @@ export default async function UserPanelPage({ searchParams }: Props) {
         ) : null}
         {/* Hero */}
         <header className="overflow-hidden rounded-2xl border border-white/40 bg-white/75 shadow-xl shadow-orange-900/5 backdrop-blur-md">
-          <div className="admin-hero px-4 py-4 text-white sm:px-6 sm:py-5">
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+          <div className="admin-hero px-4 py-3 text-white sm:px-5 sm:py-4">
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
                   <div className="flex shrink-0 justify-center sm:justify-start">
                     {panelUser?.profilePhotoUrl ? (
-                      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-white/50 shadow-lg shadow-black/20 sm:h-24 sm:w-24">
+                      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-white/50 shadow-lg shadow-black/20 sm:h-20 sm:w-20">
                         <Image
                           src={panelUser.profilePhotoUrl}
                           alt={t.profilePhotoAlt}
                           fill
-                          sizes="(min-width: 640px) 96px, 80px"
+                          sizes="(min-width: 640px) 80px, 64px"
                           className="object-cover"
                         />
                       </div>
                     ) : (
                       <div
-                        className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-white/40 bg-white/15 text-2xl font-bold text-white shadow-inner sm:h-24 sm:w-24 sm:text-3xl"
+                        className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-white/40 bg-white/15 text-xl font-bold text-white shadow-inner sm:h-20 sm:w-20 sm:text-2xl"
                         aria-hidden
                       >
                         {avatarInitial}
                       </div>
                     )}
                   </div>
-                  <div className="min-w-0 space-y-2 text-center sm:text-left">
-                    <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t.panelTitle}</h1>
-                    <p className="max-w-xl text-sm leading-relaxed text-orange-50/95 sm:text-base">{t.tagline}</p>
+                  <div className="min-w-0 space-y-1 text-center sm:text-left">
+                    <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t.panelTitle}</h1>
+                    <p className="max-w-xl text-xs leading-snug text-orange-50/95 sm:text-sm">{t.tagline}</p>
                   </div>
                 </div>
                 <Link
                   href={`/?lang=${lang}`}
-                  className="inline-flex shrink-0 items-center justify-center self-center rounded-xl border border-white/35 bg-white/15 px-4 py-2 text-center text-sm font-semibold backdrop-blur transition hover:bg-white/25 sm:self-start"
+                  className="inline-flex shrink-0 items-center justify-center self-center rounded-lg border border-white/35 bg-white/15 px-3 py-1.5 text-center text-xs font-semibold backdrop-blur transition hover:bg-white/25 sm:self-start sm:px-4 sm:py-2 sm:text-sm"
                 >
                   {t.home}
                 </Link>
               </div>
 
-              <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-start sm:gap-3 lg:gap-4">
+              <div className="flex flex-col gap-2 pt-0.5 sm:flex-row sm:items-start sm:gap-2 lg:gap-3">
                 {isMemberAccount ? (
                   <div className="flex w-fit shrink-0 justify-center sm:justify-start">
-                    <div className="rounded-lg border border-white/40 bg-white/12 px-2.5 py-2 text-center backdrop-blur">
+                    <div className="rounded-lg border border-white/40 bg-white/12 px-2 py-1.5 text-center backdrop-blur">
                       <p className="text-[9px] font-semibold uppercase tracking-wide text-orange-100">
                         {t.scoreLabel}
                       </p>
@@ -585,16 +585,22 @@ export default async function UserPanelPage({ searchParams }: Props) {
                     </div>
                   </div>
                 ) : null}
-                <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-                  <div className="mx-auto flex w-fit max-w-full min-w-0 flex-col gap-1.5 text-center sm:mx-0 sm:text-left">
-                    <p className="text-sm text-white/95">
+                <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                  <div className="mx-auto flex w-full max-w-full min-w-0 flex-col gap-1 text-center sm:mx-0 sm:text-left">
+                    <p className="text-xs text-white/95 sm:text-sm">
                       <span className="font-medium text-orange-100">{t.activeUser}:</span>{" "}
                       <span className="break-all font-mono text-[0.9em] opacity-95">{session?.email ?? "—"}</span>
                     </p>
                     {isMemberAccount ? (
-                      <p className="text-base font-semibold tabular-nums tracking-tight text-white sm:text-lg">
-                        {t.balanceLabel}: {memberBalanceTry} TL
-                      </p>
+                      <div className="flex w-full min-w-0 flex-row flex-wrap items-baseline gap-x-4 gap-y-0.5">
+                        <p className="text-base font-semibold tabular-nums tracking-tight text-white sm:text-lg">
+                          {t.balanceLabel}: {memberBalanceTry} TL
+                        </p>
+                        <p className="ml-auto text-base font-semibold tabular-nums tracking-tight text-white sm:text-lg">
+                          {lang === "tr" ? "Üye numaranız:" : "Member no."}{" "}
+                          <span className="font-mono">{panelUser?.memberNumber ?? "—"}</span>
+                        </p>
+                      </div>
                     ) : null}
                   </div>
                   {heroMemberDocuments.length > 0 ? (
@@ -618,61 +624,9 @@ export default async function UserPanelPage({ searchParams }: Props) {
         </header>
 
         {isMemberAccount ? (
-          <section
-            aria-labelledby="panel-star-system-title"
-            className="rounded-2xl border-2 border-orange-400 bg-gradient-to-br from-amber-50 via-orange-50 to-white p-4 shadow-md sm:p-5"
-          >
-            <h2 id="panel-star-system-title" className="text-lg font-bold text-orange-950 sm:text-xl">
-              {dictionary[lang].memberPage.panelStarBannerTitle}
-            </h2>
-            <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-slate-800 sm:text-[0.95rem]">
-              {dictionary[lang].memberPage.panelStarBannerLines.map((line, idx) => (
-                <li key={idx}>{line}</li>
-              ))}
-            </ul>
-            <p className="mt-3 rounded-lg border border-orange-200/80 bg-orange-50/90 px-3 py-2 text-sm font-semibold text-orange-950">
-              {dictionary[lang].memberPage.panelStarBannerDocsCta}
-            </p>
-          </section>
-        ) : null}
-
-        {isMemberAccount ? (
-          <section
-            aria-labelledby="panel-sponsor-strip-title"
-            className="rounded-2xl border border-amber-400/80 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 p-4 shadow-md sm:p-5"
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0 space-y-1">
-                <h2 id="panel-sponsor-strip-title" className="text-lg font-bold text-amber-950">
-                  {t.sponsorHero}
-                </h2>
-                <p className="text-sm leading-relaxed text-slate-700">{t.sponsorStripDesc}</p>
-                <p className="text-xs font-medium tabular-nums text-amber-900/90">
-                  {lang === "tr" ? "Üye numaranız:" : "Member no."}{" "}
-                  <span className="font-mono">{panelUser?.memberNumber ?? "—"}</span>
-                </p>
-              </div>
-              <Link
-                href={lang === "en" ? "/panel/user/sponsorship?lang=en" : "/panel/user/sponsorship"}
-                className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-amber-800 to-orange-600 px-5 py-2.5 text-center text-sm font-bold text-white shadow-md transition hover:opacity-95"
-              >
-                {t.sponsorStripCta}
-              </Link>
-            </div>
-          </section>
-        ) : null}
-
-        {isMemberAccount ? (
-          <section
-            id="uye-eposta-bildirimleri"
-            className="rounded-2xl border border-orange-200/80 bg-white/90 p-4 shadow-sm sm:p-5"
-            aria-label={t.newAdEmailSectionTitle}
-          >
-            <h2 className="sr-only">{t.newAdEmailSectionTitle}</h2>
-            <p className="mb-3 text-xs leading-relaxed text-slate-600 sm:text-sm">
-              {dictionary[lang].memberPage.newAdEmailPanelIntro}
-            </p>
+          <section id="uye-eposta-bildirimleri" aria-label={t.newAdEmailSectionTitle} className="scroll-mt-2">
             <UserPanelNewAdEmailOptIn
+              compact
               initial={newAdEmailOptIn}
               labels={{
                 optInLabel: dictionary[lang].memberPage.newAdEmailOptInLabel,
@@ -682,6 +636,47 @@ export default async function UserPanelPage({ searchParams }: Props) {
                 error: t.newAdEmailError,
               }}
             />
+          </section>
+        ) : null}
+
+        {isMemberAccount ? (
+          <section
+            aria-labelledby="panel-star-system-title"
+            className="rounded-lg border border-orange-400/80 bg-gradient-to-br from-amber-50 via-orange-50 to-white p-2.5 shadow-sm sm:p-3"
+          >
+            <h2 id="panel-star-system-title" className="text-sm font-semibold leading-tight text-orange-950 sm:text-[0.9375rem]">
+              {dictionary[lang].memberPage.panelStarBannerTitle}
+            </h2>
+            <ul className="mt-1 list-disc space-y-0.5 pl-3.5 text-[0.6875rem] leading-snug text-slate-800 sm:text-xs">
+              {dictionary[lang].memberPage.panelStarBannerLines.map((line, idx) => (
+                <li key={idx}>{line}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {isMemberAccount ? (
+          <section
+            aria-labelledby="panel-sponsor-strip-title"
+            className="rounded-xl border border-amber-400/80 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 p-3 shadow-sm sm:p-4"
+          >
+            <div className="flex flex-nowrap items-center justify-between gap-2 sm:gap-3">
+              <h2
+                id="panel-sponsor-strip-title"
+                className="min-w-0 flex-1 text-base font-semibold leading-tight text-amber-950 sm:text-[1.05rem]"
+              >
+                {t.sponsorHero}
+              </h2>
+              <Link
+                href={lang === "en" ? "/panel/user/sponsorship?lang=en" : "/panel/user/sponsorship"}
+                className="inline-flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-r from-amber-800 to-orange-600 px-3 py-1.5 text-center text-xs font-semibold text-white shadow-sm transition hover:opacity-95 sm:px-4 sm:py-2"
+              >
+                {t.sponsorStripCta}
+              </Link>
+            </div>
+            <p className="mt-1.5 min-w-0 overflow-x-auto whitespace-nowrap text-xs leading-snug text-slate-700 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
+              {t.sponsorStripDesc}
+            </p>
           </section>
         ) : null}
 

@@ -29,11 +29,13 @@ export default function UserPanelNewAdEmailOptIn({
   initial,
   labels,
   variant = "default",
+  compact = false,
 }: {
   initial: boolean;
   labels: Labels;
   /** hero: üst bant (turuncu) üzerinde; mesaj renkleri açık zemin içindir */
   variant?: Variant;
+  compact?: boolean;
 }) {
   const [value, setValue] = useState(initial);
   const [saving, setSaving] = useState(false);
@@ -70,20 +72,26 @@ export default function UserPanelNewAdEmailOptIn({
   }
 
   return (
-    <div className="space-y-2">
-      <NewAdEmailOptInGradientBox>
-        <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+    <div className={compact ? "space-y-1" : "space-y-2"}>
+      <NewAdEmailOptInGradientBox compact={compact}>
+        <label
+          className={`flex cursor-pointer items-start text-white ${compact ? "gap-2 text-xs" : "gap-2.5 text-sm"}`}
+        >
           <input
             type="checkbox"
             checked={value}
             disabled={saving}
             onChange={(e) => void onChange(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border border-white/50 bg-white/10 accent-white disabled:opacity-60"
+            className={`mt-0.5 shrink-0 rounded border border-white/50 bg-white/10 accent-white disabled:opacity-60 ${
+              compact ? "h-3.5 w-3.5" : "h-4 w-4"
+            }`}
             aria-label={labels.optInLabel}
           />
           <span>
             <span className="font-semibold text-white">{labels.optInLabel}</span>
-            <span className="mt-0.5 block text-xs font-normal leading-relaxed text-white/95">
+            <span
+              className={`mt-0.5 block font-normal text-white/95 ${compact ? "text-[0.6875rem] leading-snug" : "text-xs leading-relaxed"}`}
+            >
               {labels.optInHelp}
             </span>
           </span>

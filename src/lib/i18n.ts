@@ -65,8 +65,6 @@ type Dictionary = {
     /** Oturumlu panel: yildiz aciklamasi */
     panelStarBannerTitle: string;
     panelStarBannerLines: string[];
-    /** Ana üye paneli / uyarı kutusu — belge linkine yönlendirme */
-    panelStarBannerDocsCta: string;
     panelDocumentsHeading: string;
     docSlotDiploma: string;
     docSlotEngineering: string;
@@ -170,8 +168,6 @@ export const dictionary: Record<Lang, Dictionary> = {
         "Beğeniler: Her 10 beğeni +1 yıldız (arayüzde yaklaşık her 2 beğeni +0,2 olarak gösterilir); bu katkı en fazla +2 olabilir.",
         "Beğenmemeler: Aynı oranda eksi puan verir (en fazla −2). Belgelerden gelen puan ile birlikte hesaplanır.",
       ],
-      panelStarBannerDocsCta:
-        "Belgelerinizi eklemek veya güncellemek için aşağıdaki «Profil ve belgeler» kartından Üye belgeleri sayfasına gidin.",
       panelDocumentsHeading: "Doğrulama belgeleri",
       docSlotDiploma: "Diploma",
       docSlotEngineering: "Mühendislik hizmet belgesi",
@@ -272,8 +268,6 @@ export const dictionary: Record<Lang, Dictionary> = {
         "Likes: Every 10 likes add about +1 star (the UI shows roughly +0.2 per 2 likes); this bonus is capped at +2.",
         "Dislikes: Apply the same rule in the negative direction (capped at −2). Document stars and votes are combined.",
       ],
-      panelStarBannerDocsCta:
-        "To upload or update certificates, open Member documents via the «Profile & documents» card below.",
       panelDocumentsHeading: "Verification documents",
       docSlotDiploma: "Diploma",
       docSlotEngineering: "Engineering service certificate",
