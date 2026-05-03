@@ -23,6 +23,7 @@ import {
 import { getSafeInternalNextPath } from "@/lib/safeNextPath";
 import { uploadMemberImage } from "@/lib/uploadMemberImage";
 import HomeBackButtonLink, { homeBackPrimaryClassName } from "@/components/HomeBackButtonLink";
+import SignupTypeModal from "@/components/SignupTypeModal";
 import { formatSignupOtpTtlTr } from "@/lib/signupOtpTtl";
 
 function membersLoginHref(lang: Lang, nextPath: string): string {
@@ -75,6 +76,10 @@ function MembersPageContent() {
       billingVkn?: string | null;
       billingAddressLine?: string | null;
       billingPostalCode?: string | null;
+      billingContactSameAsInvoice?: boolean | null;
+      billingContactTcKimlik?: string | null;
+      billingContactAddressLine?: string | null;
+      billingContactPostalCode?: string | null;
     };
   } | null>(null);
   const [professions, setProfessions] = useState<{ id: string; name: string }[]>([]);
@@ -98,6 +103,10 @@ function MembersPageContent() {
   const [otpPhoneSending, setOtpPhoneSending] = useState(false);
   /** Kayıt formu: bireysel / kurumsal fatura tipi */
   const [billingAccountType, setBillingAccountType] = useState<"INDIVIDUAL" | "CORPORATE">("INDIVIDUAL");
+  /** Modal sonrası seçilen kayıt yolu; null iken giriş modalı açık. */
+  const [signupPathChoice, setSignupPathChoice] = useState<null | "individual" | "corporate">(null);
+  /** Kurumsal: şirket fatura adresi ile iletişim aynı mı. */
+  const [billingContactSameAsInvoice, setBillingContactSameAsInvoice] = useState(true);
   const [regEmail, setRegEmail] = useState("");
   const [regEmailError, setRegEmailError] = useState("");
   const [phoneCountryIso, setPhoneCountryIso] = useState<CountryCode>("TR");
@@ -177,6 +186,12 @@ function MembersPageContent() {
         const bt = data.profile.memberProfile?.billingAccountType;
         if (bt === "CORPORATE" || bt === "INDIVIDUAL") {
           setBillingAccountType(bt);
+        }
+        const sameInv = data.profile.memberProfile?.billingContactSameAsInvoice;
+        if (bt === "CORPORATE" && typeof sameInv === "boolean") {
+          setBillingContactSameAsInvoice(sameInv);
+        } else if (bt === "INDIVIDUAL") {
+          setBillingContactSameAsInvoice(true);
         }
         setPendingMemberNumber(null);
       } else {
@@ -579,6 +594,10 @@ function MembersPageContent() {
       setRegistrationJustCompleted(false);
     }
     const form = new FormData(e.currentTarget);
+    if (!isReadonly && signupPathChoice === null) {
+      setMessage("Önce kayıt türünü seçin.");
+      return;
+    }
     const professionId = String(form.get("professionId") || "").trim();
     if (!isReadonly && !professionId) {
       setMessage(d.memberPage.validationProfession);
@@ -668,6 +687,23 @@ function MembersPageContent() {
         setMessage("Vergi numarası (VKN) 10 haneli olmalıdır.");
         return;
       }
+      if (!billingContactSameAsInvoice) {
+        const ctc = digitsOnly(String(form.get("billingContactTcKimlik") || ""));
+        if (!isValidTcKimlik(ctc)) {
+          setMessage("İletişim / bireysel fatura için geçerli bir TC Kimlik Numarası girin (11 hane).");
+          return;
+        }
+        const cal = String(form.get("billingContactAddressLine") || "").trim();
+        if (cal.length < 5) {
+          setMessage("İletişim / bireysel fatura adresi en az 5 karakter olmalıdır.");
+          return;
+        }
+        const cp = String(form.get("billingContactPostalCode") || "").trim();
+        if (cp && (cp.length < 4 || cp.length > 10)) {
+          setMessage("İletişim posta kodu 4–10 karakter olmalıdır.");
+          return;
+        }
+      }
     }
 
     setIsUploading(true);
@@ -692,6 +728,19 @@ function MembersPageContent() {
       billingVkn: String(form.get("billingVkn") || "").trim(),
       billingAddressLine: addrLine,
       billingPostalCode: String(form.get("billingPostalCode") || "").trim(),
+      billingContactSameAsInvoice: billingType === "CORPORATE" ? billingContactSameAsInvoice : true,
+      billingContactTcKimlik:
+        billingType === "CORPORATE" && !billingContactSameAsInvoice
+          ? String(form.get("billingContactTcKimlik") || "").trim()
+          : "",
+      billingContactAddressLine:
+        billingType === "CORPORATE" && !billingContactSameAsInvoice
+          ? String(form.get("billingContactAddressLine") || "").trim()
+          : "",
+      billingContactPostalCode:
+        billingType === "CORPORATE" && !billingContactSameAsInvoice
+          ? String(form.get("billingContactPostalCode") || "").trim()
+          : "",
       documents: {},
       newAdEmailOptIn: form.get("newAdEmailOptIn") != null,
     };
@@ -840,6 +889,10 @@ function MembersPageContent() {
     ? ["email-verify-hint", regEmailError ? "reg-email-error" : ""].filter(Boolean).join(" ") || undefined
     : undefined;
 
+  const signupGateOpen = Boolean(
+    !isReadonly && !savedProfile && signupPathChoice === null && !registrationJustCompleted,
+  );
+
   return (
     <main id="uye-kayit" className="mx-auto w-full max-w-3xl p-6 space-y-4">
       <HomeBackButtonLink href={lang === "en" ? "/?lang=en" : "/?lang=tr"}>
@@ -862,7 +915,8 @@ function MembersPageContent() {
         </section>
       )}
       {!loadingProfile && (
-      <form className="glass-card space-y-3 rounded-2xl p-5" onSubmit={onSubmit}>
+      <form className="glass-card relative space-y-3 rounded-2xl p-5" onSubmit={onSubmit}>
+        <div inert={signupGateOpen ? true : undefined}>
         {!isReadonly && (
           <nav
             aria-label={d.memberPage.registrationProgressLabel}
@@ -1281,7 +1335,10 @@ function MembersPageContent() {
             required
           />
         )}
-        {!isReadonly && (
+        {!isReadonly && signupPathChoice !== null && (
+          <input type="hidden" name="billingAccountType" value={billingAccountType} />
+        )}
+        {!isReadonly && signupPathChoice !== null && (
           <fieldset
             disabled={blockUntilFullyVerified}
             className="space-y-3 rounded-xl border border-orange-200 bg-orange-50/40 p-4 disabled:opacity-60 disabled:pointer-events-none"
@@ -1290,30 +1347,20 @@ function MembersPageContent() {
             <p className="text-xs text-slate-600 leading-relaxed">
               E-arşiv / e-fatura düzenlenmesi için gerekli kimlik ve adres bilgileri. Seçiminize göre alanlar değişir.
             </p>
-            <div className="flex flex-wrap gap-6" role="group" aria-label="Fatura tipi">
-              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-800">
-                <input
-                  type="radio"
-                  name="billingAccountType"
-                  value="INDIVIDUAL"
-                  checked={billingAccountType === "INDIVIDUAL"}
-                  onChange={() => setBillingAccountType("INDIVIDUAL")}
-                  className="accent-orange-600"
-                />
-                Bireysel
-              </label>
-              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-800">
-                <input
-                  type="radio"
-                  name="billingAccountType"
-                  value="CORPORATE"
-                  checked={billingAccountType === "CORPORATE"}
-                  onChange={() => setBillingAccountType("CORPORATE")}
-                  className="accent-orange-600"
-                />
-                Kurumsal
-              </label>
-            </div>
+            {signupPathChoice !== null && (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-orange-100 bg-white/80 px-3 py-2">
+                <p className="text-sm font-medium text-slate-800">
+                  Kayıt türü: {billingAccountType === "CORPORATE" ? "Kurumsal" : "Bireysel"}
+                </p>
+                <button
+                  type="button"
+                  className="chip shrink-0 text-xs sm:text-sm"
+                  onClick={() => setSignupPathChoice(null)}
+                >
+                  Kayıt türünü değiştir
+                </button>
+              </div>
+            )}
             {billingAccountType === "INDIVIDUAL" && (
               <div className="space-y-1">
                 <label htmlFor="billing-tc" className="block text-xs font-medium text-slate-700">
@@ -1371,35 +1418,135 @@ function MembersPageContent() {
                     required
                   />
                 </div>
+                <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-orange-100 bg-white/90 p-3 text-sm text-slate-800">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 accent-orange-600"
+                    checked={billingContactSameAsInvoice}
+                    onChange={(ev) => setBillingContactSameAsInvoice(ev.target.checked)}
+                  />
+                  <span>
+                    <span className="font-medium">Fatura bilgileri, üyelik / iletişim bilgileriyle aynı</span>
+                    <span className="mt-1 block text-xs font-normal text-slate-600">
+                      İşaretliyse tek fatura seti yeterlidir. İşareti kaldırırsanız kurumsal fatura ile ayrı iletişim
+                      adresi ve TC alanları istenir.
+                    </span>
+                  </span>
+                </label>
               </div>
             )}
-            <div className="space-y-1">
-              <label htmlFor="billing-address-line" className="block text-xs font-medium text-slate-700">
-                Fatura teslim adresi
-              </label>
-              <textarea
-                id="billing-address-line"
-                name="billingAddressLine"
-                rows={3}
-                className="w-full rounded-lg border border-orange-200 bg-white p-2 text-sm"
-                placeholder="Mahalle, cadde/sokak, bina no, daire (il ve ilçe yukarıda seçilir)"
-                required
-                defaultValue=""
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="billing-postal" className="block text-xs font-medium text-slate-700">
-                Posta kodu <span className="font-normal text-slate-500">(isteğe bağlı)</span>
-              </label>
-              <input
-                id="billing-postal"
-                name="billingPostalCode"
-                inputMode="numeric"
-                className="w-full max-w-xs rounded-lg border border-orange-200 bg-white p-2 font-mono tabular-nums"
-                placeholder="34000"
-                maxLength={10}
-              />
-            </div>
+            {billingAccountType === "INDIVIDUAL" || (billingAccountType === "CORPORATE" && billingContactSameAsInvoice) ? (
+              <>
+                <div className="space-y-1">
+                  <label htmlFor="billing-address-line" className="block text-xs font-medium text-slate-700">
+                    {billingAccountType === "CORPORATE" ? "Kurumsal fatura teslim adresi" : "Fatura teslim adresi"}
+                  </label>
+                  <textarea
+                    id="billing-address-line"
+                    name="billingAddressLine"
+                    rows={3}
+                    className="w-full rounded-lg border border-orange-200 bg-white p-2 text-sm"
+                    placeholder="Mahalle, cadde/sokak, bina no, daire (il ve ilçe yukarıda seçilir)"
+                    required
+                    defaultValue=""
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="billing-postal" className="block text-xs font-medium text-slate-700">
+                    Posta kodu <span className="font-normal text-slate-500">(isteğe bağlı)</span>
+                  </label>
+                  <input
+                    id="billing-postal"
+                    name="billingPostalCode"
+                    inputMode="numeric"
+                    className="w-full max-w-xs rounded-lg border border-orange-200 bg-white p-2 font-mono tabular-nums"
+                    placeholder="34000"
+                    maxLength={10}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-1 rounded-lg border border-orange-100 bg-white/60 p-3">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-orange-900/80">
+                    Kurumsal fatura adresi
+                  </p>
+                  <label htmlFor="billing-address-line" className="block text-xs font-medium text-slate-700">
+                    Şirket fatura adresi
+                  </label>
+                  <textarea
+                    id="billing-address-line"
+                    name="billingAddressLine"
+                    rows={3}
+                    className="w-full rounded-lg border border-orange-200 bg-white p-2 text-sm"
+                    placeholder="Mahalle, cadde/sokak, bina no, daire (il ve ilçe yukarıda seçilir)"
+                    required
+                    defaultValue=""
+                  />
+                  <div className="mt-2 space-y-1">
+                    <label htmlFor="billing-postal" className="block text-xs font-medium text-slate-700">
+                      Posta kodu <span className="font-normal text-slate-500">(isteğe bağlı)</span>
+                    </label>
+                    <input
+                      id="billing-postal"
+                      name="billingPostalCode"
+                      inputMode="numeric"
+                      className="w-full max-w-xs rounded-lg border border-orange-200 bg-white p-2 font-mono tabular-nums"
+                      placeholder="34000"
+                      maxLength={10}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-3 rounded-lg border border-dashed border-orange-200 bg-white/90 p-3">
+                  <p className="text-xs font-semibold text-slate-800">İletişim / ayrı fatura (bireysel)</p>
+                  <p className="text-xs text-slate-600">
+                    Üyelik ve iletişim için kullanılacak adres; kurumsal fatura adresinden farklı olabilir.
+                  </p>
+                  <div className="space-y-1">
+                    <label htmlFor="billing-contact-tc" className="block text-xs font-medium text-slate-700">
+                      TC Kimlik No
+                    </label>
+                    <input
+                      id="billing-contact-tc"
+                      name="billingContactTcKimlik"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      maxLength={11}
+                      className="w-full rounded-lg border border-orange-200 bg-white p-2 font-mono tabular-nums tracking-wide"
+                      placeholder="11 hane"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor="billing-contact-address" className="block text-xs font-medium text-slate-700">
+                      İletişim / bireysel fatura adresi
+                    </label>
+                    <textarea
+                      id="billing-contact-address"
+                      name="billingContactAddressLine"
+                      rows={3}
+                      className="w-full rounded-lg border border-orange-200 bg-white p-2 text-sm"
+                      placeholder="Mahalle, cadde/sokak, bina no, daire"
+                      required
+                      defaultValue=""
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor="billing-contact-postal" className="block text-xs font-medium text-slate-700">
+                      Posta kodu <span className="font-normal text-slate-500">(isteğe bağlı)</span>
+                    </label>
+                    <input
+                      id="billing-contact-postal"
+                      name="billingContactPostalCode"
+                      inputMode="numeric"
+                      className="w-full max-w-xs rounded-lg border border-orange-200 bg-white p-2 font-mono tabular-nums"
+                      placeholder="34000"
+                      maxLength={10}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </fieldset>
         )}
         {isReadonly && savedProfile?.memberProfile.billingAccountType && (
@@ -1426,14 +1573,36 @@ function MembersPageContent() {
                   <dd>{savedProfile.memberProfile.billingTaxOffice ?? "—"}</dd>
                   <dt className="text-slate-500">VKN</dt>
                   <dd className="font-mono tabular-nums">{savedProfile.memberProfile.billingVkn ?? "—"}</dd>
+                  <dt className="text-slate-500">Fatura = iletişim</dt>
+                  <dd>{savedProfile.memberProfile.billingContactSameAsInvoice !== false ? "Evet" : "Hayır (ayrı iletişim)"}</dd>
                 </>
               )}
-              <dt className="text-slate-500">Fatura adresi</dt>
+              <dt className="text-slate-500">
+                {savedProfile.memberProfile.billingAccountType === "CORPORATE" &&
+                savedProfile.memberProfile.billingContactSameAsInvoice === false
+                  ? "Kurumsal fatura adresi"
+                  : "Fatura adresi"}
+              </dt>
               <dd className="break-words whitespace-pre-wrap">
                 {savedProfile.memberProfile.billingAddressLine ?? "—"}
               </dd>
               <dt className="text-slate-500">Posta kodu</dt>
               <dd className="tabular-nums">{savedProfile.memberProfile.billingPostalCode ?? "—"}</dd>
+              {savedProfile.memberProfile.billingAccountType === "CORPORATE" &&
+                savedProfile.memberProfile.billingContactSameAsInvoice === false && (
+                  <>
+                    <dt className="text-slate-500">İletişim TC</dt>
+                    <dd className="font-mono tabular-nums">
+                      {savedProfile.memberProfile.billingContactTcKimlik ?? "—"}
+                    </dd>
+                    <dt className="text-slate-500">İletişim adresi</dt>
+                    <dd className="break-words whitespace-pre-wrap">
+                      {savedProfile.memberProfile.billingContactAddressLine ?? "—"}
+                    </dd>
+                    <dt className="text-slate-500">İletişim posta kodu</dt>
+                    <dd className="tabular-nums">{savedProfile.memberProfile.billingContactPostalCode ?? "—"}</dd>
+                  </>
+                )}
             </dl>
             <p className="mt-2 text-xs text-slate-500">
               Bu bilgileri değiştirmek için destek ile iletişime geçin.
@@ -1673,6 +1842,27 @@ function MembersPageContent() {
             </Link>
           </div>
         )}
+        </div>
+        {signupGateOpen ? (
+          <SignupTypeModal
+            open
+            onSelectIndividual={() => {
+              setBillingAccountType("INDIVIDUAL");
+              setSignupPathChoice("individual");
+              setBillingContactSameAsInvoice(true);
+            }}
+            onSelectCorporate={() => {
+              setBillingAccountType("CORPORATE");
+              setSignupPathChoice("corporate");
+              setBillingContactSameAsInvoice(true);
+            }}
+            onDismissToIndividual={() => {
+              setBillingAccountType("INDIVIDUAL");
+              setSignupPathChoice("individual");
+              setBillingContactSameAsInvoice(true);
+            }}
+          />
+        ) : null}
       </form>
       )}
     </main>

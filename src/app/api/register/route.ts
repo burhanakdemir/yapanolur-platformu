@@ -59,6 +59,11 @@ const bodySchema = z
       .optional()
       .default({}),
     newAdEmailOptIn: z.boolean().optional().default(false),
+    /** Kurumsal: fatura adresi iletişimle aynı mı; false ise iletişim fatura alanları zorunlu. */
+    billingContactSameAsInvoice: z.boolean().optional().default(true),
+    billingContactTcKimlik: optionalTrimmedString(),
+    billingContactAddressLine: optionalTrimmedString(),
+    billingContactPostalCode: optionalTrimmedString(),
   })
   .superRefine((data, ctx) => {
     const postal = data.billingPostalCode?.trim();
@@ -102,6 +107,32 @@ const bodySchema = z
           message: "Vergi numarası 10 haneli olmalıdır.",
           path: ["billingVkn"],
         });
+      }
+      if (!data.billingContactSameAsInvoice) {
+        const ctc = data.billingContactTcKimlik ? digitsOnly(data.billingContactTcKimlik) : "";
+        if (!isValidTcKimlik(ctc)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "İletişim / bireysel fatura için geçerli bir TC Kimlik Numarası girin (11 hane).",
+            path: ["billingContactTcKimlik"],
+          });
+        }
+        const cal = data.billingContactAddressLine?.trim() ?? "";
+        if (cal.length < 5) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "İletişim / bireysel fatura adresi en az 5 karakter olmalıdır.",
+            path: ["billingContactAddressLine"],
+          });
+        }
+        const cp = data.billingContactPostalCode?.trim();
+        if (cp && (cp.length < 4 || cp.length > 10)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "İletişim posta kodu 4–10 karakter olmalıdır.",
+            path: ["billingContactPostalCode"],
+          });
+        }
       }
     }
   });
@@ -218,6 +249,21 @@ export async function POST(req: Request) {
       const vknStore =
         data.billingAccountType === "CORPORATE" ? digitsOnly(data.billingVkn ?? "") : null;
 
+      const contactSame =
+        data.billingAccountType !== "CORPORATE" ? true : Boolean(data.billingContactSameAsInvoice);
+      const contactTcStore =
+        data.billingAccountType === "CORPORATE" && !contactSame
+          ? digitsOnly(data.billingContactTcKimlik ?? "")
+          : null;
+      const contactAddrStore =
+        data.billingAccountType === "CORPORATE" && !contactSame
+          ? data.billingContactAddressLine?.trim() ?? null
+          : null;
+      const contactPostalStore =
+        data.billingAccountType === "CORPORATE" && !contactSame
+          ? data.billingContactPostalCode?.trim() || null
+          : null;
+
       const profile = await tx.memberProfile.upsert({
         where: { userId: created.id },
         update: {
@@ -234,6 +280,10 @@ export async function POST(req: Request) {
           billingVkn: vknStore,
           billingAddressLine: data.billingAddressLine.trim(),
           billingPostalCode: data.billingPostalCode?.trim() || null,
+          billingContactSameAsInvoice: contactSame,
+          billingContactTcKimlik: contactTcStore,
+          billingContactAddressLine: contactAddrStore,
+          billingContactPostalCode: contactPostalStore,
         },
         create: {
           userId: created.id,
@@ -250,6 +300,10 @@ export async function POST(req: Request) {
           billingVkn: vknStore,
           billingAddressLine: data.billingAddressLine.trim(),
           billingPostalCode: data.billingPostalCode?.trim() || null,
+          billingContactSameAsInvoice: contactSame,
+          billingContactTcKimlik: contactTcStore,
+          billingContactAddressLine: contactAddrStore,
+          billingContactPostalCode: contactPostalStore,
         },
       });
 

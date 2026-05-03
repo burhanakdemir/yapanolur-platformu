@@ -269,6 +269,15 @@ model MemberProfile {
   billingAddressLine  String?
   billingPostalCode   String?
 
+  /**
+   * Kurumsal üyelikte: fatura adresi şirket ile aynı mı.
+   * false ise `billingContact*` alanları iletişim / bireysel fatura bilgisidir.
+   */
+  billingContactSameAsInvoice Boolean @default(true)
+  billingContactTcKimlik      String?
+  billingContactAddressLine   String?
+  billingContactPostalCode    String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
