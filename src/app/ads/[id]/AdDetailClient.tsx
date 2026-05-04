@@ -245,8 +245,8 @@ function AdDetailInner() {
           </HomeBackButtonLink>
           <p className="text-sm leading-relaxed text-slate-700">
             {lang === "tr"
-              ? "Bu ilan yayında. Tam açıklama ve fotoğraflar ücretli veya üyelik gerektirebilir; aşağıdaki adımlarla erişimi tamamlayın. Arama motorları için sayfada ilan başlığı ve özet metni yine de yer alır."
-              : "This listing is published. Full description and photos may require membership or a one-time access fee—complete the steps below. A title and summary remain visible on the page for discovery."}
+              ? "Bu ilan yayında. Tam açıklama ve fotoğraflar ücretli veya üyelik gerektirebilir; aşağıdaki adımlarla erişimi tamamlayın."
+              : "This listing is published. Full description and photos may require membership or a one-time access fee—complete the steps below."}
           </p>
         </main>
         <AdAccessModal adId={id} open={accessModalVisible} onClose={closeAccessModal} lang={lang} />
@@ -429,18 +429,30 @@ function AdDetailInner() {
                     <div className="min-w-0 w-full flex-1">
                       {listingPhotosPreview.length > 0 ? (
                         <div className="grid w-full grid-cols-2 content-start gap-2 sm:min-h-0 sm:gap-2.5">
-                          {listingPhotosPreview.map((ph) => (
+                          {listingPhotosPreview.map((ph, idx) => {
+                            const titleForAlt = displayAdTitle(ad.title);
+                            const photoAlt =
+                              lang === "en"
+                                ? `${titleForAlt} — photo ${idx + 1} of ${listingPhotosPreview.length}`
+                                : `${titleForAlt} — görsel ${idx + 1} / ${listingPhotosPreview.length}`;
+                            const openLabel =
+                              lang === "en"
+                                ? `Open photo ${idx + 1} of ${listingPhotosPreview.length} in new tab`
+                                : `Görsel ${idx + 1} / ${listingPhotosPreview.length} yeni sekmede aç`;
+                            return (
                             <a
                               key={ph.id}
                               href={ph.url}
                               target="_blank"
                               rel="noopener noreferrer"
+                              aria-label={openLabel}
                               className="relative aspect-[4/3] w-full min-h-0 overflow-hidden rounded-lg border-2 border-orange-200/90 bg-white shadow-md transition hover:border-orange-400 hover:shadow-lg"
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element -- blob/harici yükleme URL */}
-                              <img src={ph.url} alt="" className="h-full w-full object-cover" />
+                              <img src={ph.url} alt={photoAlt} className="h-full w-full object-cover" />
                             </a>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : categoryFallbackVisualUrl ? (
                         <div className="grid w-full grid-cols-2 gap-2 sm:gap-2.5">
@@ -466,6 +478,18 @@ function AdDetailInner() {
             ) : null}
           </div>
         </div>
+
+        {sessionUser?.role === "MEMBER" && sessionUser.userId === ad.ownerId
+        && (ad.status === "PENDING" || ad.status === "APPROVED" || ad.status === undefined) ? (
+          <div className="mb-3">
+            <Link
+              href={lang === "en" ? `/ads/${ad.id}/edit?lang=en` : `/ads/${ad.id}/edit`}
+              className="inline-flex items-center gap-2 rounded-xl border-2 border-orange-300 bg-white/90 px-4 py-2.5 text-sm font-bold text-orange-950 shadow-sm transition hover:border-orange-500 hover:bg-orange-50"
+            >
+              {lang === "en" ? "Re-edit listing" : "İlanı yeniden düzenle"}
+            </Link>
+          </div>
+        ) : null}
 
         {sessionUser?.role === "MEMBER" && sessionUser.userId === ad.ownerId ? (
           <AdOwnerActions

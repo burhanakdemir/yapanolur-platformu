@@ -8,6 +8,8 @@ import { dictionary, getLang } from "@/lib/i18n";
 import { TR_PROVINCES_FALLBACK } from "@/lib/trProvincesFallback";
 import FileInputTr from "@/components/FileInputTr";
 import { SHOWCASE_DAY_OPTIONS } from "@/lib/showcaseDurations";
+import { flattenAllChildren, type CategoryTreeNode } from "@/lib/adCategoryTree";
+import { uploadListingImageFile } from "@/lib/adListingImageUpload";
 import { normalizeAdTextForStorage, stripHashAndAfter } from "@/lib/adTitleDisplay";
 
 const MIN_STARTING_PRICE_TRY = 100;
@@ -46,7 +48,6 @@ function capitalizeSentencesTr(text: string): string {
     .join("\n");
 }
 
-type CategoryTreeNode = { id: string; name: string; children: CategoryTreeNode[] };
 type LocationOption = { id: number; name: string };
 type ProfessionOption = { id: string; name: string };
 
@@ -70,7 +71,6 @@ function NewAdPageInner() {
   const [neighborhoodName, setNeighborhoodName] = useState("");
   const [projectImageFiles, setProjectImageFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [autoImageEnabled, setAutoImageEnabled] = useState(true);
   const [showcaseEnabled, setShowcaseEnabled] = useState(false);
   const [showcaseDays, setShowcaseDays] = useState(7);
   const [showcasePricing, setShowcasePricing] = useState<Record<string, number>>({});
@@ -155,23 +155,6 @@ function NewAdPageInner() {
       .catch(() => setNeighborhoods([]));
   }, [districtId]);
 
-  async function uploadImage(file: File) {
-    const base64 = await fileToBase64(file);
-    const safeName = `${Date.now()}-${file.name}`.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const res = await fetch(clientApiUrl("/api/uploads"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        filename: safeName,
-        dataBase64: base64,
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Gorsel yukleme hatasi.");
-    return String(data.url || "");
-  }
-
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formEl = e.currentTarget;
@@ -193,17 +176,10 @@ function NewAdPageInner() {
     let photoUrls: string[] = [];
     try {
       if (projectImageFiles.length > 0) {
-        photoUrls = await Promise.all(projectImageFiles.slice(0, 5).map((f) => uploadImage(f)));
-      } else if (autoImageEnabled) {
-        photoUrls = [getAutoProjectImage(title, getSelectedCategoryName(categoryTree, finalCategoryId))];
+        photoUrls = await Promise.all(projectImageFiles.slice(0, 5).map((f) => uploadListingImageFile(f)));
       }
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Gorseller yuklenemedi.");
-      setIsUploading(false);
-      return;
-    }
-    if (photoUrls.length === 0) {
-      setMessage("En az bir proje gorseli secin ya da otomatik gorseli acik tutun.");
       setIsUploading(false);
       return;
     }
@@ -467,14 +443,10 @@ function NewAdPageInner() {
             <span className="chip !bg-emerald-100 !text-emerald-700">4/5</span>
             <span>🖼️ Gorsel Bilgileri</span>
           </h2>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={autoImageEnabled}
-              onChange={(e) => setAutoImageEnabled(e.target.checked)}
-            />
-            Proje adina gore otomatik gorsel kullan
-          </label>
+          <p className="text-xs leading-snug text-orange-800">
+            Resim yuklemezseniz ilan kartinda ve detayda alt kategori (veya ust kategorilerde tanimli) gorsel
+            kullanilir. İsterseniz en fazla 5 adet proje fotografi ekleyin.
+          </p>
           <FileInputTr
             name="projectImages"
             multiple
@@ -488,7 +460,7 @@ function NewAdPageInner() {
             }
             onChange={(e) => setProjectImageFiles(Array.from(e.target.files || []))}
           />
-          <p className="text-xs text-orange-700">En fazla 5 adet resim yuklenir.</p>
+          <p className="text-xs text-orange-700">En fazla 5 adet (JPEG, PNG, WebP).</p>
         </section>
         <section className="rounded-xl border border-orange-200 bg-orange-50 p-3 space-y-2">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-orange-900">
@@ -524,51 +496,6 @@ function NewAdPageInner() {
       </form>
     </main>
   );
-}
-
-function flattenAllChildren(
-  nodes: CategoryTreeNode[],
-  depth = 0,
-): Array<{ id: string; label: string }> {
-  return nodes.flatMap((node) => [
-    { id: node.id, label: `${" - ".repeat(depth)}${node.name}` },
-    ...flattenAllChildren(node.children, depth + 1),
-  ]);
-}
-
-function findCategoryName(nodes: CategoryTreeNode[], id: string): string {
-  for (const node of nodes) {
-    if (node.id === id) return node.name;
-    const child = findCategoryName(node.children, id);
-    if (child) return child;
-  }
-  return "";
-}
-
-function getSelectedCategoryName(nodes: CategoryTreeNode[], id: string): string {
-  return findCategoryName(nodes, id);
-}
-
-function getAutoProjectImage(title: string, categoryName: string) {
-  const key = `${title} ${categoryName}`.toLowerCase();
-  if (key.includes("muhendis")) return "https://images.unsplash.com/photo-1465804575741-338df8554e02?auto=format&fit=crop&w=1200&q=80";
-  if (key.includes("sehir") || key.includes("plan")) return "https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=1200&q=80";
-  if (key.includes("renov") || key.includes("tadilat")) return "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80";
-  if (key.includes("insaat") || key.includes("yapi")) return "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1200&q=80";
-  return "https://images.unsplash.com/photo-1465804575741-338df8554e02?auto=format&fit=crop&w=1200&q=80";
-}
-
-function fileToBase64(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = String(reader.result || "");
-      const base64 = result.includes(",") ? result.split(",")[1] : result;
-      resolve(base64);
-    };
-    reader.onerror = () => reject(new Error("Dosya okunamadi."));
-    reader.readAsDataURL(file);
-  });
 }
 
 export default function NewAdPage() {

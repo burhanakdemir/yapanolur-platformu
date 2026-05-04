@@ -38,6 +38,7 @@ export type Ad = {
   createdAt?: string;
   updatedAt?: string;
   categoryId?: string | null;
+  professionId?: string | null;
   category?: { id: string; name: string; imageUrl?: string | null } | null;
   /** API: yaprak + üst kategorilerde ilk dolu görsel URL */
   categoryImageUrl?: string | null;

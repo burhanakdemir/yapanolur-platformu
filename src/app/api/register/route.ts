@@ -248,6 +248,12 @@ export async function POST(req: Request) {
       );
     }
 
+    const signupPolicy = await prisma.adminSettings.findUnique({
+      where: { id: "singleton" },
+      select: { memberSignupAutoApprove: true },
+    });
+    const autoApproveNewMembers = signupPolicy?.memberSignupAutoApprove ?? false;
+
     const passwordHashed = await hashPassword(data.password);
 
     const user = await prisma.$transaction(async (tx) => {
@@ -264,6 +270,7 @@ export async function POST(req: Request) {
         password: passwordHashed,
         profilePhotoUrl: data.profilePhotoUrl ?? null,
         newAdEmailOptIn: data.newAdEmailOptIn,
+        isMemberApproved: autoApproveNewMembers,
       });
 
       const phoneForProfile = phoneForRegister;

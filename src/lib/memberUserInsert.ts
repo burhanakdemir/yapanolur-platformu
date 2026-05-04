@@ -15,9 +15,12 @@ export async function insertMemberUser(
     password: string;
     profilePhotoUrl: string | null;
     newAdEmailOptIn: boolean;
+    /** Admin ayarı: otomatik üye onayı açıksa true */
+    isMemberApproved?: boolean;
   },
 ): Promise<{ id: string; memberNumber: number; isMemberApproved: boolean }> {
   const id = randomUUID();
+  const approved = Boolean(input.isMemberApproved);
   await tx.$executeRaw(
     Prisma.sql`
       INSERT INTO "User" (
@@ -41,12 +44,12 @@ export async function insertMemberUser(
         ${input.profilePhotoUrl},
         ${input.password},
         'MEMBER',
-        false,
+        ${approved},
         ${input.newAdEmailOptIn},
         CURRENT_TIMESTAMP,
         CURRENT_TIMESTAMP
       )
     `,
   );
-  return { id, memberNumber: input.memberNumber, isMemberApproved: false };
+  return { id, memberNumber: input.memberNumber, isMemberApproved: approved };
 }

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import AdDetailPage from "./AdDetailClient";
-import AdDetailSeoLead from "./AdDetailSeoLead";
 import { prisma } from "@/lib/prisma";
 import {
   buildAdBreadcrumbJsonLd,
@@ -120,46 +119,35 @@ export default async function AdDetailRoutePage({ params, searchParams }: Props)
   const sp = await searchParams;
   const lang: Lang = getLang(sp.lang);
 
-  const [ad, settingsRow] = await Promise.all([
-    prisma.ad.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        status: true,
-        listingNumber: true,
-        province: true,
-        district: true,
-        neighborhood: true,
-        startingPriceTry: true,
-        auctionEndsAt: true,
-        category: {
-          select: {
-            id: true,
-            name: true,
-            parent: { select: { id: true, name: true } },
-          },
-        },
-        photos: {
-          take: 1,
-          orderBy: { sortOrder: "asc" },
-          select: { url: true },
+  const ad = await prisma.ad.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      status: true,
+      listingNumber: true,
+      province: true,
+      district: true,
+      neighborhood: true,
+      startingPriceTry: true,
+      auctionEndsAt: true,
+      category: {
+        select: {
+          id: true,
+          name: true,
+          parent: { select: { id: true, name: true } },
         },
       },
-    }),
-    prisma.adminSettings.findUnique({
-      where: { id: "singleton" },
-      select: {
-        detailViewFeeEnabled: true,
-        detailViewFeeAmountTry: true,
+      photos: {
+        take: 1,
+        orderBy: { sortOrder: "asc" },
+        select: { url: true },
       },
-    }),
-  ]);
+    },
+  });
 
   const base = getAppUrl().replace(/\/+$/, "");
-  const detailFeeRequired =
-    Boolean(settingsRow?.detailViewFeeEnabled) && (settingsRow?.detailViewFeeAmountTry ?? 0) > 0;
 
   const imageAbs = absoluteAssetUrl(ad?.photos[0]?.url);
   const urls = listingPageUrls(base, id);
@@ -211,9 +199,6 @@ export default async function AdDetailRoutePage({ params, searchParams }: Props)
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
         />
-      ) : null}
-      {ad?.status === "APPROVED" ? (
-        <AdDetailSeoLead ad={ad} lang={lang} detailFeeRequired={detailFeeRequired} />
       ) : null}
       <AdDetailPage />
     </>

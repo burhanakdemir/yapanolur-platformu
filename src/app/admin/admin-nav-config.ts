@@ -36,6 +36,7 @@ export const ADMIN_QUICK_LINKS: readonly AdminQuickLink[] = [
   { href: adminUrl("/odeme"), label: "Ödeme", superOnly: true },
   { href: adminUrl("/signup-sms-provider"), label: "Kayıt SMS", superOnly: true },
   { href: adminUrl("/signup-verification"), label: "Kayıt OTP", superOnly: true },
+  { href: adminUrl("/member-approval"), label: "Üye onayı", superOnly: true },
   { href: adminUrl("/ileti-merkezi-json"), label: "İleti SMS", superOnly: true },
   { href: adminUrl("/payments"), label: "Vitrin", superOnly: true },
   { href: adminUrl("/categories"), label: "Kategoriler" },
@@ -122,6 +123,14 @@ export const ADMIN_SECTION_GROUPS: AdminNavGroup[] = [
         title: "Üyelik yönetimi",
         description: "Üye listesi, onay, şifre sıfırlama ve belge kontrolü.",
         href: adminUrl("/members"),
+      },
+      {
+        id: "member-approval-policy",
+        title: "Üye onayı politikası",
+        description:
+          "Yeni kayıtları otomatik onaylayın veya yönetici incelemesi (belge kontrolü) için bekletin; yalnızca süper yönetici.",
+        href: adminUrl("/member-approval"),
+        superOnly: true,
       },
       {
         id: "member-votes",

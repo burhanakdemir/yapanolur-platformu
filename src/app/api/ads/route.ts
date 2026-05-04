@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import { verifySessionToken } from "@/lib/auth";
 import { rateLimitGuard } from "@/lib/rateLimit";
 import { isAllowedUploadUrl } from "@/lib/uploadUrl";
+import type { Prisma } from "@/generated/prisma/client";
 
 const createAdSchema = z.object({
   categoryId: z.string().min(4),
@@ -21,7 +22,7 @@ const createAdSchema = z.object({
   parcelNo: z.string().min(1),
   startingPriceTry: z.number().int().min(100).max(99_999_999).default(1000),
   auctionDurationDays: z.number().int().min(1).max(30).default(7),
-  photos: z.array(z.string().min(1)).min(1).max(5),
+  photos: z.array(z.string().min(1)).max(5).optional().default([]),
 });
 
 export async function POST(req: Request) {
@@ -60,11 +61,12 @@ export async function POST(req: Request) {
     if (!profession) {
       return NextResponse.json({ error: "Meslek bulunamadi." }, { status: 404 });
     }
-    if (!data.photos.every(isAllowedUploadUrl)) {
+    const photoUrls = data.photos ?? [];
+    if (photoUrls.length > 0 && !photoUrls.every(isAllowedUploadUrl)) {
       return NextResponse.json({ error: "Gecersiz gorsel adresi." }, { status: 400 });
     }
 
-    const ad = await createAdWithListingNumber(prisma, {
+    const createPayload: Omit<Prisma.AdCreateInput, "listingNumber"> = {
       owner: { connect: { id: owner.id } },
       category: { connect: { id: data.categoryId } },
       profession: { connect: { id: data.professionId } },
@@ -78,10 +80,14 @@ export async function POST(req: Request) {
       neighborhood: data.neighborhood,
       blockNo: data.blockNo,
       parcelNo: data.parcelNo,
-      photos: {
-        create: data.photos.map((url, index) => ({ url, sortOrder: index })),
-      },
-    });
+    };
+    if (photoUrls.length > 0) {
+      createPayload.photos = {
+        create: photoUrls.map((url, index) => ({ url, sortOrder: index })),
+      };
+    }
+
+    const ad = await createAdWithListingNumber(prisma, createPayload);
 
     return NextResponse.json({ ok: true, adId: ad.id, listingNumber: ad.listingNumber });
   } catch (error) {

@@ -516,6 +516,11 @@ model AdminSettings {
   signupEmailVerificationRequired Boolean @default(true)
   /** false: kayıtta telefon OTP istenmez; telefon alanı isteğe bağlı (demo). */
   signupPhoneVerificationRequired Boolean @default(true)
+  /**
+   * true: yeni üye kaydında `User.isMemberApproved` doğrudan true (otomatik kabul).
+   * false: kayıt sonrası yönetici onayı gerekir (belge incelemesi vb.).
+   */
+  memberSignupAutoApprove       Boolean  @default(false)
   /** Ana sayfa sponsor şeridi — dönem başına ücret (TL, kredi ile tahsil önerilir) */
   sponsorHeroFeeAmountTry       Int      @default(0)
   /** Yayın süresi gün (slayt bitiş tarihi için varsayılan; geriye dönük) */

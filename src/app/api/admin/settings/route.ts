@@ -129,6 +129,14 @@ const bodySchema = z.object({
     },
     z.boolean().optional(),
   ),
+  memberSignupAutoApprove: z.preprocess(
+    (v) => {
+      if (v === "true" || v === "1" || v === 1 || v === true) return true;
+      if (v === "false" || v === "0" || v === 0 || v === false) return false;
+      return v;
+    },
+    z.boolean().optional(),
+  ),
   sponsorHeroFeeAmountTry: z.number().int().min(0).optional(),
   sponsorHeroPeriodDays: z.number().int().min(1).max(3650).optional(),
   sponsorHeroPricingTry: z
@@ -200,6 +208,9 @@ function buildAdminSettingsUpdateInput(
   if (data.signupPhoneVerificationRequired !== undefined) {
     p.signupPhoneVerificationRequired = data.signupPhoneVerificationRequired;
   }
+  if (data.memberSignupAutoApprove !== undefined) {
+    p.memberSignupAutoApprove = data.memberSignupAutoApprove;
+  }
   if (data.sponsorHeroFeeAmountTry !== undefined) {
     p.sponsorHeroFeeAmountTry = toInt(data.sponsorHeroFeeAmountTry) ?? data.sponsorHeroFeeAmountTry;
   }
@@ -230,11 +241,16 @@ export async function POST(req: Request) {
     if (
       typeof json === "object" &&
       json !== null &&
-      ("signupEmailVerificationRequired" in json || "signupPhoneVerificationRequired" in json)
+      ("signupEmailVerificationRequired" in json ||
+        "signupPhoneVerificationRequired" in json ||
+        "memberSignupAutoApprove" in json)
     ) {
       if (!isSuperAdminRole(session?.role)) {
         return NextResponse.json(
-          { error: "Üye kaydı doğrulama anahtarlarını yalnızca süper yönetici değiştirebilir." },
+          {
+            error:
+              "Üye kaydı doğrulama ve üye onayı politikalarını yalnızca süper yönetici değiştirebilir.",
+          },
           { status: 403 },
         );
       }

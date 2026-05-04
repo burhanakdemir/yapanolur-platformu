@@ -28,6 +28,7 @@ type RateLimitBucket =
   /** Oturumsuz kayit dosya yuklemesi — oturumlu upload'dan ayri kotayi korur. */
   | "signupUpload"
   | "adCreate"
+  | "adUpdate"
   | "adminTotp"
   /** Üye paneli iş deneyimi CRUD */
   | "workExperience"
@@ -45,6 +46,7 @@ const BUCKETS: Record<RateLimitBucket, { max: number; window: Duration; windowMs
   upload: { max: 60, window: "1 h", windowMs: 60 * 60 * 1000 },
   signupUpload: { max: 40, window: "1 h", windowMs: 60 * 60 * 1000 },
   adCreate: { max: 20, window: "1 h", windowMs: 60 * 60 * 1000 },
+  adUpdate: { max: 40, window: "1 h", windowMs: 60 * 60 * 1000 },
   workExperience: { max: 60, window: "1 h", windowMs: 60 * 60 * 1000 },
 };
 
