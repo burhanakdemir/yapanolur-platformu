@@ -12,6 +12,7 @@ import { SIGNUP_EMAIL_COOKIE, verifySignupEmailProofToken } from "@/lib/signupEm
 import { SIGNUP_PHONE_COOKIE, verifySignupPhoneProofToken } from "@/lib/signupPhoneProof";
 import { shouldUseSecureCookie } from "@/lib/cookieSecure";
 import { getSignupVerificationFlags } from "@/lib/signupVerificationSettings";
+import { grantWelcomeBonusIfEligible } from "@/lib/welcomeBonus";
 
 /** Kayıtta e-posta ve telefon verify-* ile doğrulanır (httpOnly kanıt çerezleri). */
 function optionalTrimmedString() {
@@ -391,6 +392,10 @@ export async function POST(req: Request) {
             fileUrl: taxCert,
           },
         });
+      }
+
+      if (autoApproveNewMembers) {
+        await grantWelcomeBonusIfEligible(tx, created.id);
       }
 
       return created;

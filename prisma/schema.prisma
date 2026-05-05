@@ -521,6 +521,10 @@ model AdminSettings {
    * false: kayıt sonrası yönetici onayı gerekir (belge incelemesi vb.).
    */
   memberSignupAutoApprove       Boolean  @default(false)
+  /** Yeni uye hosgeldin bakiyesi: etkin/pasif. */
+  welcomeBonusEnabled           Boolean  @default(true)
+  /** Yeni uye hosgeldin bakiyesi tutari (TL). */
+  welcomeBonusAmountTry         Int      @default(500)
   /** Ana sayfa sponsor şeridi — dönem başına ücret (TL, kredi ile tahsil önerilir) */
   sponsorHeroFeeAmountTry       Int      @default(0)
   /** Yayın süresi gün (slayt bitiş tarihi için varsayılan; geriye dönük) */

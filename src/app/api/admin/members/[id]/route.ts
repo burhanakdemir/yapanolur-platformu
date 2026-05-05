@@ -6,6 +6,7 @@ import { sendPasswordResetEmail } from "@/lib/mailer";
 import { hashPassword } from "@/lib/passwordHash";
 import { verifySessionToken } from "@/lib/auth";
 import { isStaffAdminRole, isSuperAdminRole } from "@/lib/adminRoles";
+import { grantWelcomeBonusIfEligible } from "@/lib/welcomeBonus";
 
 const bodySchema = z.object({
   action: z.enum(["approve", "pending", "resetPassword"]),
@@ -119,10 +120,21 @@ export async function POST(req: Request, { params }: Params) {
       }
     }
 
-    const updated = await prisma.user.update({
-      where: { id },
-      data: { isMemberApproved: action === "approve" },
-      select: { id: true, isMemberApproved: true },
+    const updated = await prisma.$transaction(async (tx) => {
+      const prev = await tx.user.findUnique({
+        where: { id },
+        select: { id: true, isMemberApproved: true },
+      });
+      const nextApproved = action === "approve";
+      const user = await tx.user.update({
+        where: { id },
+        data: { isMemberApproved: nextApproved },
+        select: { id: true, isMemberApproved: true },
+      });
+      if (nextApproved && prev && !prev.isMemberApproved && user.isMemberApproved) {
+        await grantWelcomeBonusIfEligible(tx, user.id);
+      }
+      return user;
     });
     return NextResponse.json({ ok: true, user: updated });
   } catch (error) {

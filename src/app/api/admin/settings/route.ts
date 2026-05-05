@@ -137,6 +137,15 @@ const bodySchema = z.object({
     },
     z.boolean().optional(),
   ),
+  welcomeBonusEnabled: z.preprocess(
+    (v) => {
+      if (v === "true" || v === "1" || v === 1 || v === true) return true;
+      if (v === "false" || v === "0" || v === 0 || v === false) return false;
+      return v;
+    },
+    z.boolean().optional(),
+  ),
+  welcomeBonusAmountTry: z.number().int().min(0).optional(),
   sponsorHeroFeeAmountTry: z.number().int().min(0).optional(),
   sponsorHeroPeriodDays: z.number().int().min(1).max(3650).optional(),
   sponsorHeroPricingTry: z
@@ -211,6 +220,12 @@ function buildAdminSettingsUpdateInput(
   if (data.memberSignupAutoApprove !== undefined) {
     p.memberSignupAutoApprove = data.memberSignupAutoApprove;
   }
+  if (data.welcomeBonusEnabled !== undefined) {
+    p.welcomeBonusEnabled = data.welcomeBonusEnabled;
+  }
+  if (data.welcomeBonusAmountTry !== undefined) {
+    p.welcomeBonusAmountTry = toInt(data.welcomeBonusAmountTry) ?? data.welcomeBonusAmountTry;
+  }
   if (data.sponsorHeroFeeAmountTry !== undefined) {
     p.sponsorHeroFeeAmountTry = toInt(data.sponsorHeroFeeAmountTry) ?? data.sponsorHeroFeeAmountTry;
   }
@@ -243,7 +258,9 @@ export async function POST(req: Request) {
       json !== null &&
       ("signupEmailVerificationRequired" in json ||
         "signupPhoneVerificationRequired" in json ||
-        "memberSignupAutoApprove" in json)
+        "memberSignupAutoApprove" in json ||
+        "welcomeBonusEnabled" in json ||
+        "welcomeBonusAmountTry" in json)
     ) {
       if (!isSuperAdminRole(session?.role)) {
         return NextResponse.json(

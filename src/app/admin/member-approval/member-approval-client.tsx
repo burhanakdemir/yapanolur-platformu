@@ -6,6 +6,8 @@ import { adminUrl } from "@/lib/adminUrls";
 
 export default function MemberApprovalClient() {
   const [autoApprove, setAutoApprove] = useState(false);
+  const [welcomeBonusEnabled, setWelcomeBonusEnabled] = useState(true);
+  const [welcomeBonusAmountTry, setWelcomeBonusAmountTry] = useState(500);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -15,6 +17,12 @@ export default function MemberApprovalClient() {
       .then((data) => {
         if (typeof data.memberSignupAutoApprove === "boolean") {
           setAutoApprove(data.memberSignupAutoApprove);
+        }
+        if (typeof data.welcomeBonusEnabled === "boolean") {
+          setWelcomeBonusEnabled(data.welcomeBonusEnabled);
+        }
+        if (typeof data.welcomeBonusAmountTry === "number") {
+          setWelcomeBonusAmountTry(Math.max(0, Math.trunc(data.welcomeBonusAmountTry)));
         }
       })
       .catch(() => setMessage("Ayarlar yüklenemedi."))
@@ -28,7 +36,11 @@ export default function MemberApprovalClient() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ memberSignupAutoApprove: autoApprove }),
+      body: JSON.stringify({
+        memberSignupAutoApprove: autoApprove,
+        welcomeBonusEnabled,
+        welcomeBonusAmountTry: Math.max(0, Math.trunc(welcomeBonusAmountTry || 0)),
+      }),
     });
     const data = await res.json();
     setMessage(
@@ -94,6 +106,37 @@ export default function MemberApprovalClient() {
               </span>
             </label>
           </fieldset>
+
+          <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+            <h2 className="text-sm font-semibold text-emerald-950">Yeni üye hoşgeldin bakiyesi</h2>
+            <p className="text-sm text-slate-700">
+              Hoşgeldin bakiyesi tek seferlik yazılır. Otomatik onay modunda kayıt anında, manuel onay
+              modunda ise yönetici <strong className="font-medium text-slate-900">onay</strong> verdiğinde
+              eklenir.
+            </p>
+            <p className="text-xs text-slate-600">
+              Varsayılan değer <strong className="font-medium text-slate-800">500 TL</strong> olarak gelir;
+              isterseniz bu tutarı burada değiştirebilirsiniz.
+            </p>
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-800">
+              <input
+                type="checkbox"
+                checked={welcomeBonusEnabled}
+                onChange={(e) => setWelcomeBonusEnabled(e.target.checked)}
+              />
+              Hoşgeldin bakiyesini etkinleştir
+            </label>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-600">Hoşgeldin bakiyesi (TL)</label>
+              <input
+                className="w-full rounded-lg border border-emerald-200 bg-white p-2 text-slate-900"
+                type="number"
+                min={0}
+                value={welcomeBonusAmountTry}
+                onChange={(e) => setWelcomeBonusAmountTry(Number(e.target.value))}
+              />
+            </div>
+          </div>
 
           <button className="btn-primary" type="submit">
             Kaydet
