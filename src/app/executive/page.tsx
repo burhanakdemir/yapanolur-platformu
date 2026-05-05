@@ -187,7 +187,9 @@ export default async function ExecutivePage({ searchParams }: Props) {
           subtitle={`${data.periodRange.label} (İstanbul) — yo_vid çerezi; veri bu özellik canlıya alındıktan sonra birikir`}
           accentClass="text-sky-800"
           values={data.visitorDailySeries}
-          formatY={(n) => nf.format(n)}
+          yFormat="number"
+          yAxisLabel="Adet"
+          xLabels={data.visitorDailyKeys}
         />
       </section>
 
@@ -314,14 +316,18 @@ export default async function ExecutivePage({ searchParams }: Props) {
             subtitle={memberSubtitle}
             accentClass="text-teal-700"
             values={data.newMembersSeries}
-            formatY={(n) => nf.format(n)}
+            yFormat="number"
+            yAxisLabel="Adet"
+            xLabels={data.trendBucketKeys}
           />
           <ExecutiveSparkline
             title="Kredi yükleme"
             subtitle={creditSubtitle}
             accentClass="text-orange-800"
             values={data.creditTopUpSeriesTry}
-            formatY={(n) => tryFmt.format(n)}
+            yFormat="currency_try"
+            yAxisLabel="TL"
+            xLabels={data.trendBucketKeys}
           />
         </div>
       </section>
