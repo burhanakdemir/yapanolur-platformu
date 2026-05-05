@@ -161,6 +161,7 @@ function MembersPageContent() {
   const isReadonly = Boolean(savedProfile);
   const emailOtpGate = signupEmailRequired !== false;
   const phoneOtpGate = signupPhoneRequired !== false;
+  const phoneOtpUiEnabled = signupPhoneRequired === true;
   const blockUntilEmailVerified = !isReadonly && emailOtpGate && !emailVerified;
   const blockUntilFullyVerified =
     !isReadonly && ((emailOtpGate && !emailVerified) || (phoneOtpGate && !phoneVerified));
@@ -1114,7 +1115,11 @@ function MembersPageContent() {
           <span id="member-phone-label" className="block text-xs font-medium text-slate-700">
             Telefon{" "}
             <span className="font-normal text-slate-500">
-              {phoneOtpGate ? "(zorunlu — SMS doğrulama)" : "(isteğe bağlı — SMS doğrulama kapalı)"}
+              {phoneOtpUiEnabled
+                ? "(zorunlu — SMS doğrulama)"
+                : signupPhoneRequired === false
+                  ? "(isteğe bağlı — SMS doğrulama kapalı)"
+                  : "(yükleniyor...)"}
             </span>
           </span>
           {!isReadonly && (
@@ -1182,7 +1187,7 @@ function MembersPageContent() {
             </p>
           )}
         </div>
-        {!isReadonly && phoneOtpGate && (
+        {!isReadonly && phoneOtpUiEnabled && (
           <div
             className={`space-y-2 rounded-lg border border-orange-100 bg-orange-50/50 px-2 py-1.5 ${blockUntilEmailVerified ? "opacity-60" : ""}`}
           >
