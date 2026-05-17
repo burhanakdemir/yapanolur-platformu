@@ -11,7 +11,7 @@ import FileInputTr from "@/components/FileInputTr";
 import { NewAdEmailOptInGradientBox } from "@/components/NewAdEmailOptInGradientBox";
 import ProvinceDistrictSelect from "@/components/ProvinceDistrictSelect";
 import ProfessionCombobox from "@/components/ProfessionCombobox";
-import { apiErrorMessage } from "@/lib/apiErrorMessage";
+import { apiErrorMessage, apiErrorMessageWithIssues } from "@/lib/apiErrorMessage";
 import { SIGNUP_EMAIL_OTP_REQUEST_PUBLIC_HINT_TR } from "@/lib/signupEmailOtpHint";
 import { digitsOnly, isValidTcKimlik, isValidVknFormat } from "@/lib/trBillingIds";
 import {
@@ -25,6 +25,7 @@ import { uploadMemberImage } from "@/lib/uploadMemberImage";
 import HomeBackButtonLink, { homeBackPrimaryClassName } from "@/components/HomeBackButtonLink";
 import SignupTypeModal from "@/components/SignupTypeModal";
 import { formatSignupOtpTtlTr } from "@/lib/signupOtpTtl";
+import { computeSignupOtpGates, isSignupBlockedUntilVerified } from "@/lib/signupRegistrationGates";
 
 function membersLoginHref(lang: Lang, nextPath: string): string {
   const q = new URLSearchParams();
@@ -42,6 +43,27 @@ function formatOtpMmSs(totalSec: number): string {
   return `${m}:${String(r).padStart(2, "0")}`;
 }
 
+async function readJsonBody(res: Response): Promise<Record<string, unknown>> {
+  const raw = await res.text();
+  if (!raw.trim()) return {};
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function FormStatusMessage({ message }: { message: string }) {
+  return (
+    <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800" role="alert">
+      {message}
+    </p>
+  );
+}
+
 export default function MembersPage() {
   return <MembersPageContent />;
 }
@@ -50,9 +72,11 @@ function MembersPageContent() {
   const [lang, setLang] = useState<Lang>("tr");
   /** Sunucu SIGNUP_OTP_TTL_MINUTES ile uyumlu; API yanıtındaki otpTtlMinutes ile güncellenir. */
   const [signupOtpTtlMinutes, setSignupOtpTtlMinutes] = useState(2);
-  /** null: henüz /api/register/options yüklenmedi — güvenli varsayılan OTP zorunlu. */
+  /** null: henüz /api/register/options yüklenmedi. */
   const [signupEmailRequired, setSignupEmailRequired] = useState<boolean | null>(null);
   const [signupPhoneRequired, setSignupPhoneRequired] = useState<boolean | null>(null);
+  const [signupOptionsLoading, setSignupOptionsLoading] = useState(true);
+  const [signupOptionsError, setSignupOptionsError] = useState("");
   const [message, setMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -159,12 +183,19 @@ function MembersPageContent() {
     [phoneCountryIso, phoneNational],
   );
   const isReadonly = Boolean(savedProfile);
-  const emailOtpGate = signupEmailRequired !== false;
-  const phoneOtpGate = signupPhoneRequired !== false;
-  const phoneOtpUiEnabled = signupPhoneRequired === true;
+  const { emailOtpGate, phoneOtpGate, phoneOtpUiEnabled } = computeSignupOtpGates(
+    signupEmailRequired,
+    signupPhoneRequired,
+  );
   const blockUntilEmailVerified = !isReadonly && emailOtpGate && !emailVerified;
-  const blockUntilFullyVerified =
-    !isReadonly && ((emailOtpGate && !emailVerified) || (phoneOtpGate && !phoneVerified));
+  const blockUntilFullyVerified = isSignupBlockedUntilVerified(
+    isReadonly,
+    emailOtpGate,
+    phoneOtpGate,
+    emailVerified,
+    phoneVerified,
+  );
+  const blockUntilOptionsLoaded = !isReadonly && signupOptionsLoading;
   const displayMemberNumber =
     savedProfile?.memberNumber ?? (pendingMemberNumber !== null ? pendingMemberNumber : null);
   const savedDocuments = {
@@ -220,28 +251,57 @@ function MembersPageContent() {
       .then((d) => setProfessions(Array.isArray(d) ? d : []));
   }, []);
 
+  const applySignupVerificationFlags = (em: boolean, ph: boolean) => {
+    setSignupEmailRequired(em);
+    setSignupPhoneRequired(ph);
+    if (!em) setEmailVerified(true);
+    if (!ph) setPhoneVerified(true);
+  };
+
   useEffect(() => {
     let cancelled = false;
+    const optionsLoadFail =
+      "Kayıt ayarları yüklenemedi. Sayfayı yenileyin; sorun sürerse destek ile iletişime geçin.";
+
+    const finishWithDefaults = (showError: boolean) => {
+      applySignupVerificationFlags(true, true);
+      if (showError) setSignupOptionsError(optionsLoadFail);
+    };
+
+    setSignupOptionsLoading(true);
+    setSignupOptionsError("");
     fetch(clientApiUrl("/api/register/options"), { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: unknown) => {
-        if (cancelled || !d || typeof d !== "object") return;
+      .then(async (r) => {
+        if (cancelled) return;
+        if (!r.ok) {
+          finishWithDefaults(true);
+          return;
+        }
+        let d: unknown;
+        try {
+          d = await r.json();
+        } catch {
+          finishWithDefaults(true);
+          return;
+        }
+        if (!d || typeof d !== "object") {
+          finishWithDefaults(true);
+          return;
+        }
         const o = d as {
           signupEmailVerificationRequired?: boolean;
           signupPhoneVerificationRequired?: boolean;
         };
-        const em = o.signupEmailVerificationRequired !== false;
-        const ph = o.signupPhoneVerificationRequired !== false;
-        setSignupEmailRequired(em);
-        setSignupPhoneRequired(ph);
-        if (!em) setEmailVerified(true);
-        if (!ph) setPhoneVerified(true);
+        applySignupVerificationFlags(
+          o.signupEmailVerificationRequired !== false,
+          o.signupPhoneVerificationRequired !== false,
+        );
       })
       .catch(() => {
-        if (!cancelled) {
-          setSignupEmailRequired(true);
-          setSignupPhoneRequired(true);
-        }
+        if (!cancelled) finishWithDefaults(true);
+      })
+      .finally(() => {
+        if (!cancelled) setSignupOptionsLoading(false);
       });
     return () => {
       cancelled = true;
@@ -597,6 +657,10 @@ function MembersPageContent() {
       setRegistrationJustCompleted(false);
     }
     const form = new FormData(e.currentTarget);
+    if (!isReadonly && signupOptionsLoading) {
+      setMessage("Kayıt ayarları yükleniyor, lütfen birkaç saniye bekleyin.");
+      return;
+    }
     if (!isReadonly && signupPathChoice === null) {
       setMessage("Önce kayıt türünü seçin.");
       return;
@@ -760,15 +824,14 @@ function MembersPageContent() {
         credentials: "include",
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
+      const data = await readJsonBody(res);
       if (!res.ok) {
-        const err = data.error;
-        const msg =
-          Array.isArray(err)
-            ? err.map((i: { message?: string }) => i.message).filter(Boolean).join(" ") || "Doğrulama hatası."
-            : typeof err === "string"
-              ? err
-              : "Hata.";
+        const msg = apiErrorMessageWithIssues(
+          data,
+          res.status >= 500
+            ? "Kayıt sunucu hatası. Biraz sonra tekrar deneyin."
+            : "Kayıt tamamlanamadı.",
+        );
         setMessage(msg);
         setIsUploading(false);
         return;
@@ -956,9 +1019,15 @@ function MembersPageContent() {
             </ol>
           </nav>
         )}
-        {message ? (
-          <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800" role="status">
-            {message}
+        {message ? <FormStatusMessage message={message} /> : null}
+        {!isReadonly && signupOptionsLoading ? (
+          <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700" role="status" aria-live="polite">
+            Kayıt ayarları yükleniyor…
+          </p>
+        ) : null}
+        {!isReadonly && signupOptionsError ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+            {signupOptionsError}
           </p>
         ) : null}
         {isReadonly && <p className="text-sm font-semibold">Kayıtlı üye bilgileri (düzenleme kapalı)</p>}
@@ -1670,9 +1739,38 @@ function MembersPageContent() {
           </div>
         )}
         {!isReadonly && (
-          <button className="btn-primary" type="submit" disabled={isUploading || blockUntilFullyVerified}>
-            {isUploading ? d.memberPage.registerSending : d.common.submit}
-          </button>
+          <div className="space-y-2">
+              <p
+                className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-950"
+                role="status"
+                aria-live="polite"
+              >
+                {phoneOtpGate
+                  ? "Önce e-posta ve telefon doğrulamasını tamamlayın."
+                  : "Önce e-posta doğrulamasını tamamlayın."}
+              </p>
+            ) : null}
+            {message ? <FormStatusMessage message={message} /> : null}
+            <button
+              className="btn-primary w-full sm:w-auto"
+              type="submit"
+              disabled={isUploading || blockUntilOptionsLoaded}
+              aria-describedby={
+                blockUntilFullyVerified && !blockUntilOptionsLoaded ? "signup-submit-verify-hint" : undefined
+              }
+            >
+              {isUploading
+                ? d.memberPage.registerSending
+                : blockUntilOptionsLoaded
+                  ? "Yükleniyor…"
+                  : d.common.submit}
+            </button>
+            {blockUntilFullyVerified && !blockUntilOptionsLoaded ? (
+              <p id="signup-submit-verify-hint" className="sr-only">
+                Doğrulama tamamlanmadan kayıt gönderilemez; yukarıdaki OTP adımlarını bitirin.
+              </p>
+            ) : null}
+          </div>
         )}
         {isReadonly && (
           <section className="rounded-xl border border-orange-200 bg-orange-50 p-3 space-y-3">
