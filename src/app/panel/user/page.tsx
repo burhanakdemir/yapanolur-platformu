@@ -17,6 +17,7 @@ import { buildMemberRatingPayload } from "@/lib/memberRatingPayload";
 import { sumUserCreditTry } from "@/lib/userCredit";
 import PanelCollapsibleSection from "@/components/PanelCollapsibleSection";
 import UserPanelNewAdEmailOptIn from "@/components/UserPanelNewAdEmailOptIn";
+import UserPanelPasswordActions from "@/components/UserPanelPasswordActions";
 import { dictionary } from "@/lib/i18n";
 import { getUserNewAdEmailOptIn } from "@/lib/userNewAdEmailOptIn";
 
@@ -253,6 +254,25 @@ export default async function UserPanelPage({ searchParams }: Props) {
           newAdEmailSaved: "Tercihiniz kaydedildi.",
           newAdEmailSaving: "Kaydediliyor…",
           newAdEmailError: "Kaydedilemedi. Tekrar deneyin.",
+          changePassword: "Şifre Değiştir",
+          logout: "Çıkış Yap",
+          passwordOld: "Eski şifre",
+          passwordNew: "Yeni şifre",
+          passwordConfirm: "Yeni şifre tekrar",
+          passwordVerifyOld: "Eski şifreyi doğrula",
+          passwordSave: "Şifreyi kaydet",
+          passwordAutoReset: "Otomatik Şifre Sıfırla",
+          passwordClose: "Kapat",
+          passwordVerifying: "Doğrulanıyor…",
+          passwordSaving: "Kaydediliyor…",
+          passwordResetting: "Gönderiliyor…",
+          passwordOldVerified: "Eski şifre doğrulandı. Yeni şifrenizi girin.",
+          passwordOldWrong: "Mevcut şifre hatalı.",
+          passwordMismatch: "Yeni şifre tekrarı eşleşmiyor.",
+          passwordSaved: "Şifreniz güncellendi.",
+          passwordAutoResetConfirm:
+            "Yeni otomatik şifre e-posta adresinize gönderilecek. Devam edilsin mi?",
+          passwordAutoResetDone: "Yeni şifreniz e-posta adresinize gönderildi.",
         }
       : {
           panelTitle: "Member dashboard",
@@ -325,6 +345,25 @@ export default async function UserPanelPage({ searchParams }: Props) {
           newAdEmailSaved: "Your preference was saved.",
           newAdEmailSaving: "Saving…",
           newAdEmailError: "Could not save. Try again.",
+          changePassword: "Change password",
+          logout: "Sign out",
+          passwordOld: "Current password",
+          passwordNew: "New password",
+          passwordConfirm: "Confirm new password",
+          passwordVerifyOld: "Verify current password",
+          passwordSave: "Save password",
+          passwordAutoReset: "Auto-reset password",
+          passwordClose: "Close",
+          passwordVerifying: "Verifying…",
+          passwordSaving: "Saving…",
+          passwordResetting: "Sending…",
+          passwordOldVerified: "Current password verified. Enter your new password.",
+          passwordOldWrong: "Current password is incorrect.",
+          passwordMismatch: "New passwords do not match.",
+          passwordSaved: "Your password was updated.",
+          passwordAutoResetConfirm:
+            "A new password will be emailed to you. Continue?",
+          passwordAutoResetDone: "Your new password was sent to your email.",
         };
 
   const displayName =
@@ -558,12 +597,39 @@ export default async function UserPanelPage({ searchParams }: Props) {
                     <p className="max-w-xl text-xs leading-snug text-orange-50/95 sm:text-sm">{t.tagline}</p>
                   </div>
                 </div>
-                <Link
-                  href={`/?lang=${lang}`}
-                  className="inline-flex shrink-0 items-center justify-center self-center rounded-lg border border-white/35 bg-white/15 px-3 py-1.5 text-center text-xs font-semibold backdrop-blur transition hover:bg-white/25 sm:self-start sm:px-4 sm:py-2 sm:text-sm"
-                >
-                  {t.home}
-                </Link>
+                <div className="flex shrink-0 flex-col gap-2 self-center sm:self-start">
+                  <Link
+                    href={`/?lang=${lang}`}
+                    className="inline-flex w-full min-w-[9.5rem] items-center justify-center rounded-lg border border-white/35 bg-white/15 px-3 py-1.5 text-center text-xs font-semibold backdrop-blur transition hover:bg-white/25 sm:px-4 sm:py-2 sm:text-sm"
+                  >
+                    {t.home}
+                  </Link>
+                  {isMemberAccount ? (
+                    <UserPanelPasswordActions
+                      lang={lang}
+                      labels={{
+                        changePassword: t.changePassword,
+                        logout: t.logout,
+                        oldPassword: t.passwordOld,
+                        newPassword: t.passwordNew,
+                        confirmPassword: t.passwordConfirm,
+                        verifyOld: t.passwordVerifyOld,
+                        savePassword: t.passwordSave,
+                        autoReset: t.passwordAutoReset,
+                        close: t.passwordClose,
+                        verifying: t.passwordVerifying,
+                        saving: t.passwordSaving,
+                        resetting: t.passwordResetting,
+                        oldVerified: t.passwordOldVerified,
+                        oldWrong: t.passwordOldWrong,
+                        mismatch: t.passwordMismatch,
+                        saved: t.passwordSaved,
+                        autoResetConfirm: t.passwordAutoResetConfirm,
+                        autoResetDone: t.passwordAutoResetDone,
+                      }}
+                    />
+                  ) : null}
+                </div>
               </div>
 
               <div className="flex flex-col gap-2 pt-0.5 sm:flex-row sm:items-start sm:gap-2 lg:gap-3">
