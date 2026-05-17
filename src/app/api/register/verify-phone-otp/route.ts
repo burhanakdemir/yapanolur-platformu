@@ -17,6 +17,10 @@ import {
   createSignupPhoneProofToken,
   SIGNUP_PHONE_COOKIE,
 } from "@/lib/signupPhoneProof";
+import {
+  checkRegisterAvailability,
+  registerConflictMessage,
+} from "@/lib/registerConflict";
 
 const bodySchema = z.object({
   email: z.preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase() : v), z.string().email()),
@@ -61,12 +65,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Geçerli bir telefon numarası gerekli." }, { status: 400 });
     }
 
-    const existing = await prisma.user.findUnique({
-      where: { email: data.email },
-      select: { id: true },
+    const availability = await checkRegisterAvailability(prisma, {
+      email: data.email,
+      phoneE164,
     });
-    if (existing) {
-      return NextResponse.json({ error: "Bu e-posta zaten kayıtlı." }, { status: 409 });
+    if (availability.conflict) {
+      const code =
+        availability.conflict === "both"
+          ? "both_taken"
+          : availability.conflict === "email"
+            ? "email_taken"
+            : "phone_taken";
+      return NextResponse.json(
+        {
+          error: registerConflictMessage(availability.conflict),
+          code,
+          emailTaken: availability.emailTaken,
+          phoneTaken: availability.phoneTaken,
+        },
+        { status: 409 },
+      );
     }
 
     const ok = await verifyAndConsumeOtp(prisma, OTP_PURPOSE_SIGNUP_PHONE, phoneE164, data.code);

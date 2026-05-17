@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { clientApiUrl } from "@/lib/clientApi";
-import { NewAdEmailOptInGradientBox } from "@/components/NewAdEmailOptInGradientBox";
+import {
+  NewAdEmailOptInCheckbox,
+  NewAdEmailOptInGradientBox,
+} from "@/components/NewAdEmailOptInGradientBox";
 
 type Labels = {
   optInLabel: string;
@@ -77,14 +80,11 @@ export default function UserPanelNewAdEmailOptIn({
         <label
           className={`flex cursor-pointer items-start text-white ${compact ? "gap-2 text-xs" : "gap-2.5 text-sm"}`}
         >
-          <input
-            type="checkbox"
+          <NewAdEmailOptInCheckbox
             checked={value}
             disabled={saving}
+            compact={compact}
             onChange={(e) => void onChange(e.target.checked)}
-            className={`mt-0.5 shrink-0 rounded border border-white/50 bg-white/10 accent-white disabled:opacity-60 ${
-              compact ? "h-3.5 w-3.5" : "h-4 w-4"
-            }`}
             aria-label={labels.optInLabel}
           />
           <span>

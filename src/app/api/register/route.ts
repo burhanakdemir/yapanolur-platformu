@@ -15,6 +15,10 @@ import { SIGNUP_PHONE_COOKIE, verifySignupPhoneProofToken } from "@/lib/signupPh
 import { shouldUseSecureCookie } from "@/lib/cookieSecure";
 import { getSignupVerificationFlags } from "@/lib/signupVerificationSettings";
 import { grantWelcomeBonusIfEligible } from "@/lib/welcomeBonus";
+import {
+  checkRegisterAvailability,
+  registerConflictMessage,
+} from "@/lib/registerConflict";
 
 /** Kayıtta e-posta ve telefon verify-* ile doğrulanır (httpOnly kanıt çerezleri). */
 function optionalTrimmedString() {
@@ -260,12 +264,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Gecersiz meslek secimi." }, { status: 400 });
     }
 
-    const existing = await prisma.user.findUnique({ where: { email: data.email } });
-    if (existing) {
+    const availability = await checkRegisterAvailability(prisma, {
+      email: data.email,
+      phoneE164: phoneForRegister,
+    });
+    if (availability.conflict) {
+      const code =
+        availability.conflict === "both"
+          ? "both_taken"
+          : availability.conflict === "email"
+            ? "email_taken"
+            : "phone_taken";
       return NextResponse.json(
         {
-          error:
-            "Bu e-posta adresi zaten kayıtlı. Giriş yapın veya başka bir e-posta ile yeniden deneyin.",
+          error: registerConflictMessage(availability.conflict),
+          code,
+          emailTaken: availability.emailTaken,
+          phoneTaken: availability.phoneTaken,
         },
         { status: 409 },
       );

@@ -14,6 +14,7 @@ function getOtpPepper(): string {
 
 export const OTP_PURPOSE_SIGNUP_EMAIL = "signup_email";
 export const OTP_PURPOSE_SIGNUP_PHONE = "signup_phone";
+export const OTP_PURPOSE_PASSWORD_RESET = "password_reset_email";
 
 /** Kayıt e-posta OTP geçerlilik süresi (dakika); `SIGNUP_OTP_TTL_MINUTES` ile yapılandırılır. */
 export const OTP_SIGNUP_EMAIL_TTL_MINUTES = getSignupOtpTtlMinutes();

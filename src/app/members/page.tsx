@@ -8,7 +8,10 @@ import Image from "next/image";
 import { clientApiUrl } from "@/lib/clientApi";
 import { dictionary, getLang, type Lang } from "@/lib/i18n";
 import FileInputTr from "@/components/FileInputTr";
-import { NewAdEmailOptInGradientBox } from "@/components/NewAdEmailOptInGradientBox";
+import {
+  NewAdEmailOptInCheckbox,
+  NewAdEmailOptInGradientBox,
+} from "@/components/NewAdEmailOptInGradientBox";
 import ProvinceDistrictSelect from "@/components/ProvinceDistrictSelect";
 import ProfessionCombobox from "@/components/ProfessionCombobox";
 import { apiErrorMessage, apiErrorMessageWithIssues } from "@/lib/apiErrorMessage";
@@ -24,8 +27,13 @@ import { getSafeInternalNextPath } from "@/lib/safeNextPath";
 import { uploadMemberImage } from "@/lib/uploadMemberImage";
 import HomeBackButtonLink, { homeBackPrimaryClassName } from "@/components/HomeBackButtonLink";
 import SignupTypeModal from "@/components/SignupTypeModal";
+import RegisteredMemberConflictModal from "@/components/RegisteredMemberConflictModal";
 import { formatSignupOtpTtlTr } from "@/lib/signupOtpTtl";
 import { computeSignupOtpGates, isSignupBlockedUntilVerified } from "@/lib/signupRegistrationGates";
+import {
+  parseRegisterConflictResponse,
+  type RegisterConflictKind,
+} from "@/lib/registerConflict";
 
 function membersLoginHref(lang: Lang, nextPath: string): string {
   const q = new URLSearchParams();
@@ -135,6 +143,7 @@ function MembersPageContent() {
   const [billingContactSameAsInvoice, setBillingContactSameAsInvoice] = useState(true);
   const [regEmail, setRegEmail] = useState("");
   const [regEmailError, setRegEmailError] = useState("");
+  const [duplicateConflict, setDuplicateConflict] = useState<RegisterConflictKind | null>(null);
   const [phoneCountryIso, setPhoneCountryIso] = useState<CountryCode>("TR");
   const [phoneNational, setPhoneNational] = useState("");
   const [phoneFieldError, setPhoneFieldError] = useState("");
@@ -334,6 +343,35 @@ function MembersPageContent() {
     }
   }, [isReadonly, savedProfile?.memberProfile]);
 
+  function showRegisterConflictIfAny(status: number, data: Record<string, unknown>): boolean {
+    const kind = parseRegisterConflictResponse(status, data);
+    if (kind) {
+      setDuplicateConflict(kind);
+      setMessage("");
+      return true;
+    }
+    return false;
+  }
+
+  async function checkRegisterAvailabilityClient(email: string, phone?: string): Promise<boolean> {
+    try {
+      const res = await fetch(clientApiUrl("/api/register/check-availability"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, ...(phone ? { phone } : {}) }),
+      });
+      const data = await readJsonBody(res);
+      if (data.conflict && typeof data.conflict === "string") {
+        setDuplicateConflict(data.conflict as RegisterConflictKind);
+        setMessage("");
+        return true;
+      }
+      return showRegisterConflictIfAny(res.status, data);
+    } catch {
+      return false;
+    }
+  }
+
   async function clearSignupProofCookie() {
     try {
       await fetch(clientApiUrl("/api/register/verify-email-otp"), {
@@ -404,6 +442,8 @@ function MembersPageContent() {
         }
       }
       if (!res.ok) {
+        const payload = data as Record<string, unknown>;
+        if (showRegisterConflictIfAny(res.status, payload)) return;
         const base = apiErrorMessage(data.error, "E-posta kodu gönderilemedi.");
         const retry =
           typeof data.retryAfterSec === "number" && data.retryAfterSec > 0
@@ -475,10 +515,10 @@ function MembersPageContent() {
         body: JSON.stringify({ email, code }),
       });
       const raw = await res.text();
-      let data: { error?: unknown } = {};
+      let data: Record<string, unknown> = {};
       if (raw.trim()) {
         try {
-          data = JSON.parse(raw) as { error?: unknown };
+          data = JSON.parse(raw) as Record<string, unknown>;
         } catch {
           const errLine = `Sunucu yanıtı okunamadı (HTTP ${res.status}).`;
           setEmailVerified(false);
@@ -489,6 +529,7 @@ function MembersPageContent() {
       }
       if (!res.ok) {
         setEmailVerified(false);
+        if (showRegisterConflictIfAny(res.status, data)) return;
         const errText =
           typeof data.error === "string"
             ? data.error
@@ -544,10 +585,10 @@ function MembersPageContent() {
         body: JSON.stringify({ email: emailOk.data, phone: e164 }),
       });
       const raw = await res.text();
-      let data: { error?: unknown; hint?: string; smsSent?: boolean; otpTtlMinutes?: number } = {};
+      let data: Record<string, unknown> = {};
       if (raw.trim()) {
         try {
-          data = JSON.parse(raw) as { error?: unknown; hint?: string; smsSent?: boolean };
+          data = JSON.parse(raw) as Record<string, unknown>;
         } catch {
           const errLine = "Sunucu yanıtı geçersiz. Ağ sekmesinde HTTP kodunu veya yönetici günlüğünü kontrol edin.";
           setMessage(errLine);
@@ -556,6 +597,7 @@ function MembersPageContent() {
         }
       }
       if (!res.ok) {
+        if (showRegisterConflictIfAny(res.status, data)) return;
         const errText = apiErrorMessage(data.error, "Telefon kodu gönderilemedi.");
         const extra =
           typeof data.hint === "string" && data.hint.trim() && !errText.includes(data.hint.trim())
@@ -622,10 +664,10 @@ function MembersPageContent() {
         body: JSON.stringify({ email: emailOk.data, phone: e164, code }),
       });
       const raw = await res.text();
-      let data: { error?: unknown } = {};
+      let data: Record<string, unknown> = {};
       if (raw.trim()) {
         try {
-          data = JSON.parse(raw) as { error?: unknown };
+          data = JSON.parse(raw) as Record<string, unknown>;
         } catch {
           const errLine = "Yanıt okunamadı. Oturum veya ağ hatası olabilir.";
           setPhoneVerified(false);
@@ -636,6 +678,7 @@ function MembersPageContent() {
       }
       if (!res.ok) {
         setPhoneVerified(false);
+        if (showRegisterConflictIfAny(res.status, data)) return;
         const errLine =
           typeof data.error === "string"
             ? data.error
@@ -788,6 +831,24 @@ function MembersPageContent() {
       }
     }
 
+    if (!isReadonly) {
+      const emailForAvail = signupEmailFieldSchema.safeParse(String(form.get("email") || "").trim());
+      const phoneForAvail =
+        phoneHiddenValue ||
+        tryFormatE164(phoneCountryIso, phoneNational) ||
+        String(form.get("phone") || "").trim() ||
+        undefined;
+      if (emailForAvail.success) {
+        const conflict = await checkRegisterAvailabilityClient(
+          emailForAvail.data,
+          phoneForAvail || undefined,
+        );
+        if (conflict) {
+          return;
+        }
+      }
+    }
+
     setIsUploading(true);
 
     const payload = {
@@ -840,6 +901,10 @@ function MembersPageContent() {
       });
       const data = await readJsonBody(res);
       if (!res.ok) {
+        if (showRegisterConflictIfAny(res.status, data)) {
+          setIsUploading(false);
+          return;
+        }
         const msg = apiErrorMessageWithIssues(
           data,
           res.status >= 500
@@ -1729,11 +1794,9 @@ function MembersPageContent() {
             <label
               className={`flex items-start gap-2.5 text-sm ${blockUntilFullyVerified ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
             >
-              <input
-                type="checkbox"
+              <NewAdEmailOptInCheckbox
                 name="newAdEmailOptIn"
                 disabled={blockUntilFullyVerified}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border border-white/50 bg-white/10 accent-white disabled:cursor-not-allowed"
               />
               <span>
                 <span className="font-semibold text-white">{d.memberPage.newAdEmailOptInLabel}</span>
@@ -1983,6 +2046,14 @@ function MembersPageContent() {
         ) : null}
       </form>
       )}
+      {duplicateConflict ? (
+        <RegisteredMemberConflictModal
+          open
+          kind={duplicateConflict}
+          loginHref={membersLoginHref(lang, postAuthNext)}
+          onStayOnRegister={() => setDuplicateConflict(null)}
+        />
+      ) : null}
     </main>
   );
 }

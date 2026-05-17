@@ -12,6 +12,7 @@ import { SIGNUP_PHONE_COOKIE } from "@/lib/signupPhoneProof";
 import { shouldUseSecureCookie } from "@/lib/cookieSecure";
 import { rateLimitGuard } from "@/lib/rateLimit";
 import { getSignupVerificationFlags } from "@/lib/signupVerificationSettings";
+import { isEmailRegistered, registerConflictMessage } from "@/lib/registerConflict";
 
 const bodySchema = z.object({
   email: z.preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase() : v), z.string().email()),
@@ -29,12 +30,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, verificationDisabled: true });
     }
 
-    const existing = await prisma.user.findUnique({
-      where: { email: data.email },
-      select: { id: true },
-    });
-    if (existing) {
-      return NextResponse.json({ error: "Bu e-posta zaten kayitli." }, { status: 409 });
+    if (await isEmailRegistered(prisma, data.email)) {
+      return NextResponse.json(
+        {
+          error: registerConflictMessage("email"),
+          code: "email_taken",
+          emailTaken: true,
+        },
+        { status: 409 },
+      );
     }
 
     const ok = await verifyAndConsumeOtp(prisma, OTP_PURPOSE_SIGNUP_EMAIL, data.email, data.code);

@@ -12,6 +12,7 @@ import { sendSignupEmailOtp } from "@/lib/mailer";
 import { rateLimitGuard } from "@/lib/rateLimit";
 import { SIGNUP_EMAIL_OTP_REQUEST_PUBLIC_HINT_TR } from "@/lib/signupEmailOtpHint";
 import { getSignupVerificationFlags } from "@/lib/signupVerificationSettings";
+import { isEmailRegistered, registerConflictMessage } from "@/lib/registerConflict";
 
 const bodySchema = z.object({
   email: z.preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase() : v), z.string().email()),
@@ -37,22 +38,15 @@ export async function POST(req: Request) {
       });
     }
 
-    const existing = await prisma.user.findUnique({
-      where: { email: target },
-      select: { id: true },
-    });
-    if (existing) {
-      if (process.env.NODE_ENV === "development") {
-        console.info(
-          "[request-email-otp] e-posta gonderilmedi (adres zaten kayitli; enumeration korumasi)",
-          target,
-        );
-      }
-      return NextResponse.json({
-        ok: true,
-        hint: SIGNUP_EMAIL_OTP_REQUEST_PUBLIC_HINT_TR,
-        otpTtlMinutes: OTP_SIGNUP_EMAIL_TTL_MINUTES,
-      });
+    if (await isEmailRegistered(prisma, target)) {
+      return NextResponse.json(
+        {
+          error: registerConflictMessage("email"),
+          code: "email_taken",
+          emailTaken: true,
+        },
+        { status: 409 },
+      );
     }
 
     await assertOtpRateOk(prisma, OTP_PURPOSE_SIGNUP_EMAIL, target);
