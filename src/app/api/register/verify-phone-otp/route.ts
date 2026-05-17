@@ -86,7 +86,7 @@ export async function POST(req: Request) {
       sameSite: "lax",
       secure: shouldUseSecureCookie(req),
       path: "/",
-      maxAge: 15 * 60,
+      maxAge: 2 * 60 * 60,
     });
     return res;
   } catch (error) {

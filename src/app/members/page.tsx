@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { CountryCode } from "libphonenumber-js";
 import { z } from "zod";
 import Link from "next/link";
@@ -153,6 +153,14 @@ function MembersPageContent() {
   const [emailOtpFeedback, setEmailOtpFeedback] = useState("");
   const [postAuthNext, setPostAuthNext] = useState("/panel/user");
   const [registrationJustCompleted, setRegistrationJustCompleted] = useState(false);
+  const submitFeedbackRef = useRef<HTMLDivElement>(null);
+
+  function showFormMessage(text: string) {
+    setMessage(text);
+    requestAnimationFrame(() => {
+      submitFeedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }
 
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
@@ -658,16 +666,22 @@ function MembersPageContent() {
     }
     const form = new FormData(e.currentTarget);
     if (!isReadonly && signupOptionsLoading) {
-      setMessage("Kayıt ayarları yükleniyor, lütfen birkaç saniye bekleyin.");
+      showFormMessage("Kayıt ayarları yükleniyor, lütfen birkaç saniye bekleyin.");
       return;
     }
     if (!isReadonly && signupPathChoice === null) {
-      setMessage("Önce kayıt türünü seçin.");
+      showFormMessage("Önce kayıt türünü seçin.");
       return;
     }
     const professionId = String(form.get("professionId") || "").trim();
     if (!isReadonly && !professionId) {
-      setMessage(d.memberPage.validationProfession);
+      showFormMessage(d.memberPage.validationProfession);
+      return;
+    }
+    const provinceVal = String(form.get("province") || "").trim();
+    const districtVal = String(form.get("district") || "").trim();
+    if (!isReadonly && (!provinceVal || !districtVal)) {
+      showFormMessage("İl ve ilçe seçimi zorunludur.");
       return;
     }
 
@@ -678,11 +692,11 @@ function MembersPageContent() {
     const fullNameFromParts = `${givenName} ${familyName}`.trim();
     const companyTitle = String(form.get("billingCompanyTitle") || "").trim();
     if (!isReadonly && emailOtpGate && !emailVerified) {
-      setMessage("Önce e-posta kodunu alıp «E-postayı doğrula» ile onaylayın.");
+      showFormMessage("Önce e-posta kodunu alıp «E-postayı doğrula» ile onaylayın.");
       return;
     }
     if (!isReadonly && phoneOtpGate && !phoneVerified) {
-      setMessage("Önce telefon kodunu alıp «Telefonu doğrula» ile onaylayın.");
+      showFormMessage("Önce telefon kodunu alıp «Telefonu doğrula» ile onaylayın.");
       return;
     }
     if (!isReadonly) {
@@ -789,9 +803,9 @@ function MembersPageContent() {
       authorizedFamilyName: !isReadonly && billingType === "CORPORATE" ? familyName : "",
       password: String(form.get("password") || ""),
       profilePhotoUrl: String(form.get("profilePhotoUrl") || "").trim() || undefined,
-      phone: String(form.get("phone") || ""),
-      province: String(form.get("province") || "").trim(),
-      district: String(form.get("district") || "").trim(),
+      phone: phoneHiddenValue || String(form.get("phone") || "").trim(),
+      province: provinceVal,
+      district: districtVal,
       professionId,
       billingAccountType: billingType,
       billingTcKimlik: String(form.get("billingTcKimlik") || "").trim(),
@@ -832,7 +846,7 @@ function MembersPageContent() {
             ? "Kayıt sunucu hatası. Biraz sonra tekrar deneyin."
             : "Kayıt tamamlanamadı.",
         );
-        setMessage(msg);
+        showFormMessage(msg);
         setIsUploading(false);
         return;
       }
@@ -842,13 +856,13 @@ function MembersPageContent() {
           : Number(data.memberNumber);
       if (Number.isFinite(num)) {
         setPendingMemberNumber(num);
-        setMessage(d.memberPage.registrationSuccess);
+        showFormMessage(d.memberPage.registrationSuccess);
       } else {
-        setMessage(d.memberPage.registrationSuccess);
+        showFormMessage(d.memberPage.registrationSuccess);
       }
       setRegistrationJustCompleted(true);
     } catch {
-      setMessage("Kayıt isteği gönderilemedi.");
+      showFormMessage("Kayıt isteği gönderilemedi.");
       setIsUploading(false);
       return;
     }
@@ -1739,7 +1753,7 @@ function MembersPageContent() {
           </div>
         )}
         {!isReadonly && (
-          <div className="space-y-2">
+          <div ref={submitFeedbackRef} className="space-y-2">
             {!signupOptionsLoading && blockUntilFullyVerified ? (
               <p
                 className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-950"

@@ -11,7 +11,7 @@ export async function createSignupPhoneProofToken(email: string, phoneE164: stri
   return new SignJWT({ email: normalizedEmail, phoneE164: phone, typ: TYP })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("15m")
+    .setExpirationTime("2h")
     .sign(getAuthSecretKey());
 }
 

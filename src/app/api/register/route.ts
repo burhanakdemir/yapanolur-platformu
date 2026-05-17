@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { collectErrorChainText, isLikelyPrismaSchemaColumnMissing } from "@/lib/dbErrors";
 import { nextMemberNumber } from "@/lib/memberNumber";
 import { insertMemberUser } from "@/lib/memberUserInsert";
 import { normalizePhoneInputToE164 } from "@/lib/intlPhone";
@@ -177,12 +179,32 @@ function clearSignupPhoneProofCookie(res: NextResponse, req: Request) {
   });
 }
 
+function registerFailureMessage(error: unknown): string {
+  if (isLikelyPrismaSchemaColumnMissing(error)) {
+    return "Sunucu veritabanı şeması güncel değil. Yönetici: deploy sonrası migration (prisma migrate deploy) uygulanmalı.";
+  }
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    return "Bu e-posta adresi veya üye numarası zaten kullanılıyor.";
+  }
+  if (process.env.NODE_ENV === "development") {
+    return error instanceof Error ? error.message : "Kayıt başarısız.";
+  }
+  return "Kayıt başarısız. Bilgilerinizi kontrol edip tekrar deneyin; sorun sürerse destek ile iletişime geçin.";
+}
+
 export async function POST(req: Request) {
   const limited = await rateLimitGuard(req, "register");
   if (limited) return limited;
 
+  let bodyJson: unknown;
   try {
-    const data = bodySchema.parse(await req.json());
+    bodyJson = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Geçersiz istek gövdesi." }, { status: 400 });
+  }
+
+  try {
+    const data = bodySchema.parse(bodyJson);
     const flags = await getSignupVerificationFlags(prisma);
 
     if (flags.signupEmailVerificationRequired) {
@@ -249,11 +271,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const signupPolicy = await prisma.adminSettings.findUnique({
-      where: { id: "singleton" },
-      select: { memberSignupAutoApprove: true },
-    });
-    const autoApproveNewMembers = signupPolicy?.memberSignupAutoApprove ?? false;
+    let autoApproveNewMembers = false;
+    try {
+      const signupPolicy = await prisma.adminSettings.findUnique({
+        where: { id: "singleton" },
+        select: { memberSignupAutoApprove: true },
+      });
+      autoApproveNewMembers = signupPolicy?.memberSignupAutoApprove ?? false;
+    } catch (e) {
+      console.warn("[register] memberSignupAutoApprove okunamadı, varsayılan false", e);
+    }
 
     const passwordHashed = await hashPassword(data.password);
 
@@ -394,12 +421,16 @@ export async function POST(req: Request) {
         });
       }
 
-      if (autoApproveNewMembers) {
-        await grantWelcomeBonusIfEligible(tx, created.id);
-      }
-
       return created;
     });
+
+    if (autoApproveNewMembers) {
+      try {
+        await grantWelcomeBonusIfEligible(prisma, user.id);
+      } catch (bonusErr) {
+        console.error("[register] welcome bonus (üye kaydı tamamlandı)", bonusErr);
+      }
+    }
 
     const res = NextResponse.json({
       ok: true,
@@ -414,20 +445,13 @@ export async function POST(req: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 });
     }
-    console.error("[register]", error);
-    const code = error && typeof error === "object" && "code" in error ? String((error as { code?: string }).code) : "";
-    if (code === "P2002") {
+    console.error("[register]", collectErrorChainText(error));
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return NextResponse.json(
         { error: "Bu e-posta adresi veya üye numarası zaten kullanılıyor." },
         { status: 409 },
       );
     }
-    const devMsg = error instanceof Error ? error.message : "Kayıt başarısız.";
-    return NextResponse.json(
-      {
-        error: process.env.NODE_ENV === "development" ? devMsg : "Kayıt başarısız.",
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: registerFailureMessage(error) }, { status: 500 });
   }
 }
