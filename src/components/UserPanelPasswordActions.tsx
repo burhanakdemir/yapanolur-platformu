@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useEffect, useId, useRef, useState } from "react";
 import { clientApiUrl } from "@/lib/clientApi";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
 
@@ -28,6 +28,9 @@ type Labels = {
 const heroBtnClass =
   "inline-flex w-full shrink-0 items-center justify-center rounded-lg border border-white/35 bg-white/15 px-3 py-1.5 text-center text-xs font-semibold backdrop-blur transition hover:bg-white/25 sm:px-4 sm:py-2 sm:text-sm";
 
+const inputClass =
+  "w-full rounded-lg border border-orange-200 bg-white px-2.5 py-1.5 text-sm text-slate-900 shadow-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200/80";
+
 export default function UserPanelPasswordActions({
   lang,
   labels,
@@ -35,7 +38,10 @@ export default function UserPanelPasswordActions({
   lang: "tr" | "en";
   labels: Labels;
 }) {
-  const [open, setOpen] = useState(false);
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const lastActiveRef = useRef<HTMLElement | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -56,9 +62,59 @@ export default function UserPanelPasswordActions({
     setMessageOk(false);
   }
 
-  function closePanel() {
-    setOpen(false);
+  const closeModal = useCallback(() => {
+    setModalOpen(false);
     resetForm();
+  }, []);
+
+  const trapFocus = useCallback(
+    (e: KeyboardEvent) => {
+      if (!modalOpen || !panelRef.current) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeModal();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const root = panelRef.current;
+      const focusables = root.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      const list = [...focusables].filter((el) => !el.hasAttribute("disabled") && el.offsetParent !== null);
+      if (list.length === 0) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      } else if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    },
+    [modalOpen, closeModal],
+  );
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    lastActiveRef.current = document.activeElement as HTMLElement | null;
+    const t = window.setTimeout(() => {
+      panelRef.current?.querySelector<HTMLInputElement>("input")?.focus();
+    }, 0);
+    document.addEventListener("keydown", trapFocus);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.clearTimeout(t);
+      document.removeEventListener("keydown", trapFocus);
+      document.body.style.overflow = prevOverflow;
+      lastActiveRef.current?.focus?.();
+    };
+  }, [modalOpen, trapFocus]);
+
+  function openModal() {
+    resetForm();
+    setModalOpen(true);
   }
 
   async function onVerifyOld(e: FormEvent) {
@@ -179,130 +235,146 @@ export default function UserPanelPasswordActions({
   }
 
   return (
-    <div className="flex w-full min-w-[9.5rem] flex-col gap-2 self-center sm:w-auto sm:self-start">
-      <button
-        type="button"
-        className={heroBtnClass}
-        aria-expanded={open}
-        onClick={() => {
-          if (open) closePanel();
-          else {
-            resetForm();
-            setOpen(true);
-          }
-        }}
-      >
-        {labels.changePassword}
-      </button>
-      <button
-        type="button"
-        className={heroBtnClass}
-        disabled={logoutLoading}
-        onClick={() => void onLogout()}
-      >
-        {logoutLoading ? (lang === "tr" ? "Çıkış…" : "Signing out…") : labels.logout}
-      </button>
-
-      {open ? (
-        <div
-          className="w-full min-w-[14rem] max-w-xs rounded-lg border border-white/40 bg-black/20 p-3 text-left backdrop-blur-sm sm:max-w-sm"
-          role="region"
-          aria-label={labels.changePassword}
+    <>
+      <div className="flex w-full min-w-[9.5rem] flex-col gap-2 self-center sm:w-auto sm:self-start">
+        <button
+          type="button"
+          className={heroBtnClass}
+          aria-haspopup="dialog"
+          aria-expanded={modalOpen}
+          onClick={openModal}
         >
-          <form className="space-y-2" onSubmit={onVerifyOld}>
-            <label className="block text-[11px] font-medium text-orange-50" htmlFor="panel-old-pw">
-              {labels.oldPassword}
-            </label>
-            <input
-              id="panel-old-pw"
-              type="password"
-              autoComplete="current-password"
-              value={currentPassword}
-              disabled={oldVerified && !verifyLoading}
-              onChange={(e) => {
-                setCurrentPassword(e.target.value);
-                if (oldVerified) {
-                  setOldVerified(false);
-                  setNewPassword("");
-                  setConfirmPassword("");
-                }
-              }}
-              className="w-full rounded-md border border-white/30 bg-white/95 px-2 py-1.5 text-sm text-slate-900"
-            />
-            {!oldVerified ? (
-              <button
-                type="submit"
-                disabled={verifyLoading || !currentPassword.trim()}
-                className="w-full rounded-md border border-white/50 bg-white/20 px-2 py-1.5 text-xs font-semibold text-white hover:bg-white/30 disabled:opacity-50"
-              >
-                {verifyLoading ? labels.verifying : labels.verifyOld}
-              </button>
-            ) : null}
-          </form>
+          {labels.changePassword}
+        </button>
+        <button
+          type="button"
+          className={heroBtnClass}
+          disabled={logoutLoading}
+          onClick={() => void onLogout()}
+        >
+          {logoutLoading ? (lang === "tr" ? "Çıkış…" : "Signing out…") : labels.logout}
+        </button>
+      </div>
 
-          {oldVerified ? (
-            <form className="mt-2 space-y-2 border-t border-white/25 pt-2" onSubmit={onSaveNew}>
-              <label className="block text-[11px] font-medium text-orange-50" htmlFor="panel-new-pw">
-                {labels.newPassword}
-              </label>
-              <input
-                id="panel-new-pw"
-                type="password"
-                autoComplete="new-password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full rounded-md border border-white/30 bg-white/95 px-2 py-1.5 text-sm text-slate-900"
-              />
-              <label className="block text-[11px] font-medium text-orange-50" htmlFor="panel-confirm-pw">
-                {labels.confirmPassword}
-              </label>
-              <input
-                id="panel-confirm-pw"
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded-md border border-white/30 bg-white/95 px-2 py-1.5 text-sm text-slate-900"
-              />
-              <button
-                type="submit"
-                disabled={saveLoading}
-                className="w-full rounded-md bg-white px-2 py-1.5 text-xs font-semibold text-orange-700 hover:bg-orange-50 disabled:opacity-50"
-              >
-                {saveLoading ? labels.saving : labels.savePassword}
-              </button>
-            </form>
-          ) : null}
-
-          <div className="mt-2 border-t border-white/25 pt-2">
-            <button
-              type="button"
-              disabled={resetLoading}
-              onClick={() => void onAutoReset()}
-              className="w-full rounded-md border border-amber-200/80 bg-amber-500/90 px-2 py-1.5 text-xs font-semibold text-white hover:bg-amber-500 disabled:opacity-50"
-            >
-              {resetLoading ? labels.resetting : labels.autoReset}
-            </button>
-          </div>
-
-          {message ? (
-            <p
-              className={`mt-2 text-[11px] leading-snug ${messageOk ? "text-emerald-100" : "text-amber-100"}`}
-              role="status"
-            >
-              {message}
-            </p>
-          ) : null}
-
+      {modalOpen ? (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 sm:p-6" role="presentation">
           <button
             type="button"
-            className="mt-2 w-full text-[11px] text-white/80 underline-offset-2 hover:text-white hover:underline"
-            onClick={closePanel}
+            className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"
+            aria-label={labels.close}
+            onClick={closeModal}
+          />
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            className="relative z-[91] w-full max-w-sm overflow-hidden rounded-2xl border border-orange-300/60 bg-white shadow-xl shadow-orange-900/15"
           >
-            {labels.close}
-          </button>
+            <div className="border-b border-white/25 bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3 sm:px-5">
+              <div className="flex items-start justify-between gap-2">
+                <h2 id={titleId} className="text-lg font-bold text-white">
+                  {labels.changePassword}
+                </h2>
+                <button
+                  type="button"
+                  className="shrink-0 rounded-md border border-white/40 bg-white/15 px-2 py-0.5 text-xs font-semibold text-white hover:bg-white/25"
+                  onClick={closeModal}
+                >
+                  {labels.close}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3 px-4 py-4 sm:px-5">
+              <form className="space-y-2" onSubmit={onVerifyOld}>
+                <label className="block text-sm font-medium text-slate-700" htmlFor="panel-old-pw">
+                  {labels.oldPassword}
+                </label>
+                <input
+                  id="panel-old-pw"
+                  type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  disabled={oldVerified && !verifyLoading}
+                  onChange={(e) => {
+                    setCurrentPassword(e.target.value);
+                    if (oldVerified) {
+                      setOldVerified(false);
+                      setNewPassword("");
+                      setConfirmPassword("");
+                    }
+                  }}
+                  className={inputClass}
+                />
+                {!oldVerified ? (
+                  <button
+                    type="submit"
+                    disabled={verifyLoading || !currentPassword.trim()}
+                    className="btn-primary w-full text-sm disabled:opacity-50"
+                  >
+                    {verifyLoading ? labels.verifying : labels.verifyOld}
+                  </button>
+                ) : null}
+              </form>
+
+              {oldVerified ? (
+                <form className="space-y-2 border-t border-orange-100 pt-3" onSubmit={onSaveNew}>
+                  <label className="block text-sm font-medium text-slate-700" htmlFor="panel-new-pw">
+                    {labels.newPassword}
+                  </label>
+                  <input
+                    id="panel-new-pw"
+                    type="password"
+                    autoComplete="new-password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className={inputClass}
+                  />
+                  <label className="block text-sm font-medium text-slate-700" htmlFor="panel-confirm-pw">
+                    {labels.confirmPassword}
+                  </label>
+                  <input
+                    id="panel-confirm-pw"
+                    type="password"
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={inputClass}
+                  />
+                  <button type="submit" disabled={saveLoading} className="btn-primary w-full text-sm disabled:opacity-50">
+                    {saveLoading ? labels.saving : labels.savePassword}
+                  </button>
+                </form>
+              ) : null}
+
+              <div className="border-t border-orange-100 pt-3">
+                <button
+                  type="button"
+                  disabled={resetLoading}
+                  onClick={() => void onAutoReset()}
+                  className="w-full rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-sm font-semibold text-orange-900 transition hover:bg-orange-100 disabled:opacity-50"
+                >
+                  {resetLoading ? labels.resetting : labels.autoReset}
+                </button>
+              </div>
+
+              {message ? (
+                <p
+                  className={`rounded-lg border px-3 py-2 text-sm ${
+                    messageOk
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                      : "border-amber-200 bg-amber-50 text-amber-950"
+                  }`}
+                  role="status"
+                >
+                  {message}
+                </p>
+              ) : null}
+            </div>
+          </div>
         </div>
       ) : null}
-    </div>
+    </>
   );
 }
