@@ -21,7 +21,7 @@ import EngineerSearch from "@/components/EngineerSearch";
 import HomeHeaderActions from "@/components/HomeHeaderActions";
 import HomePostListingStrip from "@/components/HomePostListingStrip";
 import HomeHeroMarqueeStrip from "@/components/HomeHeroMarqueeStrip";
-import { fetchActiveHomeHeroSlides, toHomeHeroSlidePayload } from "@/lib/homeHeroSlidesQuery";
+import { fetchHomeHeroTickerSlides } from "@/lib/homeHeroTicker";
 import { findManyAuctionsShowcaseFirst, HOME_AUCTIONS_LIMIT } from "@/lib/auctionListing";
 import { serializeAuctionForHomeList } from "@/lib/serializeHomeAuction";
 
@@ -218,8 +218,7 @@ export default async function Home({ searchParams }: Props) {
     const hydrationNowMs = Date.now();
     const flatCategories = flattenCategories(categoryTree as CategoryTreeNode[]);
 
-    const heroSlidesRaw = await fetchActiveHomeHeroSlides(lang);
-    const heroSlides = toHomeHeroSlidePayload(heroSlidesRaw);
+    const heroTicker = await fetchHomeHeroTickerSlides(lang, adminSettings);
     const fallbackHeroTitle =
       lang === "tr"
         ? adminSettings.homeHeroTitleTr || t.home.heroTitle
@@ -264,7 +263,13 @@ export default async function Home({ searchParams }: Props) {
           />
         </header>
 
-        <HomeHeroMarqueeStrip lang={lang} slides={heroSlides} title={fallbackHeroTitle} subtitle={fallbackHeroSubtitle} />
+        <HomeHeroMarqueeStrip
+          lang={lang}
+          slides={heroTicker.slides}
+          displayKind={heroTicker.displayKind}
+          title={fallbackHeroTitle}
+          subtitle={fallbackHeroSubtitle}
+        />
       </div>
 
       <section className="grid max-lg:gap-5 gap-4 lg:grid-cols-[280px_1fr] lg:items-stretch">

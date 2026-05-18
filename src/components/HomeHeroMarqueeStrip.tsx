@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Fragment, useMemo, useSyncExternalStore } from "react";
 import type { Lang } from "@/lib/i18n";
+import type { HomeHeroTickerDisplayKind } from "@/lib/homeHeroTickerMode";
 import type { HomeHeroSlideClientPayload } from "@/lib/homeHeroSlidesQuery";
 
 function subscribeReducedMotion(onStoreChange: () => void): () => void {
@@ -78,9 +79,13 @@ function SponsorSlideInner({
     </>
   );
 
-  if (!isEmptyPlaceholder && slide.isSponsor && slide.ctaUrl) {
+  const profileHref =
+    slide.ctaUrl &&
+    (slide.isSponsor || slide.ctaUrl.startsWith("/uye/") || slide.id.startsWith("member-ticker-"));
+
+  if (!isEmptyPlaceholder && profileHref) {
     return (
-      <Link href={slide.ctaUrl} className={sponsorProfileLinkClass} prefetch={false}>
+      <Link href={slide.ctaUrl!} className={sponsorProfileLinkClass} prefetch={false}>
         {titleAndSubtitle}
       </Link>
     );
@@ -128,16 +133,32 @@ function SponsorStripSegments({
   );
 }
 
+function tickerAriaLabel(lang: Lang, kind: HomeHeroTickerDisplayKind): string {
+  if (kind === "new_members") {
+    return lang === "en" ? "Recently joined members" : "Yeni katılan üyeler";
+  }
+  return lang === "en" ? "Featured sponsors" : "Öne çıkan sponsorlar";
+}
+
+function tickerEmptyTitle(lang: Lang, kind: HomeHeroTickerDisplayKind): string {
+  if (kind === "new_members") {
+    return lang === "en" ? "No new members to show yet." : "Henüz gösterilecek yeni üye yok.";
+  }
+  return lang === "en" ? "No featured sponsor slides yet." : "Henüz öne çıkan sponsor slaytı yok.";
+}
+
 function SponsorMarqueeStrip({
   slides,
   lang,
+  displayKind,
 }: {
   slides: HomeHeroSlideClientPayload[];
   lang: Lang;
+  displayKind: HomeHeroTickerDisplayKind;
 }) {
   const reduced = usePrefersReducedMotion();
-  const emptyTitle =
-    lang === "en" ? "No featured sponsor slides yet." : "Henüz öne çıkan sponsor slaytı yok.";
+  const emptyTitle = tickerEmptyTitle(lang, displayKind);
+  const ariaLabel = tickerAriaLabel(lang, displayKind);
 
   const items = useMemo(() => {
     if (slides.length === 0) return [{ ...EMPTY_SLIDE, title: emptyTitle }];
@@ -161,7 +182,7 @@ function SponsorMarqueeStrip({
     return (
       <div
         className="relative flex min-h-[2.35rem] items-center justify-center overflow-hidden border-b border-white/15 px-1 pb-1.5 text-center"
-        aria-label={lang === "en" ? "Featured sponsors" : "Öne çıkan sponsorlar"}
+        aria-label={ariaLabel}
       >
         <p
           className={`font-semibold leading-snug ${SPONSOR_TICKER_SIZE_EMPTY} ${SPONSOR_TICKER_TEXT} ${SPONSOR_TICKER_GLOW_WRAP}`}
@@ -175,7 +196,7 @@ function SponsorMarqueeStrip({
   return (
     <div
       className="relative flex min-h-[2.35rem] items-center overflow-hidden border-b border-white/15 pb-1.5 [container-type:inline-size]"
-      aria-label={lang === "en" ? "Featured sponsors" : "Öne çıkan sponsorlar"}
+      aria-label={ariaLabel}
     >
       {reduced ? (
         <div
@@ -212,18 +233,19 @@ function SponsorMarqueeStrip({
 type Props = {
   lang: Lang;
   slides: HomeHeroSlideClientPayload[];
+  displayKind: HomeHeroTickerDisplayKind;
   title: string;
   subtitle: string;
 };
 
-export default function HomeHeroMarqueeStrip({ lang, slides, title, subtitle }: Props) {
+export default function HomeHeroMarqueeStrip({ lang, slides, displayKind, title, subtitle }: Props) {
   return (
     <section
       className="w-full rounded-xl bg-gradient-to-br from-orange-600 via-orange-500 to-amber-500 px-4 py-2.5 text-white shadow-sm outline-none md:rounded-2xl md:px-5 md:py-3.5"
       aria-label={lang === "en" ? "Home hero" : "Ana sayfa üst şerit"}
     >
       <div className="flex flex-col justify-center gap-1 md:gap-1.5">
-        <SponsorMarqueeStrip slides={slides} lang={lang} />
+        <SponsorMarqueeStrip slides={slides} lang={lang} displayKind={displayKind} />
 
         <div className="flex flex-col gap-0.5 px-0.5 text-center">
           <h2 className="text-[1.485rem] font-bold leading-tight tracking-tight text-white sm:text-[1.65rem] md:text-[1.925rem] lg:text-[2.2rem]">

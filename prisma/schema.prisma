@@ -535,6 +535,10 @@ model AdminSettings {
   serviceAreaProvincesJson      String   @default("[\"Antalya\"]")
   /** JSON nesne: il -> ilce adlari; bos veya anahtar yok = o ilde tum ilceler. */
   serviceAreaDistrictsJson      String   @default("{}")
+  /** Ana sayfa kayan serit: sponsors | new_members | auto (sponsor yoksa yeni uyeler). */
+  homeHeroTickerMode            String   @default("auto")
+  /** new_members / auto yedeginde gosterilecek son uyeler (max 48). */
+  homeHeroNewMembersLimit       Int      @default(24)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }

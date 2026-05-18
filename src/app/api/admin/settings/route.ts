@@ -13,6 +13,7 @@ import {
   parseServiceAreaProvincesJson,
   serializeServiceAreaForClient,
 } from "@/lib/serviceArea";
+import { HOME_HERO_TICKER_MODES, parseHomeHeroTickerMode } from "@/lib/homeHeroTickerMode";
 
 function hasEnvSmtp() {
   return Boolean(
@@ -169,6 +170,8 @@ const bodySchema = z.object({
     .optional(),
   serviceAreaProvincesJson: z.string().optional(),
   serviceAreaDistrictsJson: z.string().optional(),
+  homeHeroTickerMode: z.enum(HOME_HERO_TICKER_MODES).optional(),
+  homeHeroNewMembersLimit: z.number().int().min(1).max(48).optional(),
 });
 
 type Body = z.infer<typeof bodySchema>;
@@ -259,6 +262,12 @@ function buildAdminSettingsUpdateInput(
     const districts = parseServiceAreaDistrictsJson(data.serviceAreaDistrictsJson);
     p.serviceAreaDistrictsJson = JSON.stringify(districts);
   }
+  if (data.homeHeroTickerMode !== undefined) {
+    p.homeHeroTickerMode = parseHomeHeroTickerMode(data.homeHeroTickerMode);
+  }
+  if (data.homeHeroNewMembersLimit !== undefined) {
+    p.homeHeroNewMembersLimit = toInt(data.homeHeroNewMembersLimit) ?? data.homeHeroNewMembersLimit;
+  }
   return p;
 }
 
@@ -317,6 +326,18 @@ export async function POST(req: Request) {
       if (!isSuperAdminRole(session?.role)) {
         return NextResponse.json(
           { error: "Hizmet bölgesi ayarlarını yalnızca süper yönetici değiştirebilir." },
+          { status: 403 },
+        );
+      }
+    }
+    if (
+      typeof json === "object" &&
+      json !== null &&
+      ("homeHeroTickerMode" in json || "homeHeroNewMembersLimit" in json)
+    ) {
+      if (!isSuperAdminRole(session?.role)) {
+        return NextResponse.json(
+          { error: "Ana sayfa kayan serit ayarlarını yalnızca süper yönetici değiştirebilir." },
           { status: 403 },
         );
       }
