@@ -3,8 +3,7 @@
  * meslek sahibi iletişim ücretini açar (50 TL).
  * PostgreSQL (Neon) üzerinde çalışır.
  */
-import "dotenv/config";
-import { prisma } from "../src/lib/prisma";
+import { disconnectScriptPrisma, prisma } from "./lib/prisma";
 
 async function main() {
   const r = await prisma.adminSettings.updateMany({
@@ -19,7 +18,7 @@ async function main() {
     },
   });
   console.log("memberContactFee guncellendi, satir:", r.count);
-  await prisma.$disconnect();
+  await disconnectScriptPrisma();
 }
 
 main().catch((e) => {

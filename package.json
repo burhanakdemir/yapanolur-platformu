@@ -25,6 +25,8 @@
     "db:backfill-ad-categories": "tsx scripts/backfill-ad-category-ids.ts",
     "seed:demo": "tsx scripts/seed-demo-bulk.ts",
     "seed:gercek": "tsx scripts/seed-realistic-members-ads.ts",
+    "seed:remove-gercek": "tsx scripts/remove-seed-users.ts gercek",
+    "seed:remove-demo": "tsx scripts/remove-seed-users.ts demo",
     "seed:demo:remove-categories": "tsx scripts/remove-demo-seeded-categories.ts",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",

@@ -1,18 +1,17 @@
 /**
- * 250 gercekci uye (isim, sehir, meslek) + 600 ilan.
- * Ust/alt kategori yapisina DOKUNMAZ; yalnizca mevcut yaprak kategorileri kullanir.
- * Once ayni e-posta sonekiyle uretilmis uyeleri siler (@seed-gercek.local).
+ * Gercekci ornek uye + ilan (hizmet bolgesine uygun konumlar).
+ * Once @seed-gercek.local uyeleri silinir, sonra yeniden uretilir.
  *
- * Calistir: npx tsx scripts/seed-realistic-members-ads.ts
- * veya: npm run seed:gercek
+ * npm run seed:gercek
  */
-import "dotenv/config";
 import type { PrismaClient } from "../src/generated/prisma/client";
-import { prisma } from "../src/lib/prisma";
 import { syncDefaultProfessions } from "../src/lib/defaultProfessions";
 import { nextMemberNumber } from "../src/lib/memberNumber";
 import { createAdWithListingNumber } from "../src/lib/adListingNumber";
 import { hashPassword } from "../src/lib/passwordHash";
+import { locationNamesEqual } from "../src/lib/serviceArea";
+import { buildSeedLocationsForServiceArea, type SeedLoc } from "./lib/buildSeedLocations";
+import { disconnectScriptPrisma, prisma } from "./lib/prisma";
 
 const SEED_EMAIL_SUFFIX = "@seed-gercek.local";
 const SEED_PASSWORD = "Seed2026!";
@@ -21,94 +20,6 @@ const AD_COUNT = 600;
 
 const SAMPLE_PHOTO =
   "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80";
-
-type Loc = { province: string; city: string; district: string; neighborhood: string };
-
-/** 50 il x 5 ilce = 250 konum (uye kayit adresi ve ilan konumu) */
-const CITY_BLOCKS: ReadonlyArray<{ province: string; city: string; districts: readonly string[] }> = [
-  { province: "İstanbul", city: "İstanbul", districts: ["Kadıköy", "Beşiktaş", "Üsküdar", "Bakırköy", "Şişli"] },
-  { province: "Ankara", city: "Ankara", districts: ["Çankaya", "Keçiören", "Mamak", "Yenimahalle", "Etimesgut"] },
-  { province: "İzmir", city: "İzmir", districts: ["Konak", "Bornova", "Karşıyaka", "Buca", "Çiğli"] },
-  { province: "Bursa", city: "Bursa", districts: ["Nilüfer", "Osmangazi", "Yıldırım", "Mudanya", "Gemlik"] },
-  { province: "Antalya", city: "Antalya", districts: ["Muratpaşa", "Kepez", "Konyaaltı", "Alanya", "Manavgat"] },
-  { province: "Adana", city: "Adana", districts: ["Seyhan", "Çukurova", "Yüreğir", "Sarıçam", "Ceyhan"] },
-  { province: "Konya", city: "Konya", districts: ["Selçuklu", "Karatay", "Meram", "Akören", "Ereğli"] },
-  { province: "Gaziantep", city: "Gaziantep", districts: ["Şahinbey", "Şehitkamil", "Nizip", "İslahiye", "Nurdağı"] },
-  { province: "Kocaeli", city: "Kocaeli", districts: ["İzmit", "Gebze", "Darıca", "Körfez", "Gölcük"] },
-  { province: "Mersin", city: "Mersin", districts: ["Yenişehir", "Toroslar", "Mezitli", "Tarsus", "Erdemli"] },
-  { province: "Diyarbakır", city: "Diyarbakır", districts: ["Bağlar", "Kayapınar", "Sur", "Bismil", "Ergani"] },
-  { province: "Hatay", city: "Hatay", districts: ["Antakya", "İskenderun", "Defne", "Arsuz", "Dörtyol"] },
-  { province: "Manisa", city: "Manisa", districts: ["Şehzadeler", "Yunusemre", "Akhisar", "Salihli", "Turgutlu"] },
-  { province: "Kayseri", city: "Kayseri", districts: ["Melikgazi", "Kocasinan", "Talas", "İncesu", "Develi"] },
-  { province: "Samsun", city: "Samsun", districts: ["İlkadım", "Atakum", "Canik", "Bafra", "Çarşamba"] },
-  { province: "Balıkesir", city: "Balıkesir", districts: ["Karesi", "Altıeylül", "Bandırma", "Edremit", "Ayvalık"] },
-  { province: "Kahramanmaraş", city: "Kahramanmaraş", districts: ["Dulkadiroğlu", "Onikişubat", "Elbistan", "Afşin", "Pazarcık"] },
-  { province: "Van", city: "Van", districts: ["İpekyolu", "Tuşba", "Edremit", "Erciş", "Çaldıran"] },
-  { province: "Denizli", city: "Denizli", districts: ["Merkezefendi", "Pamukkale", "Acıpayam", "Çivril", "Tavas"] },
-  { province: "Şanlıurfa", city: "Şanlıurfa", districts: ["Eyyübiye", "Haliliye", "Karaköprü", "Siverek", "Viranşehir"] },
-  { province: "Tekirdağ", city: "Tekirdağ", districts: ["Süleymanpaşa", "Çorlu", "Çerkezköy", "Malkara", "Saray"] },
-  { province: "Muğla", city: "Muğla", districts: ["Menteşe", "Bodrum", "Fethiye", "Marmaris", "Milas"] },
-  { province: "Eskişehir", city: "Eskişehir", districts: ["Odunpazarı", "Tepebaşı", "Sivrihisar", "İnönü", "Alpu"] },
-  { province: "Mardin", city: "Mardin", districts: ["Artuklu", "Kızıltepe", "Midyat", "Nusaybin", "Derik"] },
-  { province: "Batman", city: "Batman", districts: ["Merkez", "Beşiri", "Gercüş", "Hasankeyf", "Kozluk"] },
-  { province: "Elazığ", city: "Elazığ", districts: ["Merkez", "Kovancılar", "Karakoçan", "Maden", "Palu"] },
-  { province: "Tokat", city: "Tokat", districts: ["Merkez", "Erbaa", "Niksar", "Turhal", "Zile"] },
-  { province: "Kütahya", city: "Kütahya", districts: ["Merkez", "Tavşanlı", "Simav", "Gediz", "Domaniç"] },
-  { province: "Trabzon", city: "Trabzon", districts: ["Ortahisar", "Akçaabat", "Araklı", "Of", "Yomra"] },
-  { province: "Malatya", city: "Malatya", districts: ["Battalgazi", "Yeşilyurt", "Darende", "Hekimhan", "Pütürge"] },
-  { province: "Ordu", city: "Ordu", districts: ["Altınordu", "Ünye", "Fatsa", "Perşembe", "Korgan"] },
-  { province: "Aydın", city: "Aydın", districts: ["Efeler", "Nazilli", "Söke", "Kuşadası", "Didim"] },
-  { province: "Erzurum", city: "Erzurum", districts: ["Yakutiye", "Palandöken", "Aziziye", "Pasinler", "Horasan"] },
-  { province: "Afyonkarahisar", city: "Afyonkarahisar", districts: ["Merkez", "Sandıklı", "Dinar", "Bolvadin", "İhsaniye"] },
-  { province: "Sivas", city: "Sivas", districts: ["Merkez", "Şarkışla", "Yıldızeli", "Suşehri", "Gemerek"] },
-  { province: "Zonguldak", city: "Zonguldak", districts: ["Merkez", "Ereğli", "Çaycuma", "Devrek", "Alaplı"] },
-  { province: "Kırıkkale", city: "Kırıkkale", districts: ["Merkez", "Yahşihan", "Keskin", "Delice", "Balışeyh"] },
-  { province: "Osmaniye", city: "Osmaniye", districts: ["Merkez", "Kadirli", "Düziçi", "Toprakkale", "Bahçe"] },
-  { province: "Çorum", city: "Çorum", districts: ["Merkez", "Sungurlu", "Osmancık", "İskilip", "Alaca"] },
-  { province: "Edirne", city: "Edirne", districts: ["Merkez", "Keşan", "Uzunköprü", "Havsa", "İpsala"] },
-  { province: "Çanakkale", city: "Çanakkale", districts: ["Merkez", "Biga", "Çan", "Gelibolu", "Ayvacık"] },
-  { province: "Kırşehir", city: "Kırşehir", districts: ["Merkez", "Kaman", "Mucur", "Akpınar", "Boztepe"] },
-  { province: "Uşak", city: "Uşak", districts: ["Merkez", "Banaz", "Eşme", "Karahallı", "Sivaslı"] },
-  { province: "Isparta", city: "Isparta", districts: ["Merkez", "Yalvaç", "Eğirdir", "Atabey", "Gönen"] },
-  { province: "Bolu", city: "Bolu", districts: ["Merkez", "Gerede", "Mudurnu", "Göynük", "Yeniçağa"] },
-  { province: "Yalova", city: "Yalova", districts: ["Merkez", "Çınarcık", "Termal", "Altınova", "Armutlu"] },
-  { province: "Karabük", city: "Karabük", districts: ["Merkez", "Safranbolu", "Eflani", "Eskipazar", "Ovacık"] },
-  { province: "Nevşehir", city: "Nevşehir", districts: ["Merkez", "Ürgüp", "Avanos", "Gülşehir", "Derinkuyu"] },
-  { province: "Düzce", city: "Düzce", districts: ["Merkez", "Akçakoca", "Yığılca", "Kaynaşlı", "Gölyaka"] },
-  { province: "Burdur", city: "Burdur", districts: ["Merkez", "Bucak", "Gölhisar", "Tefenni", "Yeşilova"] },
-  { province: "Aksaray", city: "Aksaray", districts: ["Merkez", "Ortaköy", "Eskil", "Gülağaç", "Güzelyurt"] },
-  { province: "Çankırı", city: "Çankırı", districts: ["Merkez", "Çerkeş", "Ilgaz", "Kurşunlu", "Şabanözü"] },
-];
-
-const MAHALLE = [
-  "Cumhuriyet",
-  "Fatih",
-  "Yıldırım",
-  "İnönü",
-  "Bahçelievler",
-  "Kültür",
-  "Yenişehir",
-  "Barbaros",
-  "Zeytinburnu",
-  "Yavuz Selim",
-];
-
-function buildLocations(): Loc[] {
-  const out: Loc[] = [];
-  let i = 0;
-  for (const b of CITY_BLOCKS) {
-    for (const d of b.districts) {
-      out.push({
-        province: b.province,
-        city: b.city,
-        district: d,
-        neighborhood: `${MAHALLE[i % MAHALLE.length]} Mah.`,
-      });
-      i++;
-    }
-  }
-  return out;
-}
 
 const FIRST_NAMES = [
   "Ahmet",
@@ -204,7 +115,7 @@ function buildTitleAndDescription(args: {
   index: number;
   professionName: string;
   categoryLabel: string;
-  loc: Loc;
+  loc: SeedLoc;
 }): { title: string; description: string } {
   const scope = profScopeTr(args.professionName);
   const title = `${args.loc.district} / ${args.loc.city} — ${args.categoryLabel.slice(0, 80)} (${args.professionName}) #${args.index + 1}`;
@@ -219,15 +130,15 @@ function buildTitleAndDescription(args: {
   };
 }
 
-async function getLeafCategoryIds(prisma: PrismaClient): Promise<string[]> {
-  const leaves = await prisma.category.findMany({
+async function getLeafCategoryIds(client: PrismaClient): Promise<string[]> {
+  const leaves = await client.category.findMany({
     where: { parentId: { not: null } },
     select: { id: true },
   });
   if (leaves.length > 0) {
     return leaves.map((c) => c.id);
   }
-  const roots = await prisma.category.findMany({
+  const roots = await client.category.findMany({
     where: { parentId: null },
     select: { id: true },
   });
@@ -236,7 +147,7 @@ async function getLeafCategoryIds(prisma: PrismaClient): Promise<string[]> {
 
 type MemberCtx = {
   userId: string;
-  loc: Loc;
+  loc: SeedLoc;
   profession: { id: string; name: string };
 };
 
@@ -244,10 +155,16 @@ async function main() {
   await syncDefaultProfessions(prisma);
   const seedPasswordHash = await hashPassword(SEED_PASSWORD);
 
-  const locations = buildLocations();
-  if (locations.length < MEMBER_COUNT) {
-    throw new Error(`Konum sayisi yetersiz: ${locations.length} < ${MEMBER_COUNT}`);
-  }
+  const { locations, area } = await buildSeedLocationsForServiceArea(prisma, MEMBER_COUNT);
+  const districtSummary = area.provinces
+    .map((p) => {
+      const key = Object.keys(area.districtsByProvince).find((k) => locationNamesEqual(k, p));
+      const allowed = key ? area.districtsByProvince[key] : undefined;
+      if (!allowed?.length) return `${p} (tum ilceler)`;
+      return `${p} (${allowed.length} ilce)`;
+    })
+    .join(", ");
+  console.log(`Hizmet bolgesi: ${districtSummary}`);
 
   const leafIds = await getLeafCategoryIds(prisma);
   if (leafIds.length === 0) {
@@ -278,7 +195,7 @@ async function main() {
   });
   const metaById = new Map(categoryMeta.map((c) => [c.id, c]));
 
-  console.log(`${MEMBER_COUNT} uye olusturuluyor...`);
+  console.log(`${MEMBER_COUNT} uye olusturuluyor (${locations.length} konum dongusu)...`);
   const members: MemberCtx[] = [];
 
   for (let i = 0; i < MEMBER_COUNT; i++) {
@@ -306,7 +223,7 @@ async function main() {
               billingAccountType: "INDIVIDUAL",
               billingTcKimlik: "10000000146",
               billingAddressLine: `Seed Mah. No:${i + 1} Örnek Sok.`,
-              billingPostalCode: "34000",
+              billingPostalCode: "07000",
             },
           },
         },
@@ -360,11 +277,12 @@ async function main() {
 
   console.log("Tamam.");
   console.log(`Uyeler: ${MEMBER_COUNT} (${SEED_EMAIL_SUFFIX}, sifre: ${SEED_PASSWORD})`);
-  console.log(`Ilanlar: ${AD_COUNT} (onayli, mevcut kategorilere bagli, uye il ve meslegiyle uyumlu)`);
-  await prisma.$disconnect();
+  console.log(`Ilanlar: ${AD_COUNT} (onayli, hizmet bolgesi: ${area.provinces.join(", ")})`);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(() => disconnectScriptPrisma());

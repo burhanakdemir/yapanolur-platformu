@@ -1,5 +1,4 @@
-import "dotenv/config";
-import { prisma } from "../src/lib/prisma";
+import { disconnectScriptPrisma, prisma } from "./lib/prisma";
 import { deleteSubcategoriesUnderRootId } from "../src/lib/categories";
 import { DEFAULT_MAIN_CATEGORY_NAMES } from "../src/lib/mainCategoryNames";
 
@@ -20,7 +19,7 @@ async function main() {
     console.log(`${name}: silinen ${r.deleted}, ilan baglantisi kaldirilan ${r.adsDetached}`);
   }
   console.log(`Toplam: ${totalDeleted} alt kategori, ${totalAds} ilan guncellemesi.`);
-  await prisma.$disconnect();
+  await disconnectScriptPrisma();
 }
 
 main().catch((e) => {

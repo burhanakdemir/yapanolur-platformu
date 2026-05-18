@@ -2,8 +2,7 @@
  * Demo tohumunun ekledigi ust (ve CASCADE ile alt) kategorileri siler.
  * npx tsx scripts/remove-demo-seeded-categories.ts
  */
-import "dotenv/config";
-import { prisma } from "../src/lib/prisma";
+import { disconnectScriptPrisma, prisma } from "./lib/prisma";
 import { DEMO_SEEDED_PARENT_CATEGORY_NAMES } from "./demoSeededCategoryNames";
 
 async function main() {
@@ -17,7 +16,7 @@ async function main() {
 
   if (found.length === 0) {
     console.log("Silinecek demo ust kategori yok (zaten temiz veya adlar eslesmedi).");
-    await prisma.$disconnect();
+    await disconnectScriptPrisma();
     return;
   }
 
@@ -32,7 +31,7 @@ async function main() {
   console.log(
     "Bu kategorilere bagli ilanlarin categoryId alani null olur (Ad onDelete: SetNull).",
   );
-  await prisma.$disconnect();
+  await disconnectScriptPrisma();
 }
 
 main().catch((e) => {

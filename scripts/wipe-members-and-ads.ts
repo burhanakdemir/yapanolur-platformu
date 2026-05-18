@@ -4,8 +4,7 @@
  *
  * Calistirma: npx tsx scripts/wipe-members-and-ads.ts --yes
  */
-import "dotenv/config";
-import { prisma } from "../src/lib/prisma";
+import { disconnectScriptPrisma, prisma } from "./lib/prisma";
 
 async function main() {
   const yes = process.argv.includes("--yes");
@@ -32,7 +31,7 @@ async function main() {
     console.log(`Silinen uye: ${result.members}`);
     console.log("Tamam.");
   } finally {
-    await prisma.$disconnect();
+    await disconnectScriptPrisma();
   }
 }
 

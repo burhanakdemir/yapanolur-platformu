@@ -4,8 +4,7 @@
  *
  * Calistirma: npm run db:backfill-ad-categories
  */
-import "dotenv/config";
-import { prisma } from "../src/lib/prisma";
+import { disconnectScriptPrisma, prisma } from "./lib/prisma";
 
 async function getLeafCategoryIds(): Promise<string[]> {
   const leaves = await prisma.category.findMany({
@@ -39,7 +38,7 @@ async function main() {
 
   if (missing.length === 0) {
     console.log("Guncellenecek ilan yok (categoryId bos).");
-    await prisma.$disconnect();
+    await disconnectScriptPrisma();
     return;
   }
 
@@ -54,7 +53,7 @@ async function main() {
   }
 
   console.log(`Tamam: ${missing.length} ilana kategori atandi (${leafIds.length} aday id, round-robin).`);
-  await prisma.$disconnect();
+  await disconnectScriptPrisma();
 }
 
 main().catch((e) => {

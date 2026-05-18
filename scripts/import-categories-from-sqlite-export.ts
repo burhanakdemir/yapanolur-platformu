@@ -11,11 +11,10 @@
  *   --force-image-update  => imageUrl dolu olsa da importtaki degerle gunceller
  *   --dry-run             => veritabanina yazmadan plan/ozet raporlar
  */
-import "dotenv/config";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { prisma } from "../src/lib/prisma";
+import { disconnectScriptPrisma, prisma } from "./lib/prisma";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
@@ -257,7 +256,7 @@ async function main() {
   console.log(
     "Not: imageUrl varsayilan olarak korunur. Zorlamak icin --force-image-update kullanin.",
   );
-  await prisma.$disconnect();
+  await disconnectScriptPrisma();
 }
 
 main().catch((e) => {

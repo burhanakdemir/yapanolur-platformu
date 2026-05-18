@@ -1,5 +1,4 @@
-import "dotenv/config";
-import { prisma } from "../src/lib/prisma";
+import { disconnectScriptPrisma, prisma } from "./lib/prisma";
 import { syncDefaultCategorySubtrees } from "../src/lib/defaultCategorySubtrees";
 import { DEFAULT_MAIN_CATEGORY_NAMES } from "../src/lib/mainCategoryNames";
 import {
@@ -66,7 +65,7 @@ async function main() {
   console.log(`Meslek listesi senkronize edildi (${DEFAULT_ENGINEERING_PROFESSIONS.length} tanim).`);
 
   console.log(`Seed completed. Admin: ${adminEmail} / ${adminPassword}`);
-  await prisma.$disconnect();
+  await disconnectScriptPrisma();
 }
 
 main().catch((e) => {

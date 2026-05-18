@@ -6,41 +6,18 @@
  * Demo uyeler: uye0001@ornek-demo.local ... (varsayilan 100 kisi) / sifre: demo123
  * Onceki demo uyeler silinir (CASCADE ile onlarin ilanlari gider), sonra yeniden uretilir.
  */
-import "dotenv/config";
 import type { PrismaClient } from "../src/generated/prisma/client";
-import { prisma } from "../src/lib/prisma";
 import { nextMemberNumber } from "../src/lib/memberNumber";
 import { createAdWithListingNumber } from "../src/lib/adListingNumber";
 import { hashPassword } from "../src/lib/passwordHash";
+import { buildSeedLocationsForServiceArea } from "./lib/buildSeedLocations";
+import { disconnectScriptPrisma, prisma } from "./lib/prisma";
 
 const DEMO_EMAIL_SUFFIX = "@ornek-demo.local";
 const DEMO_PASSWORD = "demo123";
 /** Ornek ilan sahipleri (250 ilan icin yeterli dagilim) */
 const MEMBER_COUNT = 100;
 const AD_COUNT = 250;
-
-const LOCATIONS: ReadonlyArray<{
-  province: string;
-  city: string;
-  district: string;
-  neighborhood: string;
-}> = [
-  { province: "Istanbul", city: "Istanbul", district: "Kadikoy", neighborhood: "Moda" },
-  { province: "Istanbul", city: "Istanbul", district: "Besiktas", neighborhood: "Levent" },
-  { province: "Istanbul", city: "Istanbul", district: "Umraniye", neighborhood: "Atasehir" },
-  { province: "Ankara", city: "Ankara", district: "Cankaya", neighborhood: "Kizilay" },
-  { province: "Ankara", city: "Ankara", district: "Yenimahalle", neighborhood: "Batikent" },
-  { province: "Izmir", city: "Izmir", district: "Konak", neighborhood: "Alsancak" },
-  { province: "Izmir", city: "Izmir", district: "Bornova", neighborhood: "Evka 3" },
-  { province: "Bursa", city: "Bursa", district: "Nilufer", neighborhood: "Gorukle" },
-  { province: "Antalya", city: "Antalya", district: "Muratpasa", neighborhood: "Lara" },
-  { province: "Adana", city: "Adana", district: "Seyhan", neighborhood: "Kurtulus" },
-  { province: "Kocaeli", city: "Kocaeli", district: "Izmit", neighborhood: "Yahyakaptan" },
-  { province: "Mersin", city: "Mersin", district: "Yenisehir", neighborhood: "Pozcu" },
-  { province: "Konya", city: "Konya", district: "Selcuklu", neighborhood: "Sille" },
-  { province: "Gaziantep", city: "Gaziantep", district: "Sahinbey", neighborhood: "Sehitkamil" },
-  { province: "Eskisehir", city: "Eskisehir", district: "Odunpazari", neighborhood: "Arifiye" },
-];
 
 const TITLE_PREFIXES = [
   "Acil",
@@ -95,6 +72,9 @@ async function getLeafCategoryIds(prisma: PrismaClient): Promise<string[]> {
 }
 
 async function main() {
+  const { locations, area } = await buildSeedLocationsForServiceArea(prisma, MEMBER_COUNT);
+  console.log(`Hizmet bolgesi: ${area.provinces.join(", ")}`);
+
   const leafIds = await getLeafCategoryIds(prisma);
   if (leafIds.length === 0) {
     throw new Error("Hic kategori yok; once seed veya admin ile kategori ekleyin.");
@@ -152,7 +132,7 @@ async function main() {
     const catId = pick(leafIds);
     const meta = metaById.get(catId);
     const catLabel = meta?.parent?.name ? `${meta.parent.name} / ${meta.name}` : meta?.name ?? "Genel";
-    const loc = pick(LOCATIONS);
+    const loc = pick(locations);
     const title = `${pick(TITLE_PREFIXES)} ${catLabel} — ${pick(TITLE_SUFFIXES)} #${i + 1}`;
     const description =
       `${catLabel} kapsaminda ornek ilan. Teknik detaylar, sure ve odeme kosullari teklif sonrasi paylasilir. ` +
@@ -183,11 +163,12 @@ async function main() {
 
   console.log("Tamam.");
   console.log(`Uyeler: ${MEMBER_COUNT} (${DEMO_EMAIL_SUFFIX}, sifre: ${DEMO_PASSWORD})`);
-  console.log(`Ilanlar: ${AD_COUNT} (onayli, mevcut kategorilere bagli)`);
-  await prisma.$disconnect();
+  console.log(`Ilanlar: ${AD_COUNT} (onayli, hizmet bolgesi: ${area.provinces.join(", ")})`);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(() => disconnectScriptPrisma());

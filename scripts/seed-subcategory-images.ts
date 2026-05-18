@@ -3,8 +3,7 @@
  * Mevcut imageUrl uzerine yazar; daha iyi eslestirme icin tekrar calistirilabilir.
  * Calistir: npx tsx scripts/seed-subcategory-images.ts
  */
-import "dotenv/config";
-import { prisma } from "../src/lib/prisma";
+import { disconnectScriptPrisma, prisma } from "./lib/prisma";
 
 /** Tematik Unsplash gorselleri (auto=format&fit=crop&w=640&q=80). */
 const U = {
@@ -147,4 +146,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => disconnectScriptPrisma());

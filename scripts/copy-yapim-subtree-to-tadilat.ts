@@ -1,5 +1,4 @@
-import "dotenv/config";
-import { prisma } from "../src/lib/prisma";
+import { disconnectScriptPrisma, prisma } from "./lib/prisma";
 import { copyCategorySubtreeFromRootToRoot } from "../src/lib/categories";
 import { DEFAULT_MAIN_CATEGORY_NAMES } from "../src/lib/mainCategoryNames";
 
@@ -19,7 +18,7 @@ async function main() {
   }
   const r = await copyCategorySubtreeFromRootToRoot(src.id, dst.id);
   console.log(`Tamam: ${r.created} yeni kategori eklendi (${fromName} -> ${toName} alt agaci).`);
-  await prisma.$disconnect();
+  await disconnectScriptPrisma();
 }
 
 main().catch((e) => {
