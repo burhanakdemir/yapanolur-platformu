@@ -441,10 +441,10 @@ a.admin-back-link:hover {
       1px -1px 0 #fff,
       -1px 1px 0 #fff,
       1px 1px 0 #fff,
-      0 0 8px #fff,
-      0 0 24px rgba(255 255 255 / 0.98),
-      0 0 42px rgba(255 255 255 / 0.72),
-      0 0 56px rgba(255 255 255 / 0.38);
+      0 0 12px #fff,
+      0 0 36px rgba(255 255 255 / 1),
+      0 0 84px rgba(255 255 255 / 1),
+      0 0 84px rgba(255 255 255 / 0.57);
   }
   76% {
     opacity: 0.95;
@@ -472,7 +472,7 @@ a.admin-back-link:hover {
 
 .home-hero-sponsor-ticker-spotlight {
   opacity: 1;
-  animation: home-hero-sponsor-ticker-pulse 2.35s ease-in-out infinite;
+  animation: home-hero-sponsor-ticker-pulse 1.57s ease-in-out infinite;
   will-change: filter, text-shadow, opacity;
 }
 
