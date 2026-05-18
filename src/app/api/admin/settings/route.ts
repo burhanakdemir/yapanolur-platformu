@@ -7,6 +7,12 @@ import { isSuperAdminRole } from "@/lib/adminRoles";
 import { collectErrorChainText, isLikelyPrismaSchemaColumnMissing } from "@/lib/dbErrors";
 import { prisma } from "@/lib/prisma";
 import { mergeSponsorHeroPricingFromDb, pricingTryToJson } from "@/lib/sponsorHeroPricing";
+import {
+  parseServiceAreaDistrictsJson,
+  parseServiceAreaFromSettings,
+  parseServiceAreaProvincesJson,
+  serializeServiceAreaForClient,
+} from "@/lib/serviceArea";
 
 function hasEnvSmtp() {
   return Boolean(
@@ -29,8 +35,12 @@ function toPublicAdminSettings(s: AdminSettings) {
     (Boolean(s.smtpPass?.trim()) || hasEnvSmtpPassOnly());
   const { sponsorHeroPricingTryJson, ...rest } = s;
   void sponsorHeroPricingTryJson;
+  const serviceArea = serializeServiceAreaForClient(parseServiceAreaFromSettings(s));
   return {
     ...rest,
+    serviceArea,
+    serviceAreaProvincesJson: s.serviceAreaProvincesJson,
+    serviceAreaDistrictsJson: s.serviceAreaDistrictsJson,
     sponsorHeroPricingTry: mergeSponsorHeroPricingFromDb(s),
     smtpPass: "",
     smtpPassConfigured: panelSmtp,
@@ -157,6 +167,8 @@ const bodySchema = z.object({
       "30": z.number().int().min(0),
     })
     .optional(),
+  serviceAreaProvincesJson: z.string().optional(),
+  serviceAreaDistrictsJson: z.string().optional(),
 });
 
 type Body = z.infer<typeof bodySchema>;
@@ -236,6 +248,17 @@ function buildAdminSettingsUpdateInput(
     p.sponsorHeroPricingTryJson = extra.sponsorHeroPricingTryJson;
   }
   if (extra.setSmtpPass !== undefined) p.smtpPass = extra.setSmtpPass;
+  if (data.serviceAreaProvincesJson !== undefined) {
+    const provinces = parseServiceAreaProvincesJson(data.serviceAreaProvincesJson);
+    if (provinces.length === 0) {
+      throw new Error("En az bir il seçilmelidir.");
+    }
+    p.serviceAreaProvincesJson = JSON.stringify(provinces);
+  }
+  if (data.serviceAreaDistrictsJson !== undefined) {
+    const districts = parseServiceAreaDistrictsJson(data.serviceAreaDistrictsJson);
+    p.serviceAreaDistrictsJson = JSON.stringify(districts);
+  }
   return p;
 }
 
@@ -286,6 +309,18 @@ export async function POST(req: Request) {
         );
       }
     }
+    if (
+      typeof json === "object" &&
+      json !== null &&
+      ("serviceAreaProvincesJson" in json || "serviceAreaDistrictsJson" in json)
+    ) {
+      if (!isSuperAdminRole(session?.role)) {
+        return NextResponse.json(
+          { error: "Hizmet bölgesi ayarlarını yalnızca süper yönetici değiştirebilir." },
+          { status: 403 },
+        );
+      }
+    }
     const data = bodySchema.parse(json);
     const showcaseDailyPricingJson =
       data.showcaseDailyPricing !== undefined ? JSON.stringify(data.showcaseDailyPricing) : undefined;
@@ -331,6 +366,9 @@ export async function POST(req: Request) {
         { error: "Gecerli degerler gonderin.", issues: error.issues },
         { status: 400 },
       );
+    }
+    if (error instanceof Error && error.message === "En az bir il seçilmelidir.") {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
     if (error instanceof Prisma.PrismaClientValidationError) {
       console.error("admin settings validation", error.message);

@@ -531,6 +531,10 @@ model AdminSettings {
   sponsorHeroPeriodDays         Int      @default(30)
   /** JSON: "4"|"7"|"10"|"15"|"30" anahtarları → TL (tamsayı). Boş/güncellenmemiş günler `sponsorHeroFeeAmountTry` ile dolar. */
   sponsorHeroPricingTryJson     String   @default("{}")
+  /** JSON dizi: izinli il adlari (ornek: ["Antalya"]). */
+  serviceAreaProvincesJson      String   @default("[\"Antalya\"]")
+  /** JSON nesne: il -> ilce adlari; bos veya anahtar yok = o ilde tum ilceler. */
+  serviceAreaDistrictsJson      String   @default("{}")
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }

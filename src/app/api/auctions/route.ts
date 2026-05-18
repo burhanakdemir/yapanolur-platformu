@@ -8,6 +8,7 @@ import {
 } from "@/lib/auctionListing";
 import { serializeAuctionForHomeList } from "@/lib/serializeHomeAuction";
 import { getDescendantIds } from "@/lib/categories";
+import { buildAdServiceAreaFilter, getServiceArea } from "@/lib/serviceArea";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -24,9 +25,13 @@ export async function GET(req: Request) {
     ? { categoryId: { in: await getDescendantIds(categoryIdRaw) } }
     : {};
 
+  const serviceArea = await getServiceArea(prisma);
+  const serviceAreaFilter = buildAdServiceAreaFilter(serviceArea, {
+    province: province || undefined,
+    district: district || undefined,
+  });
   const locationFilter: Prisma.AdWhereInput = {
-    ...(province ? { province: { contains: province } } : {}),
-    ...(district ? { district: { contains: district } } : {}),
+    ...serviceAreaFilter,
     ...(neighborhood ? { neighborhood: { contains: neighborhood } } : {}),
   };
 

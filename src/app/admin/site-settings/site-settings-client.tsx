@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { adminUrl } from "@/lib/adminUrls";
+import ServiceAreaSettingsSection from "./ServiceAreaSettingsSection";
 
 export default function SiteSettingsClient() {
   const [heroTitleTr, setHeroTitleTr] = useState("");
@@ -11,6 +12,7 @@ export default function SiteSettingsClient() {
   const [primaryBtnTr, setPrimaryBtnTr] = useState("");
   const [footerContact, setFooterContact] = useState("");
   const [message, setMessage] = useState("");
+  const [areaMessage, setAreaMessage] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -90,6 +92,13 @@ export default function SiteSettingsClient() {
         </button>
         {message && <p className="text-sm">{message}</p>}
       </form>
+      <ServiceAreaSettingsSection
+        onMessage={(msg, ok) => {
+          setAreaMessage(msg);
+          if (!ok) setMessage("");
+        }}
+      />
+      {areaMessage && <p className="text-sm text-slate-700">{areaMessage}</p>}
     </main>
   );
 }

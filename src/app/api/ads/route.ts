@@ -8,6 +8,7 @@ import { verifySessionToken } from "@/lib/auth";
 import { rateLimitGuard } from "@/lib/rateLimit";
 import { isAllowedUploadUrl } from "@/lib/uploadUrl";
 import type { Prisma } from "@/generated/prisma/client";
+import { getServiceArea, validateServiceAreaLocation } from "@/lib/serviceArea";
 
 const createAdSchema = z.object({
   categoryId: z.string().min(4),
@@ -66,6 +67,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Gecersiz gorsel adresi." }, { status: 400 });
     }
 
+    const serviceArea = await getServiceArea(prisma);
+    const locationCheck = validateServiceAreaLocation(
+      serviceArea,
+      data.province,
+      data.district,
+    );
+    if (!locationCheck.ok) {
+      return NextResponse.json({ error: locationCheck.message }, { status: 400 });
+    }
+
     const createPayload: Omit<Prisma.AdCreateInput, "listingNumber"> = {
       owner: { connect: { id: owner.id } },
       category: { connect: { id: data.categoryId } },
@@ -75,8 +86,8 @@ export async function POST(req: Request) {
       startingPriceTry: data.startingPriceTry,
       auctionEndsAt: new Date(Date.now() + data.auctionDurationDays * 24 * 60 * 60 * 1000),
       city: data.city,
-      province: data.province,
-      district: data.district,
+      province: locationCheck.province,
+      district: locationCheck.district,
       neighborhood: data.neighborhood,
       blockNo: data.blockNo,
       parcelNo: data.parcelNo,

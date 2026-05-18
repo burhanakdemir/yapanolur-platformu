@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import ProvinceSelectField from "@/components/ProvinceSelectField";
 import { clientApiUrl } from "@/lib/clientApi";
+import { resolveProvinceSelection, type LocationOption } from "@/lib/locationSelect";
 import { TR_PROVINCES_FALLBACK } from "@/lib/trProvincesFallback";
-
-type Option = { id: number; name: string };
 type Profession = { id: string; name: string };
 
 export default function EngineerSearch({
@@ -26,8 +26,8 @@ export default function EngineerSearch({
   mergeSearchParams?: boolean;
 }) {
   const router = useRouter();
-  const [provinces, setProvinces] = useState<Option[]>([]);
-  const [districts, setDistricts] = useState<Option[]>([]);
+  const [provinces, setProvinces] = useState<LocationOption[]>([]);
+  const [districts, setDistricts] = useState<LocationOption[]>([]);
   const [professions, setProfessions] = useState<Profession[]>([]);
   const [provinceId, setProvinceId] = useState("");
   const [districtId, setDistrictId] = useState("");
@@ -44,8 +44,11 @@ export default function EngineerSearch({
       .then((data) => {
         const list = Array.isArray(data) && data.length > 0 ? data : TR_PROVINCES_FALLBACK;
         setProvinces(list);
-        const selected = list.find((p: Option) => p.name === initial.province);
-        if (selected) setProvinceId(String(selected.id));
+        const picked = resolveProvinceSelection(list, initial.province);
+        if (picked) {
+          setProvinceId(picked.provinceId);
+          setProvinceName(picked.provinceName);
+        }
       })
       .catch(() => setProvinces(TR_PROVINCES_FALLBACK));
   }, [initial.province]);
@@ -62,7 +65,7 @@ export default function EngineerSearch({
       .then((data) => {
         const list = Array.isArray(data) ? data : [];
         setDistricts(list);
-        const selected = list.find((d: Option) => d.name === initial.district);
+        const selected = list.find((d: LocationOption) => d.name === initial.district);
         if (selected) setDistrictId(String(selected.id));
       })
       .catch(() => setDistricts([]));
@@ -160,26 +163,20 @@ export default function EngineerSearch({
 
   return (
     <form className="space-y-2 sm:space-y-1.5" onSubmit={onSubmit}>
-      <select
-        className={fieldClass}
-        value={provinceId}
-        onChange={(e) => {
-          const nextId = e.target.value;
+      <ProvinceSelectField
+        provinces={provinceOptions}
+        provinceId={provinceId}
+        required={false}
+        placeholder={lang === "tr" ? "İl seçin" : "Select province"}
+        selectClassName={fieldClass}
+        onChange={(nextId, nextName) => {
           setProvinceId(nextId);
-          const p = provinceOptions.find((x) => String(x.id) === nextId);
-          setProvinceName(p?.name || "");
+          setProvinceName(nextName);
           setDistricts([]);
           setDistrictId("");
           setDistrictName("");
         }}
-      >
-        <option value="">{labels.province}</option>
-        {provinceOptions.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </select>
+      />
       <select
         className={`${fieldClass} disabled:bg-slate-100`}
         value={districtId}
@@ -222,9 +219,10 @@ export default function EngineerSearch({
           type="button"
           className="min-h-[44px] min-w-[4.5rem] touch-manipulation rounded-lg border border-orange-300 bg-white px-3 py-2 text-sm font-medium leading-tight text-orange-900 hover:bg-orange-50 sm:min-h-0 sm:min-w-0 sm:px-2.5 sm:py-1.5 sm:text-xs"
           onClick={() => {
-            setProvinceId("");
+            const picked = resolveProvinceSelection(provinces);
+            setProvinceId(picked?.provinceId ?? "");
+            setProvinceName(picked?.provinceName ?? "");
             setDistrictId("");
-            setProvinceName("");
             setDistrictName("");
             setProfessionId("");
             mergeAndPush({ clearEngineer: true });

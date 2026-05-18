@@ -1,4 +1,11 @@
 import type { PrismaClient } from "@/generated/prisma/client";
+import {
+  getServiceArea,
+  isDistrictAllowed,
+  isProvinceAllowed,
+  locationNamesEqual,
+  normalizeLocationName,
+} from "@/lib/serviceArea";
 
 export type PublicEngineerRow = {
   id: string;
@@ -24,6 +31,17 @@ export async function findPublicEngineers(
 
   if (!prov && !dist && !prof) return [];
 
+  const area = await getServiceArea(prisma);
+  if (prov && !isProvinceAllowed(area, prov)) return [];
+  if (dist && prov && !isDistrictAllowed(area, prov, dist)) return [];
+  const provCanon = prov
+    ? area.provinces.find((p) => locationNamesEqual(p, prov)) ?? null
+    : undefined;
+  const distCanon =
+    dist && provCanon && isDistrictAllowed(area, provCanon, dist)
+      ? normalizeLocationName(dist)
+      : dist;
+
   const rows = await prisma.user.findMany({
     where: {
       role: "MEMBER",
@@ -31,8 +49,8 @@ export async function findPublicEngineers(
       memberProfile: {
         is: {
           ...(prof ? { professionId: prof } : {}),
-          ...(prov ? { province: prov } : {}),
-          ...(dist ? { district: dist } : {}),
+          ...(provCanon ? { province: provCanon } : {}),
+          ...(distCanon ? { district: distCanon } : {}),
         },
       },
     },

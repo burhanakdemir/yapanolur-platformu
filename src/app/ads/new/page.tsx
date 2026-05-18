@@ -2,9 +2,11 @@
 
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import HomeBackButtonLink from "@/components/HomeBackButtonLink";
+import ProvinceSelectField from "@/components/ProvinceSelectField";
 import { useRouter, useSearchParams } from "next/navigation";
 import { clientApiUrl } from "@/lib/clientApi";
 import { dictionary, getLang } from "@/lib/i18n";
+import { resolveProvinceSelection } from "@/lib/locationSelect";
 import { TR_PROVINCES_FALLBACK } from "@/lib/trProvincesFallback";
 import FileInputTr from "@/components/FileInputTr";
 import { SHOWCASE_DAY_OPTIONS } from "@/lib/showcaseDurations";
@@ -106,11 +108,16 @@ function NewAdPageInner() {
         if (!r.ok) throw new Error(String(r.status));
         return r.json();
       })
-      .then((data) =>
-        setProvinces(
-          Array.isArray(data) && data.length > 0 ? data : TR_PROVINCES_FALLBACK,
-        ),
-      )
+      .then((data) => {
+        const list =
+          Array.isArray(data) && data.length > 0 ? data : TR_PROVINCES_FALLBACK;
+        setProvinces(list);
+        const picked = resolveProvinceSelection(list);
+        if (picked) {
+          setProvinceId(picked.provinceId);
+          setProvinceName(picked.provinceName);
+        }
+      })
       .catch(() => setProvinces(TR_PROVINCES_FALLBACK));
     fetch(clientApiUrl("/api/admin/settings"), { cache: "no-store" })
       .then((r) => r.json())
@@ -254,29 +261,20 @@ function NewAdPageInner() {
             <span>📍 Konum Bilgileri</span>
           </h2>
           <div className="grid grid-cols-2 gap-2">
-            <select
-              className="border rounded-lg p-2 bg-white"
-              value={provinceId}
-              onChange={(e) => {
-                const nextId = e.target.value;
+            <ProvinceSelectField
+              provinces={provinces}
+              provinceId={provinceId}
+              selectClassName="border rounded-lg p-2 bg-white w-full"
+              onChange={(nextId, nextName) => {
                 setProvinceId(nextId);
-                const selected = provinces.find((p) => String(p.id) === nextId);
-                setProvinceName(selected?.name || "");
+                setProvinceName(nextName);
                 setDistricts([]);
                 setNeighborhoods([]);
                 setDistrictId("");
                 setDistrictName("");
                 setNeighborhoodName("");
               }}
-              required
-            >
-              <option value="">Il secin</option>
-              {provinces.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+            />
             <select
               className="border rounded-lg p-2 bg-white disabled:bg-slate-100"
               value={districtId}

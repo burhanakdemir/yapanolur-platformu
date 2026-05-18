@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ProvinceSelectField from "@/components/ProvinceSelectField";
 import { clientApiUrl } from "@/lib/clientApi";
+import { resolveProvinceSelection, type LocationOption } from "@/lib/locationSelect";
 import { TR_PROVINCES_FALLBACK } from "@/lib/trProvincesFallback";
-
-type Option = { id: number; name: string };
 
 /**
  * İlan arama panelindeki gibi /api/locations ile il + ilçe seçimi.
@@ -19,8 +19,8 @@ export default function ProvinceDistrictSelect({
   initialProvince?: string | null;
   initialDistrict?: string | null;
 }) {
-  const [provinces, setProvinces] = useState<Option[]>([]);
-  const [districts, setDistricts] = useState<Option[]>([]);
+  const [provinces, setProvinces] = useState<LocationOption[]>([]);
+  const [districts, setDistricts] = useState<LocationOption[]>([]);
   const [provinceId, setProvinceId] = useState("");
   const [districtId, setDistrictId] = useState("");
   const [provinceName, setProvinceName] = useState(initialProvince || "");
@@ -35,10 +35,22 @@ export default function ProvinceDistrictSelect({
       .then((data) => {
         const list = Array.isArray(data) && data.length > 0 ? data : TR_PROVINCES_FALLBACK;
         setProvinces(list);
-        const selected = list.find((p: Option) => p.name === initialProvince);
-        if (selected) setProvinceId(String(selected.id));
+        const picked = resolveProvinceSelection(list, initialProvince);
+        if (picked) {
+          setProvinceId(picked.provinceId);
+          setProvinceName(picked.provinceName);
+        }
       })
-      .catch(() => setProvinces(TR_PROVINCES_FALLBACK));
+      .catch(() => {
+        const fallback = TR_PROVINCES_FALLBACK.filter((p) => p.name === "Antalya");
+        const list = fallback.length > 0 ? fallback : TR_PROVINCES_FALLBACK.slice(0, 1);
+        setProvinces(list);
+        const picked = resolveProvinceSelection(list, initialProvince);
+        if (picked) {
+          setProvinceId(picked.provinceId);
+          setProvinceName(picked.provinceName);
+        }
+      });
   }, [initialProvince]);
 
   useEffect(() => {
@@ -55,7 +67,7 @@ export default function ProvinceDistrictSelect({
       .then((data) => {
         const list = Array.isArray(data) ? data : [];
         setDistricts(list);
-        const selected = list.find((d: Option) => d.name === initialDistrict);
+        const selected = list.find((d: LocationOption) => d.name === initialDistrict);
         if (selected) setDistrictId(String(selected.id));
       })
       .catch(() => setDistricts([]));
@@ -65,29 +77,19 @@ export default function ProvinceDistrictSelect({
 
   return (
     <div className="space-y-1.5">
-      <label className="block text-xs font-medium text-slate-700">İl</label>
-      <select
-        className="h-9 w-full rounded-lg border bg-white px-2.5 py-0 text-sm leading-tight disabled:cursor-not-allowed disabled:bg-orange-100"
-        value={provinceId}
+      <ProvinceSelectField
+        provinces={provinces}
+        provinceId={provinceId}
         disabled={disabled}
-        onChange={(e) => {
-          const nextId = e.target.value;
+        variant="form"
+        onChange={(nextId, nextName) => {
           setProvinceId(nextId);
-          const p = provinces.find((x) => String(x.id) === nextId);
-          setProvinceName(p?.name || "");
+          setProvinceName(nextName);
           setDistricts([]);
           setDistrictId("");
           setDistrictName("");
         }}
-        required={!disabled}
-      >
-        <option value="">İl seçin</option>
-        {provinces.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </select>
+      />
       <label className="block text-xs font-medium text-slate-700">İlçe</label>
       <select
         className="h-9 w-full rounded-lg border bg-white px-2.5 py-0 text-sm leading-tight disabled:cursor-not-allowed disabled:bg-orange-100"

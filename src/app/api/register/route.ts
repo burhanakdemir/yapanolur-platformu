@@ -19,6 +19,7 @@ import {
   checkRegisterAvailability,
   registerConflictMessage,
 } from "@/lib/registerConflict";
+import { getServiceArea, validateServiceAreaLocation } from "@/lib/serviceArea";
 
 /** Kayıtta e-posta ve telefon verify-* ile doğrulanır (httpOnly kanıt çerezleri). */
 function optionalTrimmedString() {
@@ -256,6 +257,16 @@ export async function POST(req: Request) {
 
     const phoneForRegister = phoneE164;
 
+    const serviceArea = await getServiceArea(prisma);
+    const locationCheck = validateServiceAreaLocation(
+      serviceArea,
+      data.province,
+      data.district,
+    );
+    if (!locationCheck.ok) {
+      return NextResponse.json({ error: locationCheck.message }, { status: 400 });
+    }
+
     const professionOk = await prisma.profession.findUnique({
       where: { id: data.professionId },
       select: { id: true },
@@ -347,8 +358,8 @@ export async function POST(req: Request) {
         where: { userId: created.id },
         update: {
           phone: phoneForProfile ?? null,
-          province: data.province.trim(),
-          district: data.district.trim(),
+          province: locationCheck.province,
+          district: locationCheck.district,
           professionId: data.professionId,
           billingAccountType: data.billingAccountType,
           billingTcKimlik: tcStore,
@@ -369,8 +380,8 @@ export async function POST(req: Request) {
         create: {
           userId: created.id,
           phone: phoneForProfile ?? null,
-          province: data.province.trim(),
-          district: data.district.trim(),
+          province: locationCheck.province,
+          district: locationCheck.district,
           professionId: data.professionId,
           billingAccountType: data.billingAccountType,
           billingTcKimlik: tcStore,

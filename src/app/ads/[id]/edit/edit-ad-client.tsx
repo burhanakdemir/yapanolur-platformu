@@ -5,6 +5,7 @@ import HomeBackButtonLink from "@/components/HomeBackButtonLink";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import FileInputTr from "@/components/FileInputTr";
+import ProvinceSelectField from "@/components/ProvinceSelectField";
 import {
   flattenAllChildren,
   resolveMainSubCategoryIds,
@@ -13,6 +14,7 @@ import {
 import { uploadListingImageFile } from "@/lib/adListingImageUpload";
 import { clientApiUrl } from "@/lib/clientApi";
 import { dictionary, getLang } from "@/lib/i18n";
+import { resolveProvinceSelection } from "@/lib/locationSelect";
 import { TR_PROVINCES_FALLBACK } from "@/lib/trProvincesFallback";
 import { normalizeAdTextForStorage, stripHashAndAfter } from "@/lib/adTitleDisplay";
 import type { Ad } from "@/app/ads/[id]/adDetailTypes";
@@ -113,9 +115,15 @@ export default function EditAdClient() {
         if (!r.ok) throw new Error(String(r.status));
         return r.json();
       })
-      .then((data) =>
-        setProvinces(Array.isArray(data) && data.length > 0 ? data : TR_PROVINCES_FALLBACK),
-      )
+      .then((data) => {
+        const list = Array.isArray(data) && data.length > 0 ? data : TR_PROVINCES_FALLBACK;
+        setProvinces(list);
+        const picked = resolveProvinceSelection(list);
+        if (picked) {
+          setProvinceId(picked.provinceId);
+          setProvinceName(picked.provinceName);
+        }
+      })
       .catch(() => setProvinces(TR_PROVINCES_FALLBACK));
   }, []);
 
@@ -183,11 +191,11 @@ export default function EditAdClient() {
   useEffect(() => {
     if (!ad || provinces.length === 0 || locationSynced) return;
     const pn = (ad.province || ad.city || "").trim();
-    const hit = provinces.find((p) => p.name === pn);
+    const picked = resolveProvinceSelection(provinces, pn || undefined);
     queueMicrotask(() => {
-      if (hit) {
-        setProvinceId(String(hit.id));
-        setProvinceName(hit.name);
+      if (picked) {
+        setProvinceId(picked.provinceId);
+        setProvinceName(picked.provinceName);
       }
       setLocationSynced(true);
     });
@@ -352,29 +360,21 @@ export default function EditAdClient() {
             <span>{lang === "en" ? "Location" : "Konum"}</span>
           </h2>
           <div className="grid grid-cols-2 gap-2">
-            <select
-              className="rounded-lg border bg-white p-2"
-              value={provinceId}
-              onChange={(e) => {
-                const nextId = e.target.value;
+            <ProvinceSelectField
+              provinces={provinces}
+              provinceId={provinceId}
+              placeholder={lang === "en" ? "Select province" : "İl seçin"}
+              selectClassName="rounded-lg border bg-white p-2 w-full"
+              onChange={(nextId, nextName) => {
                 setProvinceId(nextId);
-                const selected = provinces.find((p) => String(p.id) === nextId);
-                setProvinceName(selected?.name || "");
+                setProvinceName(nextName);
                 setDistricts([]);
                 setNeighborhoods([]);
                 setDistrictId("");
                 setDistrictName("");
                 setNeighborhoodName("");
               }}
-              required
-            >
-              <option value="">{lang === "en" ? "Province" : "Il"}</option>
-              {provinces.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+            />
             <select
               className="rounded-lg border bg-white p-2 disabled:bg-slate-100"
               value={districtId}

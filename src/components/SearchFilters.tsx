@@ -1,18 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import ProvinceSelectField from "@/components/ProvinceSelectField";
 import { clientApiUrl } from "@/lib/clientApi";
+import { resolveProvinceSelection, type LocationOption } from "@/lib/locationSelect";
 import { TR_PROVINCES_FALLBACK } from "@/lib/trProvincesFallback";
 
 type CategoryOption = {
   id: string;
   name: string;
   depth: number;
-};
-
-type Option = {
-  id: number;
-  name: string;
 };
 
 export default function SearchFilters({
@@ -29,9 +26,9 @@ export default function SearchFilters({
     neighborhood?: string;
   };
 }) {
-  const [provinces, setProvinces] = useState<Option[]>([]);
-  const [districts, setDistricts] = useState<Option[]>([]);
-  const [neighborhoods, setNeighborhoods] = useState<Option[]>([]);
+  const [provinces, setProvinces] = useState<LocationOption[]>([]);
+  const [districts, setDistricts] = useState<LocationOption[]>([]);
+  const [neighborhoods, setNeighborhoods] = useState<LocationOption[]>([]);
   const [provinceId, setProvinceId] = useState("");
   const [districtId, setDistrictId] = useState("");
   const [provinceName, setProvinceName] = useState(initial.province || "");
@@ -47,8 +44,11 @@ export default function SearchFilters({
       .then((data) => {
         const list = Array.isArray(data) && data.length > 0 ? data : TR_PROVINCES_FALLBACK;
         setProvinces(list);
-        const selected = list.find((p) => p.name === initial.province);
-        if (selected) setProvinceId(String(selected.id));
+        const picked = resolveProvinceSelection(list, initial.province);
+        if (picked) {
+          setProvinceId(picked.provinceId);
+          setProvinceName(picked.provinceName);
+        }
       })
       .catch(() => {
         setProvinces(TR_PROVINCES_FALLBACK);
@@ -104,28 +104,22 @@ export default function SearchFilters({
   return (
     <form className="space-y-2 sm:space-y-1.5" method="get" action="/">
       <input type="hidden" name="lang" value={lang} />
-      <select
-        className={fieldClass}
-        value={provinceId}
-        onChange={(e) => {
-          const nextId = e.target.value;
+      <ProvinceSelectField
+        provinces={provinceOptions}
+        provinceId={provinceId}
+        required={false}
+        placeholder={lang === "tr" ? "İl seçin" : "Select province"}
+        selectClassName={fieldClass}
+        onChange={(nextId, nextName) => {
           setProvinceId(nextId);
-          const p = provinceOptions.find((x) => String(x.id) === nextId);
-          setProvinceName(p?.name || "");
+          setProvinceName(nextName);
           setDistricts([]);
           setNeighborhoods([]);
           setDistrictId("");
           setDistrictName("");
           setNeighborhoodName("");
         }}
-      >
-        <option value="">{lang === "tr" ? "Il secin" : "Select province"}</option>
-        {provinceOptions.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </select>
+      />
       <select
         className={`${fieldClass} disabled:bg-slate-100`}
         value={districtId}
