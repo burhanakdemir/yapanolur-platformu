@@ -387,6 +387,13 @@ a.admin-back-link:hover {
     0 0 6px rgba(255 255 255 / 0.92);
 }
 
+/* Metin Link/span icinde; golge ve nabiz alt ogelere de uygulansin */
+.home-hero-sponsor-ticker-white-ring *,
+.home-hero-sponsor-ticker-spotlight *,
+.home-hero-sponsor-ticker-idle * {
+  text-shadow: inherit;
+}
+
 @keyframes home-hero-sponsor-ticker-pulse {
   0%,
   100% {
@@ -456,6 +463,19 @@ a.admin-back-link:hover {
   }
 }
 
+/* Ortadaki üye parlar; diğerleri sönük (JS: home-hero-sponsor-ticker-spotlight / -idle) */
+.home-hero-sponsor-ticker-idle {
+  opacity: 0.82;
+  filter: brightness(0.88) saturate(0.96);
+  animation: none;
+}
+
+.home-hero-sponsor-ticker-spotlight {
+  opacity: 1;
+  animation: home-hero-sponsor-ticker-pulse 2.35s ease-in-out infinite;
+  will-change: filter, text-shadow, opacity;
+}
+
 .home-hero-sponsor-ticker-pulse {
   animation: home-hero-sponsor-ticker-pulse 2.35s ease-in-out infinite;
   will-change: filter, text-shadow, opacity;
@@ -522,7 +542,9 @@ a.admin-back-link:hover {
     will-change: auto;
   }
 
-  .home-hero-sponsor-ticker-pulse {
+  .home-hero-sponsor-ticker-pulse,
+  .home-hero-sponsor-ticker-spotlight,
+  .home-hero-sponsor-ticker-idle {
     animation: none !important;
     filter: none !important;
     opacity: 1 !important;

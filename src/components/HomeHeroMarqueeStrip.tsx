@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useMemo, useSyncExternalStore } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+  type RefObject,
+} from "react";
 import type { Lang } from "@/lib/i18n";
 import type { HomeHeroTickerDisplayKind } from "@/lib/homeHeroTickerMode";
 import type { HomeHeroSlideClientPayload } from "@/lib/homeHeroSlidesQuery";
@@ -49,8 +56,10 @@ const SPONSOR_TICKER_SIZE =
 /** Boş durum: text-sm / md:text-base → %115 */
 const SPONSOR_TICKER_SIZE_EMPTY = "text-[1.00625rem] md:text-[1.15rem]";
 
-/** Beyaz halka + parlama/sönme — doğrudan metin span’ında kullanılmaz (animasyonu bozar); sarmalayıcıya verilir. */
-const SPONSOR_TICKER_GLOW_WRAP = "home-hero-sponsor-ticker-white-ring home-hero-sponsor-ticker-pulse";
+/** Beyaz halka (tüm satırlar); parlama yalnızca ortadaki satırda (JS ile). */
+const SPONSOR_TICKER_RING = "home-hero-sponsor-ticker-white-ring";
+const TICKER_IDLE_CLASS = "home-hero-sponsor-ticker-idle";
+const TICKER_SPOTLIGHT_CLASS = "home-hero-sponsor-ticker-spotlight";
 
 const sponsorProfileLinkClass =
   "inline-flex shrink-0 cursor-pointer items-baseline gap-0 whitespace-nowrap text-inherit no-underline decoration-[#002f5e]/75 underline-offset-[0.2em] outline-none hover:underline focus-visible:underline";
@@ -104,6 +113,16 @@ function SponsorSlideInner({
   );
 }
 
+function TickerBetweenGap() {
+  return (
+    <span
+      aria-hidden
+      className="inline-block shrink-0 select-none"
+      style={{ width: `${SPONSOR_BETWEEN_GAP_CH}ch` }}
+    />
+  );
+}
+
 function SponsorStripSegments({
   items,
   slidesLength,
@@ -115,15 +134,11 @@ function SponsorStripSegments({
     <>
       {items.map((slide, i) => (
         <Fragment key={`${slide.id}-${i}`}>
-          {i > 0 ? (
-            <span
-              aria-hidden
-              className="inline-block shrink-0 select-none"
-              style={{ width: `${SPONSOR_BETWEEN_GAP_CH}ch` }}
-            />
-          ) : null}
+          {i > 0 ? <TickerBetweenGap /> : null}
           <span
-            className={`inline-flex items-baseline whitespace-nowrap ${SPONSOR_TICKER_SIZE} ${SPONSOR_TICKER_TEXT}`}
+            data-ticker-entry
+            data-slide-id={slide.id}
+            className={`inline-flex items-baseline whitespace-nowrap ${SPONSOR_TICKER_SIZE} ${SPONSOR_TICKER_TEXT} ${SPONSOR_TICKER_RING} ${TICKER_IDLE_CLASS}`}
           >
             <SponsorSlideInner slide={slide} slidesLength={slidesLength} />
           </span>
@@ -138,6 +153,76 @@ function tickerAriaLabel(lang: Lang, kind: HomeHeroTickerDisplayKind): string {
     return lang === "en" ? "Recently joined members" : "Yeni katılan üyeler";
   }
   return lang === "en" ? "Featured sponsors" : "Öne çıkan sponsorlar";
+}
+
+/** Görünür alanın tam ortasına en yakın üye satırını parlatır (marquee kopyaları aynı anda değil). */
+function useTickerCenterSpotlight(viewportRef: RefObject<HTMLElement | null>, enabled: boolean) {
+  useEffect(() => {
+    if (!enabled) return;
+
+    let frame = 0;
+    const tick = () => {
+      const viewport = viewportRef.current;
+      if (!viewport) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      const entries = viewport.querySelectorAll<HTMLElement>("[data-ticker-entry]");
+      if (entries.length === 0) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+
+      const box = viewport.getBoundingClientRect();
+      const centerX = box.left + box.width / 2;
+
+      const measure = (el: HTMLElement, requireVisible: boolean) => {
+        const r = el.getBoundingClientRect();
+        if (requireVisible && (r.right <= box.left || r.left >= box.right)) return null;
+        const slideId = el.dataset.slideId ?? el.textContent ?? "";
+        return { el, slideId, dist: Math.abs(r.left + r.width / 2 - centerX) };
+      };
+
+      /** Aynı slaytın iki kopyasından yalnızca ortaya daha yakın olanı aday. */
+      const pickBest = (requireVisible: boolean) => {
+        const nearestBySlide = new Map<string, { el: HTMLElement; dist: number }>();
+        entries.forEach((el) => {
+          const m = measure(el, requireVisible);
+          if (!m) return;
+          const prev = nearestBySlide.get(m.slideId);
+          if (!prev || m.dist < prev.dist) nearestBySlide.set(m.slideId, { el: m.el, dist: m.dist });
+        });
+        let winner: HTMLElement | null = null;
+        let winnerDist = Infinity;
+        for (const { el, dist } of nearestBySlide.values()) {
+          if (dist < winnerDist) {
+            winnerDist = dist;
+            winner = el;
+          }
+        }
+        return winner;
+      };
+
+      let best = pickBest(true);
+      if (!best) best = pickBest(false);
+
+      entries.forEach((el) => {
+        const on = el === best;
+        el.classList.toggle(TICKER_SPOTLIGHT_CLASS, on);
+        el.classList.toggle(TICKER_IDLE_CLASS, !on);
+      });
+
+      frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(frame);
+      viewportRef.current?.querySelectorAll<HTMLElement>("[data-ticker-entry]").forEach((el) => {
+        el.classList.remove(TICKER_SPOTLIGHT_CLASS, TICKER_IDLE_CLASS);
+      });
+    };
+  }, [viewportRef, enabled]);
 }
 
 function tickerEmptyTitle(lang: Lang, kind: HomeHeroTickerDisplayKind): string {
@@ -157,8 +242,11 @@ function SponsorMarqueeStrip({
   displayKind: HomeHeroTickerDisplayKind;
 }) {
   const reduced = usePrefersReducedMotion();
+  const viewportRef = useRef<HTMLDivElement>(null);
   const emptyTitle = tickerEmptyTitle(lang, displayKind);
   const ariaLabel = tickerAriaLabel(lang, displayKind);
+
+  useTickerCenterSpotlight(viewportRef, !reduced && slides.length > 0);
 
   const items = useMemo(() => {
     if (slides.length === 0) return [{ ...EMPTY_SLIDE, title: emptyTitle }];
@@ -173,6 +261,7 @@ function SponsorMarqueeStrip({
       if (slide.subtitle) n += slide.subtitle.length + 3;
       if (slide.ctaUrl && slide.ctaLabel && !slide.isSponsor) n += slide.ctaLabel.length + 3;
     });
+    if (items.length > 0) n += SPONSOR_BETWEEN_GAP_CH;
     const baseSec = Math.max(28, Math.min(120, 18 + n * 0.14));
     return baseSec / MARQUEE_SPEED_INCREASE;
   }, [items]);
@@ -185,7 +274,7 @@ function SponsorMarqueeStrip({
         aria-label={ariaLabel}
       >
         <p
-          className={`font-semibold leading-snug ${SPONSOR_TICKER_SIZE_EMPTY} ${SPONSOR_TICKER_TEXT} ${SPONSOR_TICKER_GLOW_WRAP}`}
+          className={`font-semibold leading-snug ${SPONSOR_TICKER_SIZE_EMPTY} ${SPONSOR_TICKER_TEXT} ${SPONSOR_TICKER_RING}`}
         >
           {emptyTitle}
         </p>
@@ -195,33 +284,34 @@ function SponsorMarqueeStrip({
 
   return (
     <div
-      className="relative flex min-h-[2.35rem] items-center overflow-hidden border-b border-white/15 pb-1.5 [container-type:inline-size]"
+      ref={viewportRef}
+      className="relative flex min-h-[2.35rem] w-full items-center overflow-hidden border-b border-white/15 pb-1.5 [container-type:inline-size]"
       aria-label={ariaLabel}
     >
       {reduced ? (
         <div
-          className={`flex w-full flex-wrap items-baseline justify-center gap-x-0 text-center ${SPONSOR_TICKER_SIZE} ${SPONSOR_TICKER_GLOW_WRAP}`}
+          className={`flex w-full flex-wrap items-baseline justify-center gap-x-0 text-center ${SPONSOR_TICKER_SIZE}`}
         >
           <SponsorStripSegments items={items} slidesLength={slides.length} />
         </div>
       ) : (
-        <div className="min-w-0 overflow-hidden py-1">
+        <div className="min-w-0 w-full flex-1 overflow-hidden py-1">
           <div
             className="home-hero-marquee-loop flex w-max"
             style={{
               animation: `home-hero-loop-rtl ${loopDurSec}s linear infinite`,
             }}
           >
-            <div
-              className={`inline-flex flex-none flex-row flex-nowrap items-center ${SPONSOR_TICKER_GLOW_WRAP}`}
-            >
+            <div className="inline-flex flex-none flex-row flex-nowrap items-center">
               <SponsorStripSegments items={items} slidesLength={slides.length} />
+              <TickerBetweenGap />
             </div>
             <div
-              className={`inline-flex flex-none flex-row flex-nowrap items-center ${SPONSOR_TICKER_GLOW_WRAP}`}
+              className="inline-flex flex-none flex-row flex-nowrap items-center"
               aria-hidden
             >
               <SponsorStripSegments items={items} slidesLength={slides.length} />
+              <TickerBetweenGap />
             </div>
           </div>
         </div>
