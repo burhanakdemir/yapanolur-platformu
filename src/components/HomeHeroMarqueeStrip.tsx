@@ -64,25 +64,34 @@ const TICKER_SPOTLIGHT_CLASS = "home-hero-sponsor-ticker-spotlight";
 const sponsorProfileLinkClass =
   "inline-flex shrink-0 cursor-pointer items-baseline gap-0 whitespace-nowrap text-inherit no-underline decoration-[#002f5e]/75 underline-offset-[0.2em] outline-none hover:underline focus-visible:underline";
 
+/** Yalnızca görünüm; veritabanı kaydı değişmez (tr-TR: i→İ, ı→I). */
+function tickerDisplayUpper(text: string, lang: Lang): string {
+  return text.toLocaleUpperCase(lang === "en" ? "en-US" : "tr-TR");
+}
+
 function SponsorSlideInner({
   slide,
   slidesLength,
+  lang,
 }: {
   slide: HomeHeroSlideClientPayload;
   slidesLength: number;
+  lang: Lang;
 }) {
   const isEmptyPlaceholder = slidesLength === 0;
+  const title = tickerDisplayUpper(slide.title, lang);
+  const subtitle = slide.subtitle ? tickerDisplayUpper(slide.subtitle, lang) : null;
 
   const titleAndSubtitle = (
     <>
-      <span className="shrink-0">{slide.title}</span>
-      {slide.subtitle ? (
+      <span className="shrink-0">{title}</span>
+      {subtitle ? (
         <span
           className="shrink-0 font-semibold opacity-95"
           style={{ fontSize: `${SUBTITLE_SCALE_EM}em` }}
         >
           {" — "}
-          {slide.subtitle}
+          {subtitle}
         </span>
       ) : null}
     </>
@@ -106,7 +115,7 @@ function SponsorSlideInner({
       {slide.ctaUrl && slide.ctaLabel && !slide.isSponsor ? (
         <span className="shrink-0 font-semibold">
           {" · "}
-          {slide.ctaLabel}
+          {tickerDisplayUpper(slide.ctaLabel, lang)}
         </span>
       ) : null}
     </>
@@ -126,9 +135,11 @@ function TickerBetweenGap() {
 function SponsorStripSegments({
   items,
   slidesLength,
+  lang,
 }: {
   items: HomeHeroSlideClientPayload[];
   slidesLength: number;
+  lang: Lang;
 }) {
   return (
     <>
@@ -140,7 +151,7 @@ function SponsorStripSegments({
             data-slide-id={slide.id}
             className={`inline-flex items-baseline whitespace-nowrap ${SPONSOR_TICKER_SIZE} ${SPONSOR_TICKER_TEXT} ${SPONSOR_TICKER_RING} ${TICKER_IDLE_CLASS}`}
           >
-            <SponsorSlideInner slide={slide} slidesLength={slidesLength} />
+            <SponsorSlideInner slide={slide} slidesLength={slidesLength} lang={lang} />
           </span>
         </Fragment>
       ))}
@@ -276,7 +287,7 @@ function SponsorMarqueeStrip({
         <p
           className={`font-semibold leading-snug ${SPONSOR_TICKER_SIZE_EMPTY} ${SPONSOR_TICKER_TEXT} ${SPONSOR_TICKER_RING}`}
         >
-          {emptyTitle}
+          {tickerDisplayUpper(emptyTitle, lang)}
         </p>
       </div>
     );
@@ -292,7 +303,7 @@ function SponsorMarqueeStrip({
         <div
           className={`flex w-full flex-wrap items-baseline justify-center gap-x-0 text-center ${SPONSOR_TICKER_SIZE}`}
         >
-          <SponsorStripSegments items={items} slidesLength={slides.length} />
+          <SponsorStripSegments items={items} slidesLength={slides.length} lang={lang} />
         </div>
       ) : (
         <div className="min-w-0 w-full flex-1 overflow-hidden py-1">
@@ -303,14 +314,14 @@ function SponsorMarqueeStrip({
             }}
           >
             <div className="inline-flex flex-none flex-row flex-nowrap items-center">
-              <SponsorStripSegments items={items} slidesLength={slides.length} />
+              <SponsorStripSegments items={items} slidesLength={slides.length} lang={lang} />
               <TickerBetweenGap />
             </div>
             <div
               className="inline-flex flex-none flex-row flex-nowrap items-center"
               aria-hidden
             >
-              <SponsorStripSegments items={items} slidesLength={slides.length} />
+              <SponsorStripSegments items={items} slidesLength={slides.length} lang={lang} />
               <TickerBetweenGap />
             </div>
           </div>
