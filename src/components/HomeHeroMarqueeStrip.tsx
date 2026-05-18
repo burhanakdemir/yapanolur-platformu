@@ -348,14 +348,15 @@ type Props = {
 
 export default function HomeHeroMarqueeStrip({ lang, slides, displayKind, title, subtitle }: Props) {
   return (
-    <section
-      className="relative w-full rounded-xl bg-gradient-to-br from-orange-600 via-orange-500 to-amber-500 px-4 pb-2.5 pt-7 text-white shadow-sm outline-none md:rounded-2xl md:px-5 md:pb-3.5 md:pt-8"
-      aria-label={lang === "en" ? "Home hero" : "Ana sayfa üst şerit"}
-    >
-      <h3 className="pointer-events-none absolute left-1/2 top-2.5 z-10 w-full -translate-x-1/2 px-2 text-center text-[11px] font-bold uppercase tracking-[0.14em] text-white sm:top-3 sm:text-xs md:text-[0.8125rem]">
+    <div className="flex w-full flex-col items-center gap-1 sm:gap-1.5">
+      <h3 className="w-full px-1 text-center text-[11px] font-bold uppercase tracking-[0.14em] text-orange-950/90 sm:text-xs md:text-[0.8125rem]">
         {tickerKindHeading(lang, displayKind)}
       </h3>
-      <div className="flex flex-col justify-center gap-1 md:gap-1.5">
+      <section
+        className="w-full rounded-xl bg-gradient-to-br from-orange-600 via-orange-500 to-amber-500 px-4 py-2.5 text-white shadow-sm outline-none md:rounded-2xl md:px-5 md:py-3.5"
+        aria-label={lang === "en" ? "Home hero" : "Ana sayfa üst şerit"}
+      >
+        <div className="flex flex-col justify-center gap-1 md:gap-1.5">
         <SponsorMarqueeStrip slides={slides} lang={lang} displayKind={displayKind} />
 
         <div className="flex flex-col gap-0.5 px-0.5 text-center">
@@ -369,6 +370,7 @@ export default function HomeHeroMarqueeStrip({ lang, slides, displayKind, title,
           ) : null}
         </div>
       </div>
-    </section>
+      </section>
+    </div>
   );
 }
