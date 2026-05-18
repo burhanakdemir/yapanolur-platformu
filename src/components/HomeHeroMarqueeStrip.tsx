@@ -166,6 +166,13 @@ function tickerAriaLabel(lang: Lang, kind: HomeHeroTickerDisplayKind): string {
   return lang === "en" ? "Featured sponsors" : "Öne çıkan sponsorlar";
 }
 
+function tickerKindHeading(lang: Lang, kind: HomeHeroTickerDisplayKind): string {
+  if (kind === "new_members") {
+    return lang === "en" ? "New Members" : "Yeni Üyeler";
+  }
+  return lang === "en" ? "Sponsor Members" : "Sponsor Üyeler";
+}
+
 /** Görünür alanın tam ortasına en yakın üye satırını parlatır (marquee kopyaları aynı anda değil). */
 function useTickerCenterSpotlight(viewportRef: RefObject<HTMLElement | null>, enabled: boolean) {
   useEffect(() => {
@@ -342,9 +349,12 @@ type Props = {
 export default function HomeHeroMarqueeStrip({ lang, slides, displayKind, title, subtitle }: Props) {
   return (
     <section
-      className="w-full rounded-xl bg-gradient-to-br from-orange-600 via-orange-500 to-amber-500 px-4 py-2.5 text-white shadow-sm outline-none md:rounded-2xl md:px-5 md:py-3.5"
+      className="relative w-full rounded-xl bg-gradient-to-br from-orange-600 via-orange-500 to-amber-500 px-4 pb-2.5 pt-7 text-white shadow-sm outline-none md:rounded-2xl md:px-5 md:pb-3.5 md:pt-8"
       aria-label={lang === "en" ? "Home hero" : "Ana sayfa üst şerit"}
     >
+      <h3 className="pointer-events-none absolute left-1/2 top-2.5 z-10 w-full -translate-x-1/2 px-2 text-center text-[11px] font-bold uppercase tracking-[0.14em] text-white sm:top-3 sm:text-xs md:text-[0.8125rem]">
+        {tickerKindHeading(lang, displayKind)}
+      </h3>
       <div className="flex flex-col justify-center gap-1 md:gap-1.5">
         <SponsorMarqueeStrip slides={slides} lang={lang} displayKind={displayKind} />
 
