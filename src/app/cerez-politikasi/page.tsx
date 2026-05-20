@@ -12,8 +12,8 @@ type Props = {
   searchParams: Promise<{ lang?: string }>;
 };
 
-const LAST_UPDATED_TR = "1 Mayıs 2026";
-const LAST_UPDATED_EN = "1 May 2026";
+const LAST_UPDATED_TR = "20 Mayıs 2026";
+const LAST_UPDATED_EN = "20 May 2026";
 
 export default async function CerezPolitikasiPage({ searchParams }: Props) {
   const params = await searchParams;
@@ -31,8 +31,9 @@ export default async function CerezPolitikasiPage({ searchParams }: Props) {
             <p>
               Bu politika, yapanolur.com üzerinden sunulan ilan ve ihale/teklif platformunda çerez ve benzeri
               yerel depolama teknolojilerinin nasıl kullanıldığını açıklar. Zorunlu çerezler hizmetin güvenli
-              şekilde çalışması için gereklidir. Üçüncü taraf hata izleme (Sentry) istemci tarafında yalnızca
-              alt çubukta “Tümünü kabul et” seçildiğinde yüklenir; “Yalnızca zorunlu” seçildiğinde yüklenmez.
+              şekilde çalışması için gereklidir. İsteğe bağlı üçüncü taraf hizmetler (Sentry hata izleme; Meta /
+              Facebook Piksel reklam ölçümü) istemci tarafında yalnızca alt çubukta “Tümünü kabul et” seçildiğinde
+              yüklenir; “Yalnızca zorunlu” seçildiğinde yüklenmez.
               Veri sorumlusunun kimlik bilgileri{" "}
               <Link href={`/kvkk?lang=${lang}`} className="font-medium text-orange-800 underline">
                 KVKK aydınlatma metni
@@ -131,9 +132,12 @@ export default async function CerezPolitikasiPage({ searchParams }: Props) {
             <h2 className="text-lg font-semibold text-slate-900">4. Üçüncü taraf ve isteğe bağlı izleme</h2>
             <p>
               <strong>Sentry</strong> (yalnızca ortamda <code>NEXT_PUBLIC_SENTRY_DSN</code> tanımlıysa): İstemci
-              tarafında hata raporlama için kullanılabilir ve “Tümünü kabul et” ile rıza vermediyseniz istemci
-              SDK yüklenmez. Ödeme sağlayıcıları (Iyzico, PayTR vb.) ödeme sayfasına geçildiğinde kendi çerez /
-              politikalarına tabidir.
+              tarafında hata raporlama; “Tümünü kabul et” olmadan istemci SDK yüklenmez.{" "}
+              <strong>Meta (Facebook) Piksel</strong>: Reklam ve dönüşüm ölçümü; yalnızca “Tümünü kabul et” sonrası
+              yüklenir (<code>connect.facebook.net</code>, <code>facebook.com/tr</code>). Piksel kimliği ortamda{" "}
+              <code>NEXT_PUBLIC_META_PIXEL_ID</code> ile ayarlanabilir; <code>0</code> ile devre dışı bırakılabilir.
+              Ödeme sağlayıcıları (Iyzico, PayTR vb.) ödeme sayfasına geçildiğinde kendi çerez / politikalarına
+              tabidir.
             </p>
           </section>
 
@@ -158,9 +162,10 @@ export default async function CerezPolitikasiPage({ searchParams }: Props) {
             <h2 className="text-lg font-semibold text-slate-900">1. Overview</h2>
             <p>
               This policy describes cookies and similar technologies used on the yapanolur.com marketplace.
-              Essential cookies are required for secure operation. Third‑party client error monitoring (Sentry)
-              loads only if you choose <strong>Accept all</strong> in the bottom banner;{" "}
-              <strong>Essential only</strong> skips the Sentry browser SDK. The identity of the data controller
+              Essential cookies are required for secure operation. Optional third‑party services (Sentry error
+              monitoring; Meta / Facebook Pixel for advertising measurement) load only if you choose{" "}
+              <strong>Accept all</strong> in the bottom banner; <strong>Essential only</strong> skips them. The
+              identity of the data controller
               aligns with our{" "}
               <Link href={`/kvkk?lang=${lang}`} className="font-medium text-orange-800 underline">
                 privacy notice
@@ -251,9 +256,11 @@ export default async function CerezPolitikasiPage({ searchParams }: Props) {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-900">4. Third parties</h2>
             <p>
-              <strong>Sentry</strong> (if <code>NEXT_PUBLIC_SENTRY_DSN</code> is set): optional client SDK only
-              after <strong>Accept all</strong>. Payment providers apply their own cookies when you enter their
-              payment flow.
+              <strong>Sentry</strong> (if <code>NEXT_PUBLIC_SENTRY_DSN</code> is set): optional client SDK only after{" "}
+              <strong>Accept all</strong>. <strong>Meta (Facebook) Pixel</strong>: ads / conversion measurement after{" "}
+              <strong>Accept all</strong> (<code>connect.facebook.net</code>, <code>facebook.com/tr</code>); disable
+              with <code>NEXT_PUBLIC_META_PIXEL_ID=0</code>. Payment providers apply their own cookies when you enter
+              their payment flow.
             </p>
           </section>
 

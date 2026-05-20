@@ -34,3 +34,20 @@ export function parseCookieConsent(raw: string | null): CookieConsentRecord | nu
 export function shouldLoadOptionalClientMonitoring(record: CookieConsentRecord | null): boolean {
   return record?.choice === "full";
 }
+
+/** Çerez tercihi kaydedildiğinde veya sıfırlandığında istemci bileşenleri dinler. */
+export const COOKIE_CONSENT_CHANGED_EVENT = "yapanolur:cookie-consent-changed";
+
+export function dispatchCookieConsentChanged(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_CHANGED_EVENT));
+}
+
+export function readStoredCookieConsent(): CookieConsentRecord | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return parseCookieConsent(localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY));
+  } catch {
+    return null;
+  }
+}

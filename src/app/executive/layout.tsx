@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function ExecutiveLayout({ children }: { children: ReactNode }) {
   const c = await cookies();
   const session = await verifySessionToken(c.get("session_token")?.value);
-  if (!isSuperAdminRole(session?.role)) {
+  if (!isSuperAdminRole(session?.role) || session?.adminTotp !== true) {
     redirect(adminUrl());
   }
 

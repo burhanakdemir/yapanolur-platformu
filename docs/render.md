@@ -55,7 +55,7 @@ Notlar:
 
 - Disk **dolunca** veya **yedek** politikasi operasyon ekibinde olmalidir.
 - Birden fazla replica kullanirsaniz yerel disk replikalar arasi paylasilmaz; o durumda A secenegi (S3/R2) kullanin.
-- Dogrulama: `GET /api/health?deep=1` — `storage.local_upload_writable`, `storage.local_upload_root`.
+- Dogrulama: `GET /api/health?deep=1` — `HEALTH_DEEP_SECRET` + baslik `x-health-secret` (veya `?secret=`); yanit: `storage.local_upload_writable`, `storage.local_upload_root`.
 - Eski dokuman: varsayilan container dosya sistemi deploy ile silinebilir; kalicilik icin Persistent Disk veya S3 sarttir.
 
 ### Kayit formu dosya yuklemesi (`/members`)

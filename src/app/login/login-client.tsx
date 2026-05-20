@@ -5,6 +5,7 @@ import Link from "next/link";
 import { isStaffAdminRole } from "@/lib/adminRoles";
 import { adminUrl } from "@/lib/adminUrls";
 import { apiErrorMessage } from "@/lib/apiErrorMessage";
+import { sanitizePublicNextPath } from "@/lib/safeRedirectPath";
 import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 
 type LoginClientProps = {
@@ -43,7 +44,7 @@ export default function LoginClient({ nextPath, explicitNext }: LoginClientProps
       target = isStaffAdminRole(role) ? adminUrl() : "/panel/user";
     }
     /** Tam sayfa yönlendirme: oturum çerezi middleware ile güvenilir şekilde taşınır (App Router). */
-    window.location.assign(target.startsWith("/") ? target : `/${target}`);
+    window.location.assign(sanitizePublicNextPath(target));
   }
 
   return (

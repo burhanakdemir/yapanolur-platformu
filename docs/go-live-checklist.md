@@ -30,7 +30,7 @@
 ## Sağlık ve yedek
 
 - [ ] `GET /api/health` — yük dengeleyici için hafif kontrol.
-- [ ] `GET /api/health?deep=1` — PostgreSQL `SELECT 1` (izleme; başarısızsa 503).
+- [ ] `GET /api/health?deep=1` — PostgreSQL `SELECT 1` (izleme; başarısızsa 503). Render’da `HEALTH_DEEP_SECRET` tanımlayın; istekte `x-health-secret` veya `?secret=` gönderin (tanımsızsa 401).
 - [ ] Postgres yedekleme ve geri yükleme testi: **`docs/yedekleme.md`**.
 
 ## CI

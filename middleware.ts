@@ -6,8 +6,17 @@ import { isStaffAdminRole, isSuperAdminRole } from "@/lib/adminRoles";
 import { ADMIN_MFA_PENDING_COOKIE, verifyAdminMfaPendingToken } from "@/lib/adminMfaPending";
 import { adminBrowserPathToInternal, adminUrl } from "@/lib/adminUrls";
 import { effectiveAdminBrowserPrefixForPathname } from "@/lib/adminPanelPathEnv";
+import { sanitizeAdminNextPath } from "@/lib/safeRedirectPath";
 
 const memberPaths = ["/panel/user", "/ads/new"];
+
+function isExecutivePath(pathname: string): boolean {
+  return (
+    pathname === "/executive" ||
+    pathname.startsWith("/executive/") ||
+    pathname.startsWith("/api/executive/")
+  );
+}
 
 function isAdminRootInternal(internalPath: string) {
   return internalPath === "/admin" || internalPath === "/admin/";
@@ -126,7 +135,23 @@ export async function middleware(req: NextRequest) {
     if (pathname.startsWith("/api/admin")) {
       return jsonWithRequestId({ error: "Yönetici doğrulama (TOTP) gerekli." }, 403, requestId);
     }
-    if (internalPath.startsWith("/admin") || pathname.startsWith("/panel/admin")) {
+    if (
+      internalPath.startsWith("/admin") ||
+      pathname.startsWith("/panel/admin") ||
+      isExecutivePath(pathname)
+    ) {
+      return redirectWithRequestId(new URL(adminUrl(), req.url), requestId);
+    }
+    if (pathname.startsWith("/api/executive")) {
+      return jsonWithRequestId({ error: "Yönetici doğrulama (TOTP) gerekli." }, 403, requestId);
+    }
+  }
+
+  if (isExecutivePath(pathname)) {
+    if (!isSuperAdminRole(session?.role) || session?.adminTotp !== true) {
+      if (pathname.startsWith("/api/executive")) {
+        return jsonWithRequestId({ error: "Yetkisiz" }, 403, requestId);
+      }
       return redirectWithRequestId(new URL(adminUrl(), req.url), requestId);
     }
   }
@@ -157,7 +182,10 @@ export async function middleware(req: NextRequest) {
         return jsonWithRequestId({ error: "Yetkisiz" }, 401, requestId);
       }
       const gate = new URL(adminUrl(), req.url);
-      gate.searchParams.set("next", pathname + req.nextUrl.search);
+      gate.searchParams.set(
+        "next",
+        sanitizeAdminNextPath(pathname + req.nextUrl.search),
+      );
       return redirectWithRequestId(gate, requestId);
     }
   }

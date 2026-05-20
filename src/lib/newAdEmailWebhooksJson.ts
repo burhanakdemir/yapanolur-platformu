@@ -1,5 +1,7 @@
+import { isAllowedWebhookUrl } from "@/lib/webhookUrlPolicy";
+
 /**
- * Yönetici `AdminSettings.newAdEmailWebhookUrlsJson` — https (veya geliştirme için http) URL listesi.
+ * Yönetici `AdminSettings.newAdEmailWebhookUrlsJson` — https (üretimde yalnızca https) URL listesi.
  */
 export function parseNewAdEmailWebhookUrls(json: string | null | undefined): string[] {
   if (!json || !json.trim()) return [];
@@ -21,15 +23,13 @@ export function stringifyNewAdEmailWebhookUrls(urls: string[]): string {
   );
 }
 
-function isAllowedWebhookUrlForPolicy(url: string): boolean {
-  try {
-    const u = new URL(url);
-    return u.protocol === "https:" || u.protocol === "http:";
-  } catch {
-    return false;
-  }
+function webhookPolicyOpts(): { productionOnlyHttps: boolean } {
+  return { productionOnlyHttps: process.env.NODE_ENV === "production" };
 }
 
 export function filterAllowedWebhookUrls(urls: string[]): string[] {
-  return [...new Set(urls.map((s) => s.trim()).filter((s) => s.length > 0))].filter(isAllowedWebhookUrlForPolicy);
+  const opts = webhookPolicyOpts();
+  return [...new Set(urls.map((s) => s.trim()).filter((s) => s.length > 0))].filter((u) =>
+    isAllowedWebhookUrl(u, opts),
+  );
 }

@@ -8,7 +8,7 @@ import { getSiteAnalyticsActiveMs } from "@/lib/siteAnalytics";
 export async function GET() {
   const token = (await cookies()).get("session_token")?.value;
   const session = await verifySessionToken(token);
-  if (!session || !isSuperAdminRole(session.role)) {
+  if (!session || !isSuperAdminRole(session.role) || session.adminTotp !== true) {
     return NextResponse.json({ error: "Yetkisiz." }, { status: 403 });
   }
 

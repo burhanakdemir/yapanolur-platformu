@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import {
   COOKIE_CONSENT_CLIENT_COOKIE,
   COOKIE_CONSENT_STORAGE_KEY,
+  dispatchCookieConsentChanged,
   parseCookieConsent,
   type CookieConsentChoice,
   type CookieConsentRecord,
@@ -62,6 +63,7 @@ export default function CookieConsentBar() {
     if (existing) {
       hideBannerPadding();
       initSentryClientFromConsent();
+      dispatchCookieConsentChanged();
       return;
     }
     queueMicrotask(() => {
@@ -78,6 +80,7 @@ export default function CookieConsentBar() {
     setVisible(false);
     hideBannerPadding();
     initSentryClientFromConsent();
+    dispatchCookieConsentChanged();
   };
 
   if (hideChrome || !visible) return null;
@@ -99,8 +102,8 @@ export default function CookieConsentBar() {
           </p>
           <p className="text-slate-700">
             {lang === "tr"
-              ? "Zorunlu çerezler (oturum, güvenlik, kayıt doğrulaması) olmadan site çalışmaz. İsteğe bağlı olarak üçüncü taraf hata izleme (Sentry) yalnızca “Tümünü kabul et” ile yüklenir. Ayrıntılar:"
-              : "Essential cookies (session, security, signup verification) are required for the service. Optional third‑party error monitoring (Sentry) loads only if you choose “Accept all”. Details:"}{" "}
+              ? "Zorunlu çerezler (oturum, güvenlik, kayıt doğrulaması) olmadan site çalışmaz. “Tümünü kabul et” ile isteğe bağlı üçüncü taraf hizmetler (Sentry hata izleme, Meta reklam ölçümü / Facebook Piksel) yüklenir. Ayrıntılar:"
+              : "Essential cookies (session, security, signup verification) are required for the service. “Accept all” enables optional third‑party services (Sentry error monitoring, Meta / Facebook Pixel for ads measurement). Details:"}{" "}
             <Link href={cerezHref} className="font-medium text-orange-800 underline decoration-orange-300 underline-offset-2">
               {lang === "tr" ? "Çerez politikası" : "Cookie policy"}
             </Link>

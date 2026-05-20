@@ -6,6 +6,7 @@ import "./globals.css";
 import { Suspense } from "react";
 import AppSiteFooter from "@/components/AppSiteFooter";
 import CookieConsentBar from "@/components/CookieConsentBar";
+import MetaPixel from "@/components/MetaPixel";
 import PwaRegister from "@/components/PwaRegister";
 import SitePresenceBeacon from "@/components/SitePresenceBeacon";
 import { getSafeMetadataBase } from "@/lib/appUrl";
@@ -82,6 +83,7 @@ export default function RootLayout({
         <SiteWideJsonLd />
         <PwaRegister />
         <SitePresenceBeacon />
+        <MetaPixel />
         <div className="app-main-shell flex min-h-0 flex-1 flex-col">{children}</div>
         <AppSiteFooter />
         <Suspense fallback={null}>
